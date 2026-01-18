@@ -1,7 +1,5 @@
---- START OF UPDATED FILE NewcustomerAPP.html ---
-
 <!DOCTYPE html>
-<html lang="en" dir="rtl"> <!-- Default RTL for Arabic start -->
+<html lang="en" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -21,7 +19,7 @@
         body { 
             margin: 0; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #525659; /* PDF Viewer Grey */
+            background: #525659;
             height: 100vh;
             display: flex;
             flex-direction: row; 
@@ -32,83 +30,76 @@
         #viewer-container {
             flex: 1;
             height: 100%;
-            overflow-y: auto;
+            overflow: auto; /* Changed to auto to handle both X and Y */
             position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 20px;
-            touch-action: pan-x pan-y; 
             background-color: #525659;
+            min-width: 0; /* Important flex fix for desktop mode */
         }
 
         .pdf-page-container {
             position: relative;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             background: white;
-            user-select: none; 
+            user-select: none;
+            line-height: 0; /* Removes extra spacing under canvas */
         }
 
-        canvas { display: block; width: 100%; height: auto; }
+        canvas { 
+            max-width: none; /* Allow canvas to be larger than container if zoomed */
+            display: block; 
+        }
 
-        /* Red Marker Dot */
         .marker {
             position: absolute;
-            width: 12px;
-            height: 12px;
-            background: rgba(220, 38, 38, 0.9); /* Red */
+            width: 14px;
+            height: 14px;
+            background: #ef4444;
             border: 2px solid white;
             border-radius: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
             z-index: 10;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
         }
 
-        /* --- Floating Input on PDF --- */
         .floating-input-wrapper {
             position: absolute;
             background: white;
-            padding: 4px;
-            border-radius: 4px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            padding: 5px;
+            border-radius: 6px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             display: flex;
-            gap: 4px;
+            gap: 5px;
             z-index: 1000;
-            transform: translate(-50%, -125%);
-            min-width: 180px;
-        }
-        
-        .floating-input-wrapper::after {
-            content: ''; position: absolute; top: 100%; left: 50%; margin-left: -6px;
-            border-width: 6px; border-style: solid; border-color: white transparent transparent transparent;
-        }
-
-        .floating-input-wrapper input {
-            flex: 1; border: 1px solid #ccc; padding: 6px; border-radius: 3px; outline: none;
-        }
-
-        .floating-input-wrapper button {
-            background: var(--primary); color: white; border: none; padding: 0 12px; border-radius: 3px; font-weight: bold;
+            transform: translate(-50%, -130%);
+            min-width: 200px;
+            border: 1px solid #ccc;
         }
 
         /* --- Sidebar (Form Area) --- */
         #sidebar {
             width: 350px;
+            min-width: 350px;
             background: white;
             display: flex;
             flex-direction: column;
             z-index: 20;
             border-inline-start: 1px solid #ccc;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
         }
 
         .sidebar-header {
-            padding: 10px;
+            padding: 12px;
             background: #f1f5f9;
             border-bottom: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
         }
 
         .header-top {
@@ -120,116 +111,76 @@
         .zoom-controls {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 10px;
-            background: #e2e8f0;
-            padding: 5px;
+            justify-content: space-between;
+            background: #fff;
+            padding: 4px 8px;
             border-radius: 6px;
+            border: 1px solid #cbd5e1;
         }
 
         .zoom-btn {
-            background: white;
-            border: 1px solid #cbd5e1;
-            padding: 2px 10px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 4px 12px;
             cursor: pointer;
             font-weight: bold;
             border-radius: 4px;
+            font-size: 16px;
         }
-        .zoom-btn:hover { background: #f8fafc; }
+        .zoom-btn:active { background: #e2e8f0; }
+
+        .fit-btn {
+            font-size: 11px;
+            padding: 4px 8px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
 
         .lang-btn {
             background: #334155;
-            color: white;
-            border: none;
-            padding: 4px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
+            color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;
         }
 
         .action-btn { 
-            width: 100%; padding: 10px; cursor: pointer; 
+            width: 100%; padding: 12px; cursor: pointer; 
             background: var(--primary); color: white; border: none; 
             border-radius: 6px; font-weight: 600;
         }
-        .action-btn:active { opacity: 0.9; }
 
-        /* --- Form Table Layout --- */
-        #form-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0;
-        }
+        #form-container { flex: 1; overflow-y: auto; }
 
         .form-row {
             display: grid;
-            /* Label | Input | Controls */
             grid-template-columns: 110px 1fr 30px; 
             border-bottom: 1px solid #eee;
-            align-items: stretch;
-            min-height: 40px;
+            min-height: 44px;
         }
 
         .form-label {
-            background: #f8fafc;
-            padding: 8px;
-            font-size: 12px;
-            font-weight: bold;
-            color: #475569;
-            display: flex;
-            align-items: center;
-            border-inline-end: 1px solid #eee;
-            word-break: break-word;
-        }
-
-        .form-value {
-            padding: 0;
-            display: flex;
+            background: #f8fafc; padding: 8px; font-size: 12px; font-weight: bold;
+            color: #475569; display: flex; align-items: center; border-inline-end: 1px solid #eee;
         }
 
         .form-value input {
-            width: 100%;
-            border: none;
-            padding: 5px 8px;
-            font-family: monospace;
-            font-size: 13px;
-            color: #000;
-            outline: none;
-        }
-        .form-value input:focus { background: #f0f9ff; }
-
-        .form-controls {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            background: #fff;
+            width: 100%; border: none; padding: 10px; font-family: monospace; font-size: 14px; outline: none;
         }
 
-        .mini-btn {
-            border: none; background: transparent; 
-            font-size: 10px; color: #94a3b8; cursor: pointer;
-            height: 13px; padding: 0; line-height: 1;
-        }
-        .mini-btn:hover { color: var(--primary); font-weight: bold; }
-        .btn-clear { color: #ef4444; font-size: 14px; height: 14px; margin-top: 2px;}
+        .form-controls { display: flex; flex-direction: column; border-inline-start: 1px solid #eee; }
+        .mini-btn { border: none; background: transparent; font-size: 12px; color: #94a3b8; cursor: pointer; flex: 1; }
+        .btn-clear { color: #ef4444; font-weight: bold; }
 
-        /* Active/Filled State */
+        .form-row.filled { background: #f0f9ff; }
         .form-row.filled .form-label { color: var(--primary); }
 
-        /* --- Mobile Layout --- */
         @media (max-width: 768px) {
             body { flex-direction: column; }
-            #viewer-container { width: 100%; padding: 10px; }
-            #sidebar { 
-                width: 100%; 
-                height: 50vh; 
-                border-inline-start: none;
-                border-top: 2px solid #ccc;
-            }
-            .form-row { grid-template-columns: 90px 1fr 30px; }
+            #sidebar { width: 100%; height: 45vh; min-width: 100%; border-top: 2px solid #ccc; }
+            #viewer-container { flex: 1; }
         }
 
-        /* Loader & Overlay */
         #upload-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #111; z-index: 2000; display: flex;
@@ -244,17 +195,14 @@
 </head>
 <body>
 
-    <!-- Upload Screen -->
     <div id="upload-overlay">
         <h2>📂 Open PDF</h2>
-        <input type="file" id="file-input" accept="application/pdf" style="margin-top:20px;">
+        <input type="file" id="file-input" accept="application/pdf">
         <div class="loader" id="loader"></div>
     </div>
 
-    <!-- Viewer -->
     <div id="viewer-container"></div>
 
-    <!-- Sidebar Form -->
     <div id="sidebar">
         <div class="sidebar-header">
             <div class="header-top">
@@ -262,26 +210,23 @@
                 <div style="font-size:12px; color:#555;">Filled: <span id="filled-count">0</span>/12</div>
             </div>
 
-            <!-- Zoom Controls Added Here -->
             <div class="zoom-controls">
                 <button class="zoom-btn" onclick="changeZoom(-0.2)">−</button>
-                <span id="zoom-level" style="font-size:12px; font-weight:bold; min-width:40px; text-align:center;">150%</span>
+                <span id="zoom-level" style="font-size:13px; font-weight:bold;">100%</span>
                 <button class="zoom-btn" onclick="changeZoom(0.2)">+</button>
+                <button class="fit-btn" onclick="fitToWidth()">Fit Width</button>
             </div>
 
             <button class="action-btn" id="copy-btn" onclick="copyAll()">Copy Data (-)</button>
         </div>
         
-        <div id="form-container">
-            <!-- Table Rows will be generated here by JS -->
-        </div>
+        <div id="form-container"></div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-        /* --- Configuration --- */
         const fieldsConfig = [
             { key: 'store', ar: 'اسم المحل', en: 'Store Name' },
             { key: 'cr', ar: 'رقم السجل', en: 'CR Number' },
@@ -297,14 +242,12 @@
             { key: 'coords', ar: 'احداثيات الموقع', en: 'Coordinates' }
         ];
 
-        // Marker data now includes page index and percentage coordinates for scaling
         let formData = new Array(12).fill(null).map(() => ({ value: '', markerData: null }));
         let currentLang = 'ar';
         let activeFloatingInput = null;
         let pdfDoc = null;
-        let currentScale = 1.5;
+        let currentScale = 1.2;
 
-        // --- DOM Elements ---
         const formContainer = document.getElementById('form-container');
         const filledCount = document.getElementById('filled-count');
         const fileInput = document.getElementById('file-input');
@@ -313,84 +256,77 @@
         const loader = document.getElementById('loader');
         const zoomLevelEl = document.getElementById('zoom-level');
 
-        // --- Initialization ---
         function initForm() {
             formContainer.innerHTML = '';
             fieldsConfig.forEach((field, index) => {
                 const row = document.createElement('div');
                 row.className = 'form-row';
                 row.id = `row-${index}`;
-                
                 row.innerHTML = `
                     <div class="form-label">${currentLang === 'ar' ? field.ar : field.en}</div>
-                    <div class="form-value">
-                        <input type="text" id="input-${index}" 
-                            oninput="updateValueManually(${index}, this.value)" 
-                            placeholder="...">
-                    </div>
+                    <div class="form-value"><input type="text" id="input-${index}" oninput="updateValueManually(${index}, this.value)" placeholder="..."></div>
                     <div class="form-controls">
                         <button class="mini-btn" onclick="moveValue(${index}, -1)">▲</button>
                         <button class="mini-btn btn-clear" onclick="clearRow(${index})">×</button>
                         <button class="mini-btn" onclick="moveValue(${index}, 1)">▼</button>
-                    </div>
-                `;
+                    </div>`;
                 formContainer.appendChild(row);
             });
             updateFormUI();
         }
 
-        // --- Zoom Logic ---
-        function changeZoom(delta) {
+        async function fitToWidth() {
             if (!pdfDoc) return;
-            currentScale = Math.min(Math.max(currentScale + delta, 0.5), 3.0);
+            const page = await pdfDoc.getPage(1);
+            const viewport = page.getViewport({ scale: 1 });
+            // Width of viewer container minus padding
+            const availableWidth = viewer.clientWidth - 40; 
+            currentScale = availableWidth / viewport.width;
             zoomLevelEl.innerText = Math.round(currentScale * 100) + "%";
             renderPDF();
         }
 
-        // --- PDF Rendering ---
+        function changeZoom(delta) {
+            if (!pdfDoc) return;
+            currentScale = Math.min(Math.max(currentScale + delta, 0.3), 4.0);
+            zoomLevelEl.innerText = Math.round(currentScale * 100) + "%";
+            renderPDF();
+        }
+
         fileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if(!file) return;
             loader.style.display = 'block';
-            
             const reader = new FileReader();
             reader.onload = async function() {
                 const typedarray = new Uint8Array(this.result);
                 pdfDoc = await pdfjsLib.getDocument(typedarray).promise;
                 overlay.style.display = 'none';
                 initForm();
-                renderPDF();
+                await fitToWidth(); // Auto fit on load
             };
             reader.readAsArrayBuffer(file);
         });
 
         async function renderPDF() {
             if (!pdfDoc) return;
-            viewer.innerHTML = ''; // Clear current pages
-            
+            viewer.innerHTML = '';
             for(let i=1; i<=pdfDoc.numPages; i++) {
                 const page = await pdfDoc.getPage(i);
                 const viewport = page.getViewport({scale: currentScale});
-                
                 const wrapper = document.createElement('div');
                 wrapper.className = 'pdf-page-container';
-                wrapper.id = `page-container-${i-1}`; // 0-indexed
                 wrapper.style.width = viewport.width + "px";
                 wrapper.style.height = viewport.height + "px";
                 
                 const canvas = document.createElement('canvas');
                 canvas.width = viewport.width;
                 canvas.height = viewport.height;
-                const ctx = canvas.getContext('2d');
-                
                 wrapper.appendChild(canvas);
                 viewer.appendChild(wrapper);
                 
                 wrapper.addEventListener('click', (e) => handleMapClick(e, wrapper, i-1));
-                
-                await page.render({canvasContext: ctx, viewport: viewport}).promise;
-
-                // Re-draw any existing markers for this page
+                await page.render({canvasContext: canvas.getContext('2d'), viewport: viewport}).promise;
                 recreateMarkers(i-1, wrapper);
             }
         }
@@ -403,21 +339,17 @@
                     marker.style.left = data.markerData.percentX + '%';
                     marker.style.top = data.markerData.percentY + '%';
                     wrapper.appendChild(marker);
-                    // Update reference
                     formData[index].markerElement = marker;
                 }
             });
         }
 
-        // --- Interaction Logic ---
         function handleMapClick(e, wrapper, pageIdx) {
             if(['INPUT','BUTTON'].includes(e.target.tagName)) return;
             if(activeFloatingInput) activeFloatingInput.remove();
-
             const rect = wrapper.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
-
             createFloatingInput(wrapper, x, y, pageIdx);
         }
 
@@ -426,90 +358,65 @@
             div.className = 'floating-input-wrapper';
             div.style.left = x + 'px';
             div.style.top = y + 'px';
-
             const input = document.createElement('input');
             input.type = 'text';
+            input.style.flex = "1";
+            input.style.padding = "8px";
             setTimeout(() => input.focus(), 50);
-
             const btn = document.createElement('button');
             btn.innerHTML = '✔';
+            btn.style.padding = "0 15px";
+            btn.style.background = "var(--primary)";
+            btn.style.color = "white";
+            btn.style.border = "none";
+            btn.style.borderRadius = "4px";
 
             const submit = () => {
-                if(input.value.trim()) {
-                    assignToNextEmptySlot(input.value, x, y, parent, pageIdx);
-                }
+                if(input.value.trim()) assignToNextEmptySlot(input.value, x, y, parent, pageIdx);
                 div.remove();
                 activeFloatingInput = null;
             };
-
             btn.onclick = submit;
-            input.addEventListener('keydown', (e) => { if(e.key === 'Enter') submit(); });
-
-            div.appendChild(input);
-            div.appendChild(btn);
+            input.onkeydown = (e) => { if(e.key === 'Enter') submit(); };
+            div.appendChild(input); div.appendChild(btn);
             parent.appendChild(div);
             activeFloatingInput = div;
         }
 
         function assignToNextEmptySlot(text, x, y, parent, pageIdx) {
-            const emptyIndex = formData.findIndex(item => item.value === '');
-            
-            if(emptyIndex === -1) {
-                alert("All fields are full!");
-                return;
-            }
-
-            // Calculate percentage coordinates
-            const percentX = (x / parent.offsetWidth) * 100;
-            const percentY = (y / parent.offsetHeight) * 100;
-
+            const idx = formData.findIndex(item => item.value === '');
+            if(idx === -1) return alert("Full!");
+            const px = (x / parent.offsetWidth) * 100;
+            const py = (y / parent.offsetHeight) * 100;
             const marker = document.createElement('div');
             marker.className = 'marker';
-            marker.style.left = percentX + '%';
-            marker.style.top = percentY + '%';
+            marker.style.left = px + '%'; marker.style.top = py + '%';
             parent.appendChild(marker);
-
-            formData[emptyIndex] = { 
-                value: text, 
-                markerElement: marker,
-                markerData: { percentX, percentY, pageIdx } 
-            };
-            
+            formData[idx] = { value: text, markerElement: marker, markerData: { percentX: px, percentY: py, pageIdx } };
             updateFormUI();
         }
 
         function clearRow(index) {
-            if(formData[index].markerElement) {
-                formData[index].markerElement.remove();
-            }
+            if(formData[index].markerElement) formData[index].markerElement.remove();
             formData[index] = { value: '', markerElement: null, markerData: null };
             updateFormUI();
         }
 
-        // --- Logic Shared with Original ---
-        function updateValueManually(index, newVal) {
-            formData[index].value = newVal;
-            updateFormUI(false);
-        }
+        function updateValueManually(index, val) { formData[index].value = val; updateFormUI(false); }
 
-        function moveValue(index, direction) {
-            const newIndex = index + direction;
-            if(newIndex < 0 || newIndex >= 12) return;
-            const temp = formData[index];
-            formData[index] = formData[newIndex];
-            formData[newIndex] = temp;
+        function moveValue(index, dir) {
+            const newIdx = index + dir;
+            if(newIdx < 0 || newIdx >= 12) return;
+            [formData[index], formData[newIdx]] = [formData[newIdx], formData[index]];
             updateFormUI();
         }
 
-        function updateFormUI(refreshInputs = true) {
+        function updateFormUI(refresh = true) {
             let count = 0;
             formData.forEach((data, i) => {
                 const row = document.getElementById(`row-${i}`);
-                if(refreshInputs) {
-                    document.getElementById(`input-${i}`).value = data.value;
-                }
-                if(data.value) { row.classList.add('filled'); count++; } 
-                else { row.classList.remove('filled'); }
+                if(refresh) document.getElementById(`input-${i}`).value = data.value;
+                if(data.value) { row.classList.add('filled'); count++; } else row.classList.remove('filled');
             });
             filledCount.innerText = count;
         }
@@ -517,29 +424,19 @@
         function toggleLanguage() {
             currentLang = currentLang === 'ar' ? 'en' : 'ar';
             document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            const values = formData.map(d => d.value);
             initForm();
-            formData.forEach((data, i) => {
-                const input = document.getElementById(`input-${i}`);
-                if(input && data.value) input.value = data.value;
-            });
+            values.forEach((v, i) => { if(v) document.getElementById(`input-${i}`).value = v; });
         }
 
         function copyAll() {
-            const textToCopy = formData.map(d => d.value.trim()).join('-');
-            const txt = document.createElement('textarea');
-            txt.value = textToCopy;
-            txt.style.position = 'fixed'; txt.style.left = '-9999px';
-            document.body.appendChild(txt);
-            txt.select();
-            try {
-                document.execCommand('copy');
+            const text = formData.map(d => d.value.trim()).join('-');
+            navigator.clipboard.writeText(text).then(() => {
                 const btn = document.getElementById('copy-btn');
                 const old = btn.innerText;
-                btn.innerText = "COPIED! ✔";
-                btn.style.background = "#059669";
-                setTimeout(() => { btn.innerText = old; btn.style.background = ""; }, 1500);
-            } catch(e) {}
-            document.body.removeChild(txt);
+                btn.innerText = "COPIED!";
+                setTimeout(() => btn.innerText = old, 1000);
+            });
         }
 
         initForm();
