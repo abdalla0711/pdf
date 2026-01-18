@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محرر PDF الاحترافي - ترتيب ومعاينة</title>
+    
+    <!-- المكتبات المطلوبة -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --secondary: #f8f9fa;
+            --text: #2d3436;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: #dfe6e9;
+            margin: 0; padding: 15px;
+            display: flex; justify-content: center;
+        }
+        .container {
+            background: white;
+            width: 100%; max-width: 600px;
+            padding: 20px; border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+        h1 { text-align: center; color: var(--text); font-size: 1.3rem; margin-bottom: 20px; }
+
+        /* منطقة التحكم */
+        .controls { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+        input[type="text"] {
+            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 1rem;
+        }
+        .upload-box {
+            border: 2px dashed var(--primary); padding: 25px; border-radius: 12px;
+            text-align: center; background: #f0f7ff; cursor: pointer; font-weight: bold;
+        }
+
+        /* قائمة الملفات القابلة للترتيب */
+        #fileList { margin-bottom: 20px; min-height: 50px; }
+        .file-item {
+            background: var(--secondary);
+            margin-bottom: 8px; padding: 12px;
+            border-radius: 10px; border: 1px solid #eee;
+            display: flex; align-items: center; justify-content: space-between;
+            cursor: grab; transition: 0.2s;
+        }
+        .file-item:active { cursor: grabbing; }
+        .file-info { display: flex; flex-direction: column; overflow: hidden; flex-grow: 1; margin-left: 10px; }
+        .file-name { font-size: 0.9rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .file-size { font-size: 0.75rem; color: #777; }
+
+        .item-btns { display: flex; gap: 5px; }
+        .btn-sm { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; color: white; }
+        .btn-preview { background: #636e72; }
+        .btn-remove { background: var(--danger); }
+
+        /* الأزرار الرئيسية */
+        .main-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-big { padding: 15px; border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; grid-column: span 2; font-size: 1.1rem; }
+        .btn-merge { background: var(--success); }
+        .btn-clear { background: #b2bec3; grid-column: span 1; }
+        .btn-add { background: var(--primary); grid-column: span 1; }
+
+        /* نافذة المعاينة العائمة (Modal) */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 1000;
+            justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: white; width: 90%; height: 80%;
+            border-radius: 15px; position: relative;
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+        .close-modal {
+            position: absolute; top: 10px; left: 10px;
+            background: var(--danger); color: white; border: none;
+            width: 35px; height: 35px; border-radius: 50%;
+            font-size: 1.2rem; cursor: pointer; z-index: 1001;
+        }
+        #previewContainer { flex-grow: 1; display: flex; justify-content: center; align-items: center; padding: 10px; }
+        #previewContainer img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        #previewContainer iframe { width: 100%; height: 100%; border: none; }
+
+        .loading-text { display: none; text-align: center; color: var(--primary); font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>دمج وترتيب ملفات الصور والـ PDF</h1>
+
+    <div class="controls">
+        <input type="text" id="fileNameInput" placeholder="اسم الملف النهائي (مثلاً: ملفي_الجديد)" value="merged_document">
+        <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+            <span>➕ اضغط لإضافة ملفات</span>
+            <input type="file" id="fileInput" multiple accept="image/*,application/pdf" style="display:none">
+        </div>
+    </div>
+
+    <div id="fileList">
+        <!-- الملفات ستظهر هنا -->
+    </div>
+
+    <div class="main-actions">
+        <button class="btn-big btn-clear" onclick="clearAll()">مسح الكل</button>
+        <button class="btn-big btn-add" onclick="document.getElementById('fileInput').click()">إضافة المزيد</button>
+        <button id="mergeBtn" class="btn-big btn-merge" onclick="mergeFiles()" disabled>بدء الدمج والتحميل</button>
+    </div>
+
+    <div id="status" class="loading-text">جاري معالجة الملفات...</div>
+</div>
+
+<!-- نافذة المعاينة -->
+<div id="previewModal" class="modal">
+    <div class="modal-content">
+        <button class="close-modal" onclick="closePreview()">✕</button>
+        <div id="previewContainer"></div>
+    </div>
+</div>
+
+<script>
+    let allFiles = []; 
+    const fileListDiv = document.getElementById('fileList');
+    const mergeBtn = document.getElementById('mergeBtn');
+    const previewModal = document.getElementById('previewModal');
+    const previewContainer = document.getElementById('previewContainer');
+
+    // تفعيل خاصية السحب والإفلات (Sortable)
+    const sortable = Sortable.create(fileListDiv, {
+        animation: 150,
+        onEnd: function () {
+            // تحديث ترتيب المصفوفة بناءً على الترتيب الجديد في الواجهة
+            const newOrder = [];
+            const items = fileListDiv.querySelectorAll('.file-item');
+            items.forEach(item => {
+                const index = parseInt(item.getAttribute('data-id'));
+                newOrder.push(allFiles[index]);
+            });
+            allFiles = newOrder;
+            renderFileList(); // إعادة الرندرة لتحديث الـ data-id
+        }
+    });
+
+    // عند اختيار ملفات
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+        const newFiles = Array.from(e.target.files);
+        allFiles = [...allFiles, ...newFiles];
+        renderFileList();
+        e.target.value = '';
+    });
+
+    function renderFileList() {
+        fileListDiv.innerHTML = '';
+        if (allFiles.length === 0) {
+            fileListDiv.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">اسحب الملفات هنا للترتيب</p>';
+            mergeBtn.disabled = true;
+            return;
+        }
+
+        allFiles.forEach((file, index) => {
+            const item = document.createElement('div');
+            item.className = 'file-item';
+            item.setAttribute('data-id', index);
+            item.innerHTML = `
+                <div class="file-info">
+                    <span class="file-name">${file.name}</span>
+                    <span class="file-size">${(file.size / 1024).toFixed(1)} KB</span>
+                </div>
+                <div class="item-btns">
+                    <button class="btn-sm btn-preview" onclick="showPreview(${index})">معاينة</button>
+                    <button class="btn-sm btn-remove" onclick="removeFile(${index})">حذف</button>
+                </div>
+            `;
+            fileListDiv.appendChild(item);
+        });
+        mergeBtn.disabled = false;
+    }
+
+    // المعاينة
+    function showPreview(index) {
+        const file = allFiles[index];
+        const url = URL.createObjectURL(file);
+        previewContainer.innerHTML = '';
+
+        if (file.type.startsWith('image/')) {
+            const img = document.createElement('img');
+            img.src = url;
+            previewContainer.appendChild(img);
+        } else if (file.type === 'application/pdf') {
+            const iframe = document.createElement('iframe');
+            iframe.src = url;
+            previewContainer.appendChild(iframe);
+        }
+
+        previewModal.style.display = 'flex';
+    }
+
+    function closePreview() {
+        previewModal.style.display = 'none';
+        previewContainer.innerHTML = '';
+    }
+
+    function removeFile(index) {
+        allFiles.splice(index, 1);
+        renderFileList();
+    }
+
+    function clearAll() {
+        if(confirm("مسح جميع الملفات؟")) {
+            allFiles = [];
+            renderFileList();
+        }
+    }
+
+    // عملية الدمج
+    async function mergeFiles() {
+        const status = document.getElementById('status');
+        status.style.display = 'block';
+        mergeBtn.disabled = true;
+
+        try {
+            const { PDFDocument } = PDFLib;
+            const mergedPdf = await PDFDocument.create();
+
+            for (const file of allFiles) {
+                const arrayBuffer = await file.arrayBuffer();
+                if (file.type === 'application/pdf') {
+                    const donorPdf = await PDFDocument.load(arrayBuffer);
+                    const pages = await mergedPdf.copyPages(donorPdf, donorPdf.getPageIndices());
+                    pages.forEach(p => mergedPdf.addPage(p));
+                } else {
+                    const page = mergedPdf.addPage();
+                    const { width, height } = page.getSize();
+                    const image = file.type === 'image/png' ? await mergedPdf.embedPng(arrayBuffer) : await mergedPdf.embedJpg(arrayBuffer);
+                    const dims = image.scaleToFit(width - 40, height - 40);
+                    page.drawImage(image, {
+                        x: (width / 2) - (dims.width / 2),
+                        y: (height / 2) - (dims.height / 2),
+                        width: dims.width, height: dims.height
+                    });
+                }
+            }
+
+            const pdfBytes = await mergedPdf.save();
+            let name = document.getElementById('fileNameInput').value.trim() || 'merged';
+            const blob = new Blob([pdfBytes], { type: "application/pdf" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = name.endsWith('.pdf') ? name : name + '.pdf';
+            link.click();
+            
+            status.textContent = "✅ اكتمل التحميل!";
+            setTimeout(() => { status.style.display = 'none'; mergeBtn.disabled = false; }, 3000);
+        } catch (e) {
+            alert("خطأ: " + e.message);
+            status.style.display = 'none';
+            mergeBtn.disabled = false;
+        }
+    }
+</script>
+</body>
+</html>
