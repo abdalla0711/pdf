@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>محرر PDF الاحترافي</title>
+    <title>محرر PDF الاحترافي - المطور</title>
     
     <!-- المكتبات -->
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+    <!-- مكتبة إضافية فقط للمعاينة -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
     <style>
         :root {
@@ -24,21 +26,27 @@
             display: flex; flex-direction: column; align-items: center;
         }
         .container {
-            background: white; width: 100%; max-width: 500px;
+            background: white; width: 100%; max-width: 600px;
             padding: 20px; border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             box-sizing: border-box;
+            margin-bottom: 20px;
         }
         h1 { text-align: center; color: var(--text); font-size: 1.4rem; margin-top: 0; }
 
-        /* منطقة الإدخال */
         .controls { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
-        .input-label { font-size: 0.9rem; font-weight: bold; color: #555; margin-bottom: -8px; }
-        input[type="text"] {
+        .input-label { font-size: 0.9rem; font-weight: bold; color: #555; margin-bottom: -5px; }
+        
+        input[type="text"], textarea {
             width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 10px; 
             font-size: 1rem; box-sizing: border-box; outline: none; transition: 0.3s;
+            font-family: inherit;
         }
-        input[type="text"]:focus { border-color: var(--primary); }
+        input:focus, textarea:focus { border-color: var(--primary); }
+
+        .text-input-section {
+            background: #f9f9f9; padding: 15px; border-radius: 12px; border: 1px solid #ddd;
+        }
 
         .upload-box {
             border: 2px dashed var(--primary); padding: 20px; border-radius: 12px;
@@ -49,58 +57,37 @@
         /* قائمة الملفات */
         #fileList { margin-bottom: 20px; }
         .file-item {
-            background: #fff; margin-bottom: 10px; padding: 12px;
+            background: #fff; margin-bottom: 8px; padding: 10px;
             border-radius: 12px; border: 1px solid #eee;
             display: flex; align-items: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-            touch-action: none; /* لمنع التداخل مع تمرير الصفحة أثناء السحب */
+            touch-action: none;
         }
-        .drag-handle {
-            cursor: grab; color: #ccc; margin-left: 10px; font-size: 1.5rem;
-            padding: 0 5px; user-select: none;
+        .drag-handle { cursor: grab; color: #ccc; margin-left: 10px; font-size: 1.2rem; }
+        
+        /* تنسيق المعاينة المصغرة */
+        .thumb-preview {
+            width: 50px; height: 50px; border-radius: 6px; 
+            margin-left: 10px; border: 1px solid #ddd; 
+            object-fit: cover; background: #eee;
+            transition: transform 0.2s;
         }
-        .file-info { flex-grow: 1; overflow: hidden; display: flex; flex-direction: column; }
-        .file-name { font-size: 0.85rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .file-size { font-size: 0.7rem; color: #999; }
 
-        .item-btns { display: flex; gap: 5px; }
-        .btn-sm { padding: 8px 12px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.8rem; color: white; }
-        .btn-preview { background: #636e72; }
+        .file-info { flex-grow: 1; overflow: hidden; }
+        .file-name { font-size: 0.85rem; font-weight: bold; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .page-badge { font-size: 0.7rem; background: #e1eafc; color: #4a90e2; padding: 2px 6px; border-radius: 4px; }
+
+        .item-btns { display: flex; gap: 4px; }
+        .btn-sm { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.75rem; color: white; }
+        .btn-rotate { background: #f39c12; }
         .btn-remove { background: var(--danger); }
 
-        /* الأزرار الرئيسية */
         .main-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn-big { padding: 16px; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; font-size: 1rem; }
-        .btn-merge { background: var(--success); grid-column: span 2; margin-top: 5px; }
+        .btn-big { padding: 16px; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; font-size: 1rem; text-decoration: none; text-align: center; display: block; }
+        .btn-merge { background: var(--success); grid-column: span 2; margin-top: 5px; width: 100%; }
         .btn-clear { background: #b2bec3; }
         .btn-add { background: var(--primary); }
-
-        /* خصائص التطبيق */
-        .features-list {
-            margin-top: 30px; background: #fff; padding: 20px;
-            border-radius: 15px; width: 100%; max-width: 500px;
-            box-sizing: border-box; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-        .features-list h3 { margin-top: 0; font-size: 1.1rem; color: var(--primary); border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; }
-        .features-list ul { list-style: none; padding: 0; margin: 0; }
-        .features-list li {
-            padding: 8px 0; display: flex; align-items: center; font-size: 0.95rem; color: #444;
-        }
-        .features-list li::before { content: "✅"; margin-left: 10px; font-size: 0.9rem; }
-
-        /* نافذة المعاينة */
-        .modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center;
-        }
-        .modal-content { background: white; width: 95%; height: 85%; border-radius: 15px; position: relative; overflow: hidden; }
-        .close-modal {
-            position: absolute; top: 10px; left: 10px; background: var(--danger); color: white;
-            border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; z-index: 2001;
-        }
-        #previewContainer { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
-        #previewContainer img { max-width: 100%; max-height: 100%; object-fit: contain; }
-        #previewContainer iframe { width: 100%; height: 100%; border: none; }
+        .btn-customer { background: #636e72; width: 100%; max-width: 600px; }
 
         .loading-text { display: none; text-align: center; color: var(--primary); font-weight: bold; margin: 15px 0; }
     </style>
@@ -108,189 +95,265 @@
 <body>
 
 <div class="container">
-    <h1>دمج وترتيب ملفات PDF</h1>
+    <h1>دمج وتحرير الصفحات الاحترافي</h1>
 
     <div class="controls">
-        <div class="input-label">اسم الملف المحمل:</div>
-        <input type="text" id="fileNameInput" placeholder="enter pdf name here_ادخل اسم الملف هنا" value="">
+        <div class="input-label">اسم ملف المخرج النهائي:</div>
+        <input type="text" id="fileNameInput" placeholder="مثال: ملفي_الجديد" value="merged_document">
         
         <div class="upload-box" onclick="document.getElementById('fileInput').click()">
-            <span>➕ اضغط لإضافة ملفات (صور أو PDF)</span>
+            <span>➕ اضغط لإضافة (ملفات PDF أو صور)</span>
             <input type="file" id="fileInput" multiple accept="image/*,application/pdf" style="display:none">
+        </div>
+
+        <div class="text-input-section">
+            <div class="input-label">إضافة صفحة نصية (عربي/إنجليزي):</div>
+            <textarea id="textPageInput" rows="2" placeholder="اكتب النص هنا ليتم تحويله لصفحة PDF..."></textarea>
+            <button class="btn-sm btn-add" style="width: 100%; margin-top: 8px; padding: 10px;" onclick="addTextPage()">إضافة النص كصفحة مستقلة</button>
         </div>
     </div>
 
     <div id="fileList">
-        <!-- الملفات ستظهر هنا -->
+        <!-- الصفحات ستظهر هنا -->
     </div>
 
     <div class="main-actions">
         <button class="btn-big btn-clear" onclick="clearAll()">مسح الكل</button>
         <button class="btn-big btn-add" onclick="document.getElementById('fileInput').click()">إضافة المزيد</button>
-        <button id="mergeBtn" class="btn-big btn-merge" onclick="mergeFiles()" disabled>ابدأ دمج الملفات الآن</button>
+        <button id="mergeBtn" class="btn-big btn-merge" onclick="mergeFiles()" disabled>بدء عملية الدمج والحفظ</button>
     </div>
 
-    <div id="status" class="loading-text">جاري دمج الملفات... يرجى الانتظار</div>
-</div>
-<div>
-<form action="new_customer.html" style="display: inline;">
-    <button  id="mergeBtn" class="btn-big btn-merge" type="submit">New Customer</button>
-</form>
-    
-</div>
-<!-- خصائص التطبيق -->
-<div class="features-list">
-
-    <h3>مميزات التطبيق:</h3>
-    <ul>
-        <li>دمج الصور وملفات الـ PDF معاً بسهولة.</li>
-        <li>ترتيب الصفحات بالسحب والإفلات قبل الدمج.</li>
-        <li>معاينة الملفات للتأكد منها قبل الحفظ.</li>
-        <li>حذف الملفات غير المرغوبة من القائمة.</li>
-        <li>تسمية الملف النهائي حسب رغبتك.</li>
-        <li>معالجة آمنة 100% داخل جهازك فقط.</li>
-    </ul>
+    <div id="status" class="loading-text">جاري المعالجة... يرجى الانتظار</div>
 </div>
 
-<!-- نافذة المعاينة -->
-<div id="previewModal" class="modal">
-    <div class="modal-content">
-        <button class="close-modal" onclick="closePreview()">✕</button>
-        <div id="previewContainer"></div>
-    </div>
-</div>
+<!-- الزر المطلوب -->
+<a href="new_customer.html" class="btn-big btn-customer">New Customer</a>
 
 <script>
-    let allFiles = []; 
+    // إعداد pdf.js للمعاينة
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+    let allItems = []; 
     const fileListDiv = document.getElementById('fileList');
     const mergeBtn = document.getElementById('mergeBtn');
-    const previewModal = document.getElementById('previewModal');
-    const previewContainer = document.getElementById('previewContainer');
 
-    // إعداد مكتبة الترتيب (Sortable) مع تخصيصات للجوال
-    const sortable = Sortable.create(fileListDiv, {
-        handle: '.drag-handle', // السحب فقط من المقبض لعدم التداخل مع اللمس
-        animation: 200,
-        ghostClass: 'sortable-ghost',
-        onEnd: function () {
+    // الترتيب بالسحب
+    Sortable.create(fileListDiv, {
+        handle: '.drag-handle',
+        animation: 150,
+        onEnd: () => {
             const newOrder = [];
-            fileListDiv.querySelectorAll('.file-item').forEach(item => {
-                newOrder.push(allFiles[parseInt(item.getAttribute('data-id'))]);
+            fileListDiv.querySelectorAll('.file-item').forEach(el => {
+                newOrder.push(allItems[parseInt(el.dataset.index)]);
             });
-            allFiles = newOrder;
-            renderFileList(); 
+            allItems = newOrder;
+            renderFileList();
         }
     });
 
-    document.getElementById('fileInput').addEventListener('change', (e) => {
-        const newFiles = Array.from(e.target.files);
-        allFiles = [...allFiles, ...newFiles];
+    // رفع الملفات
+    document.getElementById('fileInput').addEventListener('change', async (e) => {
+        const files = Array.from(e.target.files);
+        const { PDFDocument } = PDFLib;
+        const status = document.getElementById('status');
+        status.style.display = 'block';
+        status.textContent = "جاري توليد المعاينة...";
+
+        for (const file of files) {
+            if (file.type === 'application/pdf') {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await PDFDocument.load(arrayBuffer);
+                const pageCount = pdf.getPageCount();
+
+                // قراءة صفحات PDF للمعاينة
+                const pdfPreviewDoc = await pdfjsLib.getDocument({data: arrayBuffer.slice(0)}).promise;
+                
+                for (let i = 0; i < pageCount; i++) {
+                    // إنشاء صورة معاينة لصفحة PDF
+                    const page = await pdfPreviewDoc.getPage(i + 1);
+                    const viewport = page.getViewport({scale: 0.2});
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    await page.render({canvasContext: context, viewport: viewport}).promise;
+
+                    allItems.push({
+                        id: Math.random().toString(36),
+                        type: 'pdf',
+                        file: file,
+                        pageIndex: i,
+                        name: file.name,
+                        rotation: 0,
+                        data: arrayBuffer,
+                        thumb: canvas.toDataURL() // حفظ صورة المعاينة
+                    });
+                }
+            } else if (file.type.startsWith('image/')) {
+                const url = URL.createObjectURL(file);
+                allItems.push({
+                    id: Math.random().toString(36),
+                    type: 'image',
+                    file: file,
+                    name: file.name,
+                    rotation: 0,
+                    thumb: url // المعاينة هي الصورة نفسها
+                });
+            }
+        }
+        status.style.display = 'none';
         renderFileList();
         e.target.value = '';
     });
 
+    async function addTextPage() {
+        const text = document.getElementById('textPageInput').value.trim();
+        if (!text) return;
+        
+        // توليد معاينة للنص
+        const thumb = await textToImage(text, 150, 200); 
+
+        allItems.push({
+            id: Math.random().toString(36),
+            type: 'text',
+            content: text,
+            name: 'صفحة نصية: ' + text.substring(0, 15) + '...',
+            rotation: 0,
+            thumb: thumb
+        });
+        
+        document.getElementById('textPageInput').value = '';
+        renderFileList();
+    }
+
     function renderFileList() {
         fileListDiv.innerHTML = '';
-        if (allFiles.length === 0) {
-            fileListDiv.innerHTML = '<p style="text-align:center; color:#999; padding:10px;">لا توجد ملفات مختارة</p>';
+        if (allItems.length === 0) {
+            fileListDiv.innerHTML = '<p style="text-align:center; color:#999;">القائمة فارغة</p>';
             mergeBtn.disabled = true;
             return;
         }
 
-        allFiles.forEach((file, index) => {
-            const item = document.createElement('div');
-            item.className = 'file-item';
-            item.setAttribute('data-id', index);
-            item.innerHTML = `
+        allItems.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'file-item';
+            div.dataset.index = index;
+            
+            let badge = item.type === 'pdf' ? `<span class="page-badge">صفحة ${item.pageIndex + 1}</span>` : `<span class="page-badge">${item.type}</span>`;
+            let rotateInfo = item.rotation !== 0 ? `<span style="font-size:10px; color:orange"> (${item.rotation}°)</span>` : '';
+
+            div.innerHTML = `
                 <div class="drag-handle">☰</div>
+                <img src="${item.thumb}" class="thumb-preview" style="transform: rotate(${item.rotation}deg)">
                 <div class="file-info">
-                    <span class="file-name">${file.name}</span>
-                    <span class="file-size">${(file.size / 1024).toFixed(1)} KB</span>
+                    <span class="file-name">${item.name}</span>
+                    ${badge} ${rotateInfo}
                 </div>
                 <div class="item-btns">
-                    <button class="btn-sm btn-preview" onclick="showPreview(${index})">معاينة</button>
-                    <button class="btn-sm btn-remove" onclick="removeFile(${index})">حذف</button>
+                    <button class="btn-sm btn-rotate" onclick="rotateItem(${index})">لف 🔄</button>
+                    <button class="btn-sm btn-remove" onclick="removeItem(${index})">حذف</button>
                 </div>
             `;
-            fileListDiv.appendChild(item);
+            fileListDiv.appendChild(div);
         });
         mergeBtn.disabled = false;
     }
 
-    function showPreview(index) {
-        const file = allFiles[index];
-        const url = URL.createObjectURL(file);
-        previewContainer.innerHTML = '';
-
-        if (file.type.startsWith('image/')) {
-            const img = document.createElement('img');
-            img.src = url;
-            previewContainer.appendChild(img);
-        } else if (file.type === 'application/pdf') {
-            const iframe = document.createElement('iframe');
-            iframe.src = url;
-            previewContainer.appendChild(iframe);
-        }
-        previewModal.style.display = 'flex';
+    function rotateItem(index) {
+        allItems[index].rotation = (allItems[index].rotation + 90) % 360;
+        renderFileList();
     }
 
-    function closePreview() {
-        previewModal.style.display = 'none';
-        previewContainer.innerHTML = '';
-    }
-
-    function removeFile(index) {
-        allFiles.splice(index, 1);
+    function removeItem(index) {
+        allItems.splice(index, 1);
         renderFileList();
     }
 
     function clearAll() {
-        if(confirm("هل تريد مسح القائمة كاملة؟")) {
-            allFiles = [];
+        if (confirm("حذف جميع العناصر؟")) {
+            allItems = [];
             renderFileList();
         }
+    }
+
+    // وظيفة تحويل النص لصورة (نفس منطقك الأصلي مع تخصيص العرض للدمج)
+    async function textToImage(text, w=800, h=1000) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = w;
+        canvas.height = h;
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'black';
+        ctx.font = (w/25) + 'px Arial';
+        ctx.textAlign = 'right';
+        ctx.direction = 'rtl';
+        const lines = text.split('\n');
+        let y = h/12;
+        lines.forEach(line => {
+            ctx.fillText(line, w - (w/30), y);
+            y += (w/20);
+        });
+        return canvas.toDataURL('image/png');
     }
 
     async function mergeFiles() {
         const status = document.getElementById('status');
         status.style.display = 'block';
+        status.textContent = "جاري معالجة الصفحات والدمج...";
         mergeBtn.disabled = true;
 
         try {
-            const { PDFDocument } = PDFLib;
+            const { PDFDocument, degrees } = PDFLib;
             const mergedPdf = await PDFDocument.create();
 
-            for (const file of allFiles) {
-                const arrayBuffer = await file.arrayBuffer();
-                if (file.type === 'application/pdf') {
-                    const donorPdf = await PDFDocument.load(arrayBuffer);
-                    const pages = await mergedPdf.copyPages(donorPdf, donorPdf.getPageIndices());
-                    pages.forEach(p => mergedPdf.addPage(p));
-                } else {
-                    const page = mergedPdf.addPage();
+            for (const item of allItems) {
+                if (item.type === 'pdf') {
+                    const donorPdf = await PDFDocument.load(item.data.slice(0)); // استخدام slice لضمان عدم تلف الـ buffer
+                    const [copiedPage] = await mergedPdf.copyPages(donorPdf, [item.pageIndex]);
+                    copiedPage.setRotation(degrees(item.rotation));
+                    mergedPdf.addPage(copiedPage);
+                } 
+                else if (item.type === 'image' || item.type === 'text') {
+                    let imageBytes;
+                    if (item.type === 'text') {
+                        const dataUrl = await textToImage(item.content, 800, 1000);
+                        imageBytes = await fetch(dataUrl).then(res => res.arrayBuffer());
+                    } else {
+                        imageBytes = await item.file.arrayBuffer();
+                    }
+
+                    const page = mergedPdf.addPage([595, 842]);
+                    const image = item.type === 'text' || item.name.toLowerCase().endsWith('.png') ? 
+                                  await mergedPdf.embedPng(imageBytes) : 
+                                  await mergedPdf.embedJpg(imageBytes);
+                    
                     const { width, height } = page.getSize();
-                    const image = file.type === 'image/png' ? await mergedPdf.embedPng(arrayBuffer) : await mergedPdf.embedJpg(arrayBuffer);
                     const dims = image.scaleToFit(width - 40, height - 40);
+                    
                     page.drawImage(image, {
                         x: (width / 2) - (dims.width / 2),
                         y: (height / 2) - (dims.height / 2),
-                        width: dims.width, height: dims.height
+                        width: dims.width,
+                        height: dims.height,
+                        rotate: degrees(item.rotation)
                     });
                 }
             }
 
             const pdfBytes = await mergedPdf.save();
-            let name = document.getElementById('fileNameInput').value.trim();
             const blob = new Blob([pdfBytes], { type: "application/pdf" });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = name.endsWith('.pdf') ? name : name + '.pdf';
+            let outName = document.getElementById('fileNameInput').value.trim() || 'document';
+            link.download = outName.endsWith('.pdf') ? outName : outName + '.pdf';
             link.click();
             
-            status.textContent = "✅ تم دمج وحفظ الملف!";
+            status.textContent = "✅ اكتملت العملية بنجاح!";
             setTimeout(() => { status.style.display = 'none'; mergeBtn.disabled = false; }, 3000);
         } catch (e) {
-            alert("خطأ أثناء الدمج: " + e.message);
+            console.error(e);
+            alert("حدث خطأ: " + e.message);
             status.style.display = 'none';
             mergeBtn.disabled = false;
         }
