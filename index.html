@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>محرر PDF الاحترافي | النسخة المتكاملة</title>
+    <title>محرر PDF الاحترافي | النسخة المطورة</title>
     
-    <!-- المكتبات -->
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
@@ -19,10 +18,8 @@
         .container { background: var(--card); width: 100%; max-width: 600px; padding: 20px; border-radius: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); box-sizing: border-box; }
         h1 { text-align: center; font-size: 1.3rem; margin-bottom: 20px; color: var(--primary); }
         
-        /* تنسيق منطقة الرفع والكاميرا */
         .upload-container { display: flex; gap: 10px; margin-bottom: 15px; }
-        .upload-section { border: 2px dashed #dcdde1; padding: 15px; border-radius: 18px; text-align: center; cursor: pointer; background: #fafafa; flex: 1; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
-        .upload-section:hover { border-color: var(--primary); background: #f0f3ff; }
+        .upload-section { border: 2px dashed #dcdde1; padding: 15px; border-radius: 18px; text-align: center; cursor: pointer; background: #fafafa; flex: 1; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; }
         .btn-camera { background: var(--primary); color: white; border: none; border-radius: 18px; padding: 0 20px; cursor: pointer; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; gap: 5px; }
 
         .btn { border: none; border-radius: 12px; padding: 12px; font-size: 0.95rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; color: white; width: 100%; }
@@ -31,13 +28,7 @@
         .btn-images { background: #f39c12; }
 
         #fileList { margin-top: 15px; width: 100%; }
-        .file-item { 
-            background: #fff; margin-bottom: 10px; padding: 12px; 
-            border-radius: 16px; border: 1px solid #edf2f7; 
-            display: flex; align-items: center; gap: 10px; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03); 
-        }
-        
+        .file-item { background: #fff; margin-bottom: 10px; padding: 12px; border-radius: 16px; border: 1px solid #edf2f7; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
         .drag-handle { cursor: grab; color: #ccc; font-size: 1.4rem; }
         .thumb-wrapper { width: 55px; height: 55px; border-radius: 8px; overflow: hidden; border: 1px solid #eee; background: #f9f9f9; flex-shrink: 0; cursor: pointer; }
         .thumb-wrapper img { width: 100%; height: 100%; object-fit: cover; }
@@ -46,14 +37,20 @@
         .page-name-input { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.85rem; outline: none; box-sizing: border-box; }
         
         .item-controls-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-        .checkbox-group { display: flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: bold; color: var(--primary); white-space: nowrap; }
+        .checkbox-group { display: flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: bold; color: var(--primary); }
         .btns-row { display: flex; gap: 6px; }
-        
-        .btn-icon { background: #f1f2f6; border: none; cursor: pointer; font-size: 0.95rem; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-        .btn-icon:hover { background: #dfe4ea; }
+        .btn-icon { background: #f1f2f6; border: none; cursor: pointer; font-size: 0.95rem; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
 
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center; }
         .modal-content { background: white; width: 90%; max-width: 450px; padding: 20px; border-radius: 20px; text-align: center; }
+        
+        .gps-inputs-row { margin-bottom: 10px; }
+        .gps-inputs-row input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; text-align: center; font-size: 0.9rem; box-sizing: border-box; }
+        
+        .paste-wrapper { display: flex; gap: 5px; margin-bottom: 15px; }
+        .paste-wrapper input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 10px; text-align: center; }
+        .btn-paste { background: #f1f2f6; border: 1px solid #ddd; border-radius: 10px; padding: 0 15px; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
+
         #previewBox { width: 100%; max-height: 65vh; overflow-y: auto; margin-top: 10px; border-radius: 10px; background: #f9f9f9; }
         #previewBox img { width: 100%; height: auto; }
 
@@ -71,16 +68,14 @@
             <span>📂 إضافة ملفات PDF أو صور</span>
             <input type="file" id="fileInput" multiple accept="image/*,application/pdf" style="display:none">
         </div>
-        <button class="btn-camera" onclick="document.getElementById('cameraInput').click()">
-            📸 تصوير
-        </button>
+        <button class="btn-camera" onclick="document.getElementById('cameraInput').click()">📸 تصوير</button>
         <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
     </div>
 
-    <button class="btn btn-gps" onclick="startGPS()">📍 إضافة صفحة الموقع (Plus Code)</button>
+    <button class="btn btn-gps" onclick="startGPS()">📍 إضافة صفحة الموقع (GPS)</button>
 
     <div style="background: #f9f9f9; padding: 12px; border-radius: 15px; border: 1px solid #eee; margin-bottom:15px;">
-        <textarea id="textPageInput" rows="1" style="width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; outline:none; font-family:inherit;" placeholder="اكتب نصاً لإضافته كصفحة..."></textarea>
+        <textarea id="textPageInput" rows="2" style="width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; outline:none; font-family:inherit; resize: none;" placeholder="اكتب نصاً هنا (يتم تقسيمه تلقائياً)..."></textarea>
         <button class="btn" style="background:var(--primary); margin-top:8px; height:36px; font-size:0.85rem;" onclick="handleTextAddition()">إدراج نص</button>
     </div>
 
@@ -98,12 +93,17 @@
 
 <a href="new_customer.html" style="background: #2f3542; color: white; width: 100%; max-width: 600px; margin-top: 15px; text-decoration: none; text-align: center; display: block; border-radius: 12px; padding: 12px; font-weight: bold; font-size: 0.9rem;">New Customer</a>
 
-<!-- نافذة GPS -->
+<!-- نافذة GPS المعدلة -->
 <div id="gpsOverlay" class="modal-overlay">
     <div class="modal-content">
-        <h3>بيانات الموقع</h3>
-        <div id="coordsVal" style="font-family: monospace; background:#f1f2f6; padding:10px; border-radius:8px; margin-bottom:10px;">0, 0</div>
-        <input type="text" id="plusCodeManual" style="width:100%; padding:12px; border:1px solid #ddd; border-radius:10px; margin-bottom:15px; text-align:center;" placeholder="الصق الـ Plus Code هنا...">
+        <h3>بيانات الموقع (قابلة للتعديل)</h3>
+        <div class="gps-inputs-row">
+            <input type="text" id="coordsInput" placeholder="الإحداثيات (مثال: 30.9975, 40.9967)">
+        </div>
+        <div class="paste-wrapper">
+            <input type="text" id="plusCodeManual" placeholder="Plus Code">
+            <button class="btn-paste" onclick="pasteFromClipboard()">📋 لصق</button>
+        </div>
         <div style="display:flex; gap:10px;">
             <button class="btn" style="background:#009432; flex:1" onclick="openMapsWindow()">فتح الخرائط</button>
             <button class="btn" style="background:var(--primary); flex:1" onclick="addGPSItem()">تأكيد</button>
@@ -125,7 +125,25 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
     let items = [];
-    let tempCoords = { lat: 0, lon: 0 };
+
+    function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+        const lines = text.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+            let words = lines[i].split(' ');
+            let line = '';
+            for (let n = 0; n < words.length; n++) {
+                let testLine = line + words[n] + ' ';
+                let metrics = ctx.measureText(testLine);
+                if (metrics.width > maxWidth && n > 0) {
+                    ctx.fillText(line, x, y);
+                    line = words[n] + ' ';
+                    y += lineHeight;
+                } else { line = testLine; }
+            }
+            ctx.fillText(line, x, y);
+            y += lineHeight;
+        }
+    }
 
     function updateItemData(idx, field, value) { items[idx][field] = value; }
 
@@ -147,9 +165,9 @@
                             <span>تضمين العنوان</span>
                         </div>
                         <div class="btns-row">
-                            <button class="btn-icon" onclick="showPreview(${idx})" title="معاينة">👁️</button>
-                            <button class="btn-icon" onclick="rotateItem(${idx})" title="تدوير">🔄</button>
-                            <button class="btn-icon" onclick="removeItem(${idx})" title="حذف">🗑️</button>
+                            <button class="btn-icon" onclick="showPreview(${idx})">👁️</button>
+                            <button class="btn-icon" onclick="rotateItem(${idx})">🔄</button>
+                            <button class="btn-icon" onclick="removeItem(${idx})">🗑️</button>
                         </div>
                     </div>
                 </div>
@@ -181,7 +199,6 @@
         ctx.fillText(text, canvas.width - 20, canvas.height / 2); return canvas.toDataURL('image/png');
     }
 
-    // دمج وظيفة الرفع والكاميرا
     const handleFiles = async (e) => {
         const files = Array.from(e.target.files);
         for (const file of files) {
@@ -211,25 +228,48 @@
         if (!text) return;
         const canvas = document.createElement('canvas'); canvas.width = 800; canvas.height = 1131;
         const ctx = canvas.getContext('2d'); ctx.fillStyle = 'white'; ctx.fillRect(0, 0, 800, 1131);
-        ctx.fillStyle = 'black'; ctx.font = '32px Arial'; ctx.textAlign = 'right'; ctx.direction = 'rtl';
-        text.split('\n').forEach((line, i) => ctx.fillText(line, 750, 100 + (i * 50)));
+        ctx.fillStyle = 'black'; ctx.font = '28px Arial'; ctx.textAlign = 'right'; ctx.direction = 'rtl';
+        wrapText(ctx, text, 750, 80, 700, 40);
         items.push({ id: Math.random(), type: 'text_page', customName: "", thumb: canvas.toDataURL(), dataURL: canvas.toDataURL(), rotation: 0, includeName: false });
         document.getElementById('textPageInput').value = ''; renderUI();
     }
 
+    // GPS وظائف محسنة لخانة واحدة
     function startGPS() {
         navigator.geolocation.getCurrentPosition((pos) => {
-            tempCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-            document.getElementById('coordsVal').textContent = `${tempCoords.lat}, ${tempCoords.lon}`;
+            document.getElementById('coordsInput').value = pos.coords.latitude + ", " + pos.coords.longitude;
+            document.getElementById('gpsOverlay').style.display = 'flex';
+        }, () => {
             document.getElementById('gpsOverlay').style.display = 'flex';
         });
     }
-    function openMapsWindow() { window.open(`https://www.google.com/maps/search/?api=1&query=${tempCoords.lat},${tempCoords.lon}`, 'Maps', 'width=500,height=600'); }
+
+    async function pasteFromClipboard() {
+        try {
+            const text = await navigator.clipboard.readText();
+            document.getElementById('plusCodeManual').value = text;
+        } catch (err) { alert("يرجى اللصق يدوياً."); }
+    }
+
+    function parseCoords() {
+        const val = document.getElementById('coordsInput').value;
+        const parts = val.split(',').map(s => s.trim());
+        return { lat: parts[0] || "0", lon: parts[1] || "0" };
+    }
+
+    function openMapsWindow() { 
+        const c = parseCoords();
+        window.open(`https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lon}`, 'Maps', 'width=500,height=600'); 
+    }
+
     async function addGPSItem() {
+        const c = parseCoords();
         const plusCode = document.getElementById('plusCodeManual').value.trim() || "غير محدد";
-        const content = `GPS LOCATION DATA\nCoordinates: ${tempCoords.lat},${tempCoords.lon}\nPlus Code: ${plusCode}\nGoogle Maps: https://www.google.com/maps?q=${tempCoords.lat},${tempCoords.lon}`;
+        const content = `GPS LOCATION DATA\nCoordinates: ${c.lat},${c.lon}\nPlus Code: ${plusCode}\nGoogle Maps: https://www.google.com/maps?q=${c.lat},${c.lon}`;
         items.push({ id: Math.random(), type: 'gps', customName: "", content: content, rotation: 0, thumb: await genSimpleThumb("📍 Location"), includeName: false });
-        document.getElementById('gpsOverlay').style.display = 'none'; renderUI();
+        document.getElementById('gpsOverlay').style.display = 'none'; 
+        document.getElementById('plusCodeManual').value = "";
+        renderUI();
     }
 
     async function showPreview(idx) {
@@ -325,7 +365,6 @@
         } catch (e) { alert("خطأ: " + e.message); status.style.display = 'none'; }
     }
 
-    // وظيفة التحميل كصور منفردة
     async function saveAsImages() {
         const status = document.getElementById('status'); status.style.display = 'block';
         status.textContent = "جاري تحميل الصور...";
@@ -334,16 +373,13 @@
                 const canvas = await getProcessedCanvas(items[i]);
                 const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.9));
                 const name = (items[i].customName || `page_${i+1}`).replace(/[/\\?%*:|"<>]/g, '-') + ".jpg";
-                
                 const link = document.createElement("a");
                 link.href = URL.createObjectURL(blob);
                 link.download = name;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                
-                // تأخير بسيط لمنع المتصفح من حظر التحميلات المتتالية
-                await new Promise(r => setTimeout(r, 300));
+                await new Promise(r => setTimeout(r, 400));
             }
             status.textContent = "✅ تمت العملية!"; setTimeout(() => status.style.display = 'none', 3000);
         } catch (e) { alert("خطأ: " + e.message); status.style.display = 'none'; }
