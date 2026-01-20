@@ -3,361 +3,355 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>محرر PDF الاحترافي - المطور</title>
+    <title>محرر PDF الاحترافي | النسخة المتكاملة</title>
     
     <!-- المكتبات -->
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
-    <!-- مكتبة إضافية فقط للمعاينة -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
     <style>
         :root {
-            --primary: #4a90e2;
-            --success: #27ae60;
-            --danger: #e74c3c;
-            --secondary: #f8f9fa;
-            --text: #2d3436;
+            --primary: #4834d4; --accent: #686de0; --success: #2ecc71; --danger: #eb4d4b;
+            --bg: #f5f6fa; --card: #ffffff; --text: #2f3640;
         }
-        body {
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            background-color: #f0f2f5;
-            margin: 0; padding: 10px;
-            display: flex; flex-direction: column; align-items: center;
-        }
-        .container {
-            background: white; width: 100%; max-width: 600px;
-            padding: 20px; border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            box-sizing: border-box;
-            margin-bottom: 20px;
-        }
-        h1 { text-align: center; color: var(--text); font-size: 1.4rem; margin-top: 0; }
-
-        .controls { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
-        .input-label { font-size: 0.9rem; font-weight: bold; color: #555; margin-bottom: -5px; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        .container { background: var(--card); width: 100%; max-width: 600px; padding: 20px; border-radius: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); box-sizing: border-box; }
+        h1 { text-align: center; font-size: 1.3rem; margin-bottom: 20px; color: var(--primary); }
         
-        input[type="text"], textarea {
-            width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 10px; 
-            font-size: 1rem; box-sizing: border-box; outline: none; transition: 0.3s;
-            font-family: inherit;
-        }
-        input:focus, textarea:focus { border-color: var(--primary); }
+        /* تنسيق منطقة الرفع والكاميرا */
+        .upload-container { display: flex; gap: 10px; margin-bottom: 15px; }
+        .upload-section { border: 2px dashed #dcdde1; padding: 15px; border-radius: 18px; text-align: center; cursor: pointer; background: #fafafa; flex: 1; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+        .upload-section:hover { border-color: var(--primary); background: #f0f3ff; }
+        .btn-camera { background: var(--primary); color: white; border: none; border-radius: 18px; padding: 0 20px; cursor: pointer; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; gap: 5px; }
 
-        .text-input-section {
-            background: #f9f9f9; padding: 15px; border-radius: 12px; border: 1px solid #ddd;
-        }
+        .btn { border: none; border-radius: 12px; padding: 12px; font-size: 0.95rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; color: white; width: 100%; }
+        .btn-gps { background: var(--accent); margin-bottom: 10px; }
+        .btn-merge { background: var(--success); }
+        .btn-images { background: #f39c12; }
 
-        .upload-box {
-            border: 2px dashed var(--primary); padding: 20px; border-radius: 12px;
-            text-align: center; background: #f0f7ff; cursor: pointer; font-weight: bold;
-            color: var(--primary); transition: 0.3s;
+        #fileList { margin-top: 15px; width: 100%; }
+        .file-item { 
+            background: #fff; margin-bottom: 10px; padding: 12px; 
+            border-radius: 16px; border: 1px solid #edf2f7; 
+            display: flex; align-items: center; gap: 10px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03); 
         }
-
-        /* قائمة الملفات */
-        #fileList { margin-bottom: 20px; }
-        .file-item {
-            background: #fff; margin-bottom: 8px; padding: 10px;
-            border-radius: 12px; border: 1px solid #eee;
-            display: flex; align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-            touch-action: none;
-        }
-        .drag-handle { cursor: grab; color: #ccc; margin-left: 10px; font-size: 1.2rem; }
         
-        /* تنسيق المعاينة المصغرة */
-        .thumb-preview {
-            width: 50px; height: 50px; border-radius: 6px; 
-            margin-left: 10px; border: 1px solid #ddd; 
-            object-fit: cover; background: #eee;
-            transition: transform 0.2s;
-        }
+        .drag-handle { cursor: grab; color: #ccc; font-size: 1.4rem; }
+        .thumb-wrapper { width: 55px; height: 55px; border-radius: 8px; overflow: hidden; border: 1px solid #eee; background: #f9f9f9; flex-shrink: 0; cursor: pointer; }
+        .thumb-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .item-content-stack { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+        .page-name-input { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.85rem; outline: none; box-sizing: border-box; }
+        
+        .item-controls-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .checkbox-group { display: flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: bold; color: var(--primary); white-space: nowrap; }
+        .btns-row { display: flex; gap: 6px; }
+        
+        .btn-icon { background: #f1f2f6; border: none; cursor: pointer; font-size: 0.95rem; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .btn-icon:hover { background: #dfe4ea; }
 
-        .file-info { flex-grow: 1; overflow: hidden; }
-        .file-name { font-size: 0.85rem; font-weight: bold; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .page-badge { font-size: 0.7rem; background: #e1eafc; color: #4a90e2; padding: 2px 6px; border-radius: 4px; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center; }
+        .modal-content { background: white; width: 90%; max-width: 450px; padding: 20px; border-radius: 20px; text-align: center; }
+        #previewBox { width: 100%; max-height: 65vh; overflow-y: auto; margin-top: 10px; border-radius: 10px; background: #f9f9f9; }
+        #previewBox img { width: 100%; height: auto; }
 
-        .item-btns { display: flex; gap: 4px; }
-        .btn-sm { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.75rem; color: white; }
-        .btn-rotate { background: #f39c12; }
-        .btn-remove { background: var(--danger); }
-
-        .main-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn-big { padding: 16px; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; font-size: 1rem; text-decoration: none; text-align: center; display: block; }
-        .btn-merge { background: var(--success); grid-column: span 2; margin-top: 5px; width: 100%; }
-        .btn-clear { background: #b2bec3; }
-        .btn-add { background: var(--primary); }
-        .btn-customer { background: #636e72; width: 100%; max-width: 600px; }
-
-        .loading-text { display: none; text-align: center; color: var(--primary); font-weight: bold; margin: 15px 0; }
+        .main-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; width: 100%; }
+        .loading { display: none; text-align: center; color: var(--primary); font-weight: bold; padding: 10px; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>دمج وتحرير الصفحات الاحترافي</h1>
+    <h1>محرر PDF الاحترافي</h1>
 
-    <div class="controls">
-        <div class="input-label">اسم ملف المخرج النهائي:</div>
-        <input type="text" id="fileNameInput" placeholder="مثال: ملفي_الجديد" value="merged_document">
-        
-        <div class="upload-box" onclick="document.getElementById('fileInput').click()">
-            <span>➕ اضغط لإضافة (ملفات PDF أو صور)</span>
+    <div class="upload-container">
+        <div class="upload-section" onclick="document.getElementById('fileInput').click()">
+            <span>📂 إضافة ملفات PDF أو صور</span>
             <input type="file" id="fileInput" multiple accept="image/*,application/pdf" style="display:none">
         </div>
-
-        <div class="text-input-section">
-            <div class="input-label">إضافة صفحة نصية (عربي/إنجليزي):</div>
-            <textarea id="textPageInput" rows="2" placeholder="اكتب النص هنا ليتم تحويله لصفحة PDF..."></textarea>
-            <button class="btn-sm btn-add" style="width: 100%; margin-top: 8px; padding: 10px;" onclick="addTextPage()">إضافة النص كصفحة مستقلة</button>
-        </div>
+        <button class="btn-camera" onclick="document.getElementById('cameraInput').click()">
+            📸 تصوير
+        </button>
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
     </div>
 
-    <div id="fileList">
-        <!-- الصفحات ستظهر هنا -->
+    <button class="btn btn-gps" onclick="startGPS()">📍 إضافة صفحة الموقع (Plus Code)</button>
+
+    <div style="background: #f9f9f9; padding: 12px; border-radius: 15px; border: 1px solid #eee; margin-bottom:15px;">
+        <textarea id="textPageInput" rows="1" style="width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; outline:none; font-family:inherit;" placeholder="اكتب نصاً لإضافته كصفحة..."></textarea>
+        <button class="btn" style="background:var(--primary); margin-top:8px; height:36px; font-size:0.85rem;" onclick="handleTextAddition()">إدراج نص</button>
     </div>
+
+    <input type="text" id="fileNameInput" placeholder="اسم الملف النهائي..." value="merged_document" style="width:100%; padding:10px; border-radius:10px; border:1px solid #eee; box-sizing:border-box; outline:none;">
+
+    <div id="fileList"></div>
+
+    <div id="status" class="loading">جاري المعالجة...</div>
 
     <div class="main-actions">
-        <button class="btn-big btn-clear" onclick="clearAll()">مسح الكل</button>
-        <button class="btn-big btn-add" onclick="document.getElementById('fileInput').click()">إضافة المزيد</button>
-        <button id="mergeBtn" class="btn-big btn-merge" onclick="mergeFiles()" disabled>بدء عملية الدمج والحفظ</button>
+        <button id="imgBtn" class="btn btn-images" onclick="saveAsImages()" disabled>🖼️ حفظ كصور منفردة</button>
+        <button id="mergeBtn" class="btn btn-merge" onclick="mergeAll()" disabled>🚀 حفظ كملف PDF</button>
     </div>
-
-    <div id="status" class="loading-text">جاري المعالجة... يرجى الانتظار</div>
 </div>
 
-<!-- الزر المطلوب -->
-<a href="new_customer.html" class="btn-big btn-customer">New Customer</a>
+<a href="new_customer.html" style="background: #2f3542; color: white; width: 100%; max-width: 600px; margin-top: 15px; text-decoration: none; text-align: center; display: block; border-radius: 12px; padding: 12px; font-weight: bold; font-size: 0.9rem;">New Customer</a>
+
+<!-- نافذة GPS -->
+<div id="gpsOverlay" class="modal-overlay">
+    <div class="modal-content">
+        <h3>بيانات الموقع</h3>
+        <div id="coordsVal" style="font-family: monospace; background:#f1f2f6; padding:10px; border-radius:8px; margin-bottom:10px;">0, 0</div>
+        <input type="text" id="plusCodeManual" style="width:100%; padding:12px; border:1px solid #ddd; border-radius:10px; margin-bottom:15px; text-align:center;" placeholder="الصق الـ Plus Code هنا...">
+        <div style="display:flex; gap:10px;">
+            <button class="btn" style="background:#009432; flex:1" onclick="openMapsWindow()">فتح الخرائط</button>
+            <button class="btn" style="background:var(--primary); flex:1" onclick="addGPSItem()">تأكيد</button>
+        </div>
+        <button onclick="document.getElementById('gpsOverlay').style.display='none'" style="background:none; border:none; color:red; margin-top:15px; cursor:pointer;">إلغاء</button>
+    </div>
+</div>
+
+<!-- نافذة المعاينة -->
+<div id="previewOverlay" class="modal-overlay">
+    <div class="modal-content">
+        <h3 id="previewTitle" style="margin-top:0; font-size:1rem;">معاينة الصفحة</h3>
+        <div id="previewBox"></div>
+        <button class="btn" style="background:var(--danger); margin-top:15px;" onclick="document.getElementById('previewOverlay').style.display='none'">إغلاق</button>
+    </div>
+</div>
 
 <script>
-    // إعداد pdf.js للمعاينة
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
-    let allItems = []; 
-    const fileListDiv = document.getElementById('fileList');
-    const mergeBtn = document.getElementById('mergeBtn');
+    let items = [];
+    let tempCoords = { lat: 0, lon: 0 };
 
-    // الترتيب بالسحب
-    Sortable.create(fileListDiv, {
-        handle: '.drag-handle',
-        animation: 150,
-        onEnd: () => {
-            const newOrder = [];
-            fileListDiv.querySelectorAll('.file-item').forEach(el => {
-                newOrder.push(allItems[parseInt(el.dataset.index)]);
-            });
-            allItems = newOrder;
-            renderFileList();
-        }
-    });
+    function updateItemData(idx, field, value) { items[idx][field] = value; }
 
-    // رفع الملفات
-    document.getElementById('fileInput').addEventListener('change', async (e) => {
-        const files = Array.from(e.target.files);
-        const { PDFDocument } = PDFLib;
-        const status = document.getElementById('status');
-        status.style.display = 'block';
-        status.textContent = "جاري توليد المعاينة...";
-
-        for (const file of files) {
-            if (file.type === 'application/pdf') {
-                const arrayBuffer = await file.arrayBuffer();
-                const pdf = await PDFDocument.load(arrayBuffer);
-                const pageCount = pdf.getPageCount();
-
-                // قراءة صفحات PDF للمعاينة
-                const pdfPreviewDoc = await pdfjsLib.getDocument({data: arrayBuffer.slice(0)}).promise;
-                
-                for (let i = 0; i < pageCount; i++) {
-                    // إنشاء صورة معاينة لصفحة PDF
-                    const page = await pdfPreviewDoc.getPage(i + 1);
-                    const viewport = page.getViewport({scale: 0.2});
-                    const canvas = document.createElement('canvas');
-                    const context = canvas.getContext('2d');
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
-                    await page.render({canvasContext: context, viewport: viewport}).promise;
-
-                    allItems.push({
-                        id: Math.random().toString(36),
-                        type: 'pdf',
-                        file: file,
-                        pageIndex: i,
-                        name: file.name,
-                        rotation: 0,
-                        data: arrayBuffer,
-                        thumb: canvas.toDataURL() // حفظ صورة المعاينة
-                    });
-                }
-            } else if (file.type.startsWith('image/')) {
-                const url = URL.createObjectURL(file);
-                allItems.push({
-                    id: Math.random().toString(36),
-                    type: 'image',
-                    file: file,
-                    name: file.name,
-                    rotation: 0,
-                    thumb: url // المعاينة هي الصورة نفسها
-                });
-            }
-        }
-        status.style.display = 'none';
-        renderFileList();
-        e.target.value = '';
-    });
-
-    async function addTextPage() {
-        const text = document.getElementById('textPageInput').value.trim();
-        if (!text) return;
-        
-        // توليد معاينة للنص
-        const thumb = await textToImage(text, 150, 200); 
-
-        allItems.push({
-            id: Math.random().toString(36),
-            type: 'text',
-            content: text,
-            name: 'صفحة نصية: ' + text.substring(0, 15) + '...',
-            rotation: 0,
-            thumb: thumb
-        });
-        
-        document.getElementById('textPageInput').value = '';
-        renderFileList();
-    }
-
-    function renderFileList() {
-        fileListDiv.innerHTML = '';
-        if (allItems.length === 0) {
-            fileListDiv.innerHTML = '<p style="text-align:center; color:#999;">القائمة فارغة</p>';
-            mergeBtn.disabled = true;
-            return;
-        }
-
-        allItems.forEach((item, index) => {
+    function renderUI() {
+        const list = document.getElementById('fileList');
+        list.innerHTML = '';
+        items.forEach((item, idx) => {
             const div = document.createElement('div');
             div.className = 'file-item';
-            div.dataset.index = index;
-            
-            let badge = item.type === 'pdf' ? `<span class="page-badge">صفحة ${item.pageIndex + 1}</span>` : `<span class="page-badge">${item.type}</span>`;
-            let rotateInfo = item.rotation !== 0 ? `<span style="font-size:10px; color:orange"> (${item.rotation}°)</span>` : '';
-
+            div.dataset.id = item.id;
             div.innerHTML = `
                 <div class="drag-handle">☰</div>
-                <img src="${item.thumb}" class="thumb-preview" style="transform: rotate(${item.rotation}deg)">
-                <div class="file-info">
-                    <span class="file-name">${item.name}</span>
-                    ${badge} ${rotateInfo}
-                </div>
-                <div class="item-btns">
-                    <button class="btn-sm btn-rotate" onclick="rotateItem(${index})">لف 🔄</button>
-                    <button class="btn-sm btn-remove" onclick="removeItem(${index})">حذف</button>
+                <div class="thumb-wrapper" onclick="showPreview(${idx})"><img src="${item.thumb}" style="transform: rotate(${item.rotation}deg)"></div>
+                <div class="item-content-stack">
+                    <input type="text" class="page-name-input" placeholder="عنوان الصفحة..." value="${item.customName}" oninput="updateItemData(${idx}, 'customName', this.value)">
+                    <div class="item-controls-row">
+                        <div class="checkbox-group">
+                            <input type="checkbox" ${item.includeName ? 'checked' : ''} onchange="updateItemData(${idx}, 'includeName', this.checked)">
+                            <span>تضمين العنوان</span>
+                        </div>
+                        <div class="btns-row">
+                            <button class="btn-icon" onclick="showPreview(${idx})" title="معاينة">👁️</button>
+                            <button class="btn-icon" onclick="rotateItem(${idx})" title="تدوير">🔄</button>
+                            <button class="btn-icon" onclick="removeItem(${idx})" title="حذف">🗑️</button>
+                        </div>
+                    </div>
                 </div>
             `;
-            fileListDiv.appendChild(div);
+            list.appendChild(div);
         });
-        mergeBtn.disabled = false;
+        const hasItems = items.length > 0;
+        document.getElementById('mergeBtn').disabled = !hasItems;
+        document.getElementById('imgBtn').disabled = !hasItems;
     }
 
-    function rotateItem(index) {
-        allItems[index].rotation = (allItems[index].rotation + 90) % 360;
-        renderFileList();
-    }
-
-    function removeItem(index) {
-        allItems.splice(index, 1);
-        renderFileList();
-    }
-
-    function clearAll() {
-        if (confirm("حذف جميع العناصر؟")) {
-            allItems = [];
-            renderFileList();
+    Sortable.create(document.getElementById('fileList'), {
+        animation: 150, handle: '.drag-handle',
+        onEnd: function() {
+            const newOrder = [];
+            document.querySelectorAll('.file-item').forEach(el => {
+                const item = items.find(i => i.id == el.dataset.id);
+                if (item) newOrder.push(item);
+            });
+            items = newOrder; renderUI();
         }
+    });
+
+    async function createTextLabelImage(text, fontSize = 28, color = "#4834d4") {
+        const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
+        ctx.font = `bold ${fontSize}px Arial`; const textWidth = ctx.measureText(text).width;
+        canvas.width = textWidth + 50; canvas.height = fontSize + 50;
+        ctx.fillStyle = color; ctx.font = `bold ${fontSize}px Arial`; ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.direction = 'rtl';
+        ctx.fillText(text, canvas.width - 20, canvas.height / 2); return canvas.toDataURL('image/png');
     }
 
-    // وظيفة تحويل النص لصورة (نفس منطقك الأصلي مع تخصيص العرض للدمج)
-    async function textToImage(text, w=800, h=1000) {
+    // دمج وظيفة الرفع والكاميرا
+    const handleFiles = async (e) => {
+        const files = Array.from(e.target.files);
+        for (const file of files) {
+            if (file.type === 'application/pdf') {
+                const buffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({data: buffer.slice(0)}).promise;
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const viewport = page.getViewport({scale: 0.2});
+                    const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
+                    canvas.height = viewport.height; canvas.width = viewport.width;
+                    await page.render({canvasContext: ctx, viewport: viewport}).promise;
+                    items.push({ id: Math.random(), type: 'pdf', customName: "", pageIdx: i-1, data: buffer, thumb: canvas.toDataURL(), rotation: 0, includeName: false });
+                }
+            } else if (file.type.startsWith('image/')) {
+                items.push({ id: Math.random(), type: 'image', customName: "", file: file, thumb: URL.createObjectURL(file), rotation: 0, includeName: false });
+            }
+        }
+        renderUI(); e.target.value = '';
+    };
+
+    document.getElementById('fileInput').addEventListener('change', handleFiles);
+    document.getElementById('cameraInput').addEventListener('change', handleFiles);
+
+    async function handleTextAddition() {
+        const text = document.getElementById('textPageInput').value.trim();
+        if (!text) return;
+        const canvas = document.createElement('canvas'); canvas.width = 800; canvas.height = 1131;
+        const ctx = canvas.getContext('2d'); ctx.fillStyle = 'white'; ctx.fillRect(0, 0, 800, 1131);
+        ctx.fillStyle = 'black'; ctx.font = '32px Arial'; ctx.textAlign = 'right'; ctx.direction = 'rtl';
+        text.split('\n').forEach((line, i) => ctx.fillText(line, 750, 100 + (i * 50)));
+        items.push({ id: Math.random(), type: 'text_page', customName: "", thumb: canvas.toDataURL(), dataURL: canvas.toDataURL(), rotation: 0, includeName: false });
+        document.getElementById('textPageInput').value = ''; renderUI();
+    }
+
+    function startGPS() {
+        navigator.geolocation.getCurrentPosition((pos) => {
+            tempCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+            document.getElementById('coordsVal').textContent = `${tempCoords.lat}, ${tempCoords.lon}`;
+            document.getElementById('gpsOverlay').style.display = 'flex';
+        });
+    }
+    function openMapsWindow() { window.open(`https://www.google.com/maps/search/?api=1&query=${tempCoords.lat},${tempCoords.lon}`, 'Maps', 'width=500,height=600'); }
+    async function addGPSItem() {
+        const plusCode = document.getElementById('plusCodeManual').value.trim() || "غير محدد";
+        const content = `GPS LOCATION DATA\nCoordinates: ${tempCoords.lat},${tempCoords.lon}\nPlus Code: ${plusCode}\nGoogle Maps: https://www.google.com/maps?q=${tempCoords.lat},${tempCoords.lon}`;
+        items.push({ id: Math.random(), type: 'gps', customName: "", content: content, rotation: 0, thumb: await genSimpleThumb("📍 Location"), includeName: false });
+        document.getElementById('gpsOverlay').style.display = 'none'; renderUI();
+    }
+
+    async function showPreview(idx) {
+        const item = items[idx]; const overlay = document.getElementById('previewOverlay');
+        const previewBox = document.getElementById('previewBox');
+        overlay.style.display = 'flex'; previewBox.innerHTML = '<p>جاري التحميل...</p>';
+        let url = "";
+        if (item.type === 'pdf') {
+            const pdf = await pdfjsLib.getDocument({data: item.data.slice(0)}).promise;
+            const page = await pdf.getPage(item.pageIdx + 1);
+            const viewport = page.getViewport({scale: 1.0});
+            const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
+            canvas.height = viewport.height; canvas.width = viewport.width;
+            await page.render({canvasContext: ctx, viewport: viewport}).promise;
+            url = canvas.toDataURL();
+        } else if (item.type === 'image') { url = URL.createObjectURL(item.file); }
+        else if (item.type === 'text_page') { url = item.dataURL; }
+        else if (item.type === 'gps') {
+            const canvas = document.createElement('canvas'); canvas.width = 500; canvas.height = 600;
+            const ctx = canvas.getContext('2d'); ctx.fillStyle = 'white'; ctx.fillRect(0,0,500,600);
+            ctx.fillStyle = 'black'; ctx.font = '16px Arial';
+            item.content.split('\n').forEach((l, i) => ctx.fillText(l, 20, 40+(i*25)));
+            url = canvas.toDataURL();
+        }
+        previewBox.innerHTML = `<img src="${url}" style="transform: rotate(${item.rotation}deg)">`;
+    }
+
+    async function getProcessedCanvas(item) {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = w;
-        canvas.height = h;
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = 'black';
-        ctx.font = (w/25) + 'px Arial';
-        ctx.textAlign = 'right';
-        ctx.direction = 'rtl';
-        const lines = text.split('\n');
-        let y = h/12;
-        lines.forEach(line => {
-            ctx.fillText(line, w - (w/30), y);
-            y += (w/20);
-        });
-        return canvas.toDataURL('image/png');
-    }
-
-    async function mergeFiles() {
-        const status = document.getElementById('status');
-        status.style.display = 'block';
-        status.textContent = "جاري معالجة الصفحات والدمج...";
-        mergeBtn.disabled = true;
-
-        try {
-            const { PDFDocument, degrees } = PDFLib;
-            const mergedPdf = await PDFDocument.create();
-
-            for (const item of allItems) {
-                if (item.type === 'pdf') {
-                    const donorPdf = await PDFDocument.load(item.data.slice(0)); // استخدام slice لضمان عدم تلف الـ buffer
-                    const [copiedPage] = await mergedPdf.copyPages(donorPdf, [item.pageIndex]);
-                    copiedPage.setRotation(degrees(item.rotation));
-                    mergedPdf.addPage(copiedPage);
-                } 
-                else if (item.type === 'image' || item.type === 'text') {
-                    let imageBytes;
-                    if (item.type === 'text') {
-                        const dataUrl = await textToImage(item.content, 800, 1000);
-                        imageBytes = await fetch(dataUrl).then(res => res.arrayBuffer());
-                    } else {
-                        imageBytes = await item.file.arrayBuffer();
-                    }
-
-                    const page = mergedPdf.addPage([595, 842]);
-                    const image = item.type === 'text' || item.name.toLowerCase().endsWith('.png') ? 
-                                  await mergedPdf.embedPng(imageBytes) : 
-                                  await mergedPdf.embedJpg(imageBytes);
-                    
-                    const { width, height } = page.getSize();
-                    const dims = image.scaleToFit(width - 40, height - 40);
-                    
-                    page.drawImage(image, {
-                        x: (width / 2) - (dims.width / 2),
-                        y: (height / 2) - (dims.height / 2),
-                        width: dims.width,
-                        height: dims.height,
-                        rotate: degrees(item.rotation)
-                    });
-                }
-            }
-
-            const pdfBytes = await mergedPdf.save();
-            const blob = new Blob([pdfBytes], { type: "application/pdf" });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            let outName = document.getElementById('fileNameInput').value.trim() || 'document';
-            link.download = outName.endsWith('.pdf') ? outName : outName + '.pdf';
-            link.click();
-            
-            status.textContent = "✅ اكتملت العملية بنجاح!";
-            setTimeout(() => { status.style.display = 'none'; mergeBtn.disabled = false; }, 3000);
-        } catch (e) {
-            console.error(e);
-            alert("حدث خطأ: " + e.message);
-            status.style.display = 'none';
-            mergeBtn.disabled = false;
+        if (item.type === 'pdf') {
+            const pdf = await pdfjsLib.getDocument({data: item.data.slice(0)}).promise;
+            const page = await pdf.getPage(item.pageIdx + 1);
+            const vp = page.getViewport({scale: 2.0});
+            canvas.width = vp.width; canvas.height = vp.height;
+            await page.render({canvasContext: ctx, viewport: vp}).promise;
+        } else if (item.type === 'image') {
+            const img = new Image(); img.src = URL.createObjectURL(item.file);
+            await new Promise(r => img.onload = r);
+            canvas.width = img.width; canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+        } else if (item.type === 'text_page' || item.type === 'gps') {
+            const img = new Image();
+            if(item.type === 'gps') {
+                const gCanvas = document.createElement('canvas'); gCanvas.width = 800; gCanvas.height = 1100;
+                const gCtx = gCanvas.getContext('2d'); gCtx.fillStyle = 'white'; gCtx.fillRect(0,0,800,1100);
+                gCtx.fillStyle = 'black'; gCtx.font = '24px Arial';
+                item.content.split('\n').forEach((l, i) => gCtx.fillText(l, 50, 80+(i*35)));
+                img.src = gCanvas.toDataURL();
+            } else { img.src = item.dataURL; }
+            await new Promise(r => img.onload = r);
+            canvas.width = img.width; canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
         }
+
+        const finalCanvas = document.createElement('canvas');
+        const fCtx = finalCanvas.getContext('2d');
+        const isRot = (item.rotation / 90) % 2 !== 0;
+        finalCanvas.width = isRot ? canvas.height : canvas.width;
+        finalCanvas.height = isRot ? canvas.width : canvas.height;
+        fCtx.translate(finalCanvas.width/2, finalCanvas.height/2);
+        fCtx.rotate(item.rotation * Math.PI / 180);
+        fCtx.drawImage(canvas, -canvas.width/2, -canvas.height/2);
+        fCtx.setTransform(1,0,0,1,0,0);
+
+        if (item.includeName && item.customName) {
+            const labelUrl = await createTextLabelImage(item.customName, finalCanvas.width/25);
+            const labelImg = new Image(); labelImg.src = labelUrl;
+            await new Promise(r => labelImg.onload = r);
+            fCtx.drawImage(labelImg, finalCanvas.width - labelImg.width - 20, 20);
+        }
+        return finalCanvas;
     }
+
+    async function mergeAll() {
+        const status = document.getElementById('status'); status.style.display = 'block';
+        status.textContent = "جاري إنشاء ملف PDF...";
+        try {
+            const { PDFDocument } = PDFLib;
+            const pdfDoc = await PDFDocument.create();
+            for (const item of items) {
+                const canvas = await getProcessedCanvas(item);
+                const imgBytes = await fetch(canvas.toDataURL('image/jpeg', 0.85)).then(r => r.arrayBuffer());
+                const pdfImg = await pdfDoc.embedJpg(imgBytes);
+                const page = pdfDoc.addPage([canvas.width * 0.75, canvas.height * 0.75]);
+                page.drawImage(pdfImg, { x: 0, y: 0, width: page.getWidth(), height: page.getHeight() });
+            }
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(new Blob([await pdfDoc.save()], { type: "application/pdf" }));
+            link.download = document.getElementById('fileNameInput').value + ".pdf";
+            link.click();
+            status.textContent = "✅ تم الحفظ!"; setTimeout(() => status.style.display = 'none', 3000);
+        } catch (e) { alert("خطأ: " + e.message); status.style.display = 'none'; }
+    }
+
+    // وظيفة التحميل كصور منفردة
+    async function saveAsImages() {
+        const status = document.getElementById('status'); status.style.display = 'block';
+        status.textContent = "جاري تحميل الصور...";
+        try {
+            for (let i = 0; i < items.length; i++) {
+                const canvas = await getProcessedCanvas(items[i]);
+                const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.9));
+                const name = (items[i].customName || `page_${i+1}`).replace(/[/\\?%*:|"<>]/g, '-') + ".jpg";
+                
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = name;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // تأخير بسيط لمنع المتصفح من حظر التحميلات المتتالية
+                await new Promise(r => setTimeout(r, 300));
+            }
+            status.textContent = "✅ تمت العملية!"; setTimeout(() => status.style.display = 'none', 3000);
+        } catch (e) { alert("خطأ: " + e.message); status.style.display = 'none'; }
+    }
+
+    function rotateItem(i) { items[i].rotation = (items[i].rotation + 90) % 360; renderUI(); }
+    function removeItem(i) { items.splice(i, 1); renderUI(); }
+    async function genSimpleThumb(t) { const canvas = document.createElement('canvas'); canvas.width = 100; canvas.height = 100; const ctx = canvas.getContext('2d'); ctx.fillStyle = '#eee'; ctx.fillRect(0,0,100,100); ctx.fillStyle = '#333'; ctx.font = '12px Arial'; ctx.textAlign = 'center'; ctx.fillText(t.substring(0,20), 50, 55); return canvas.toDataURL(); }
 </script>
 </body>
 </html>
