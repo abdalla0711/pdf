@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>محرر PDF الاحترافي | النسخة المطورة</title>
+    <title>محرر PDF الاحترافي | النسخة المكتملة</title>
     
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
@@ -18,6 +18,9 @@
         .container { background: var(--card); width: 100%; max-width: 600px; padding: 20px; border-radius: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); box-sizing: border-box; }
         h1 { text-align: center; font-size: 1.3rem; margin-bottom: 20px; color: var(--primary); }
         
+        .compression-section { background: #fff9e6; border: 1px solid #ffeaa7; padding: 12px; border-radius: 15px; margin-bottom: 15px; }
+        .compression-info { display: flex; justify-content: space-between; font-size: 0.75rem; margin-top: 5px; font-weight: bold; color: #856404; }
+
         .upload-container { display: flex; gap: 10px; margin-bottom: 15px; }
         .upload-section { border: 2px dashed #dcdde1; padding: 15px; border-radius: 18px; text-align: center; cursor: pointer; background: #fafafa; flex: 1; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; }
         .btn-camera { background: var(--primary); color: white; border: none; border-radius: 18px; padding: 0 20px; cursor: pointer; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; gap: 5px; }
@@ -41,18 +44,11 @@
         .btns-row { display: flex; gap: 6px; }
         .btn-icon { background: #f1f2f6; border: none; cursor: pointer; font-size: 0.95rem; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
 
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center; }
-        .modal-content { background: white; width: 90%; max-width: 450px; padding: 20px; border-radius: 20px; text-align: center; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center; }
+        .modal-content { background: white; width: 90%; max-width: 500px; padding: 20px; border-radius: 20px; text-align: center; }
         
-        .gps-inputs-row { margin-bottom: 10px; }
-        .gps-inputs-row input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; text-align: center; font-size: 0.9rem; box-sizing: border-box; }
-        
-        .paste-wrapper { display: flex; gap: 5px; margin-bottom: 15px; }
-        .paste-wrapper input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 10px; text-align: center; }
-        .btn-paste { background: #f1f2f6; border: 1px solid #ddd; border-radius: 10px; padding: 0 15px; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
-
-        #previewBox { width: 100%; max-height: 65vh; overflow-y: auto; margin-top: 10px; border-radius: 10px; background: #f9f9f9; }
-        #previewBox img { width: 100%; height: auto; }
+        #previewBox { width: 100%; max-height: 60vh; overflow-y: auto; margin-top: 10px; border-radius: 10px; background: #eee; }
+        #previewBox img { width: 100%; height: auto; display: block; margin: 0 auto; }
 
         .main-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; width: 100%; }
         .loading { display: none; text-align: center; color: var(--primary); font-weight: bold; padding: 10px; font-size: 0.9rem; }
@@ -63,9 +59,18 @@
 <div class="container">
     <h1>محرر PDF الاحترافي</h1>
 
+    <div class="compression-section">
+        <label style="font-weight: bold; font-size: 0.85rem;">🗜️ جودة ضغط الصور (لتقليل الحجم):</label>
+        <input type="range" id="compressionQuality" min="0.1" max="1.0" step="0.1" value="0.7" style="width: 100%; margin-top: 8px;">
+        <div class="compression-info">
+            <span>حجم أصغر</span>
+            <span>جودة أعلى</span>
+        </div>
+    </div>
+
     <div class="upload-container">
         <div class="upload-section" onclick="document.getElementById('fileInput').click()">
-            <span>📂 إضافة ملفات PDF أو صور</span>
+            <span>📂 إضافة PDF أو صور</span>
             <input type="file" id="fileInput" multiple accept="image/*,application/pdf" style="display:none">
         </div>
         <button class="btn-camera" onclick="document.getElementById('cameraInput').click()">📸 تصوير</button>
@@ -75,7 +80,7 @@
     <button class="btn btn-gps" onclick="startGPS()">📍 إضافة صفحة الموقع (GPS)</button>
 
     <div style="background: #f9f9f9; padding: 12px; border-radius: 15px; border: 1px solid #eee; margin-bottom:15px;">
-        <textarea id="textPageInput" rows="2" style="width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; outline:none; font-family:inherit; resize: none;" placeholder="اكتب نصاً هنا (يتم تقسيمه تلقائياً)..."></textarea>
+        <textarea id="textPageInput" rows="2" style="width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; outline:none; font-family:inherit; resize: none;" placeholder="اكتب نصاً ليظهر في صفحة مستقلة..."></textarea>
         <button class="btn" style="background:var(--primary); margin-top:8px; height:36px; font-size:0.85rem;" onclick="handleTextAddition()">إدراج نص</button>
     </div>
 
@@ -86,36 +91,16 @@
     <div id="status" class="loading">جاري المعالجة...</div>
 
     <div class="main-actions">
-        <button id="imgBtn" class="btn btn-images" onclick="saveAsImages()" disabled>🖼️ حفظ كصور منفردة</button>
-        <button id="mergeBtn" class="btn btn-merge" onclick="mergeAll()" disabled>🚀 حفظ كملف PDF</button>
+        <button id="imgBtn" class="btn btn-images" onclick="saveAsImages()" disabled>🖼️ حفظ كصور</button>
+        <button id="mergeBtn" class="btn btn-merge" onclick="mergeAll()" disabled>🚀 حفظ ملف PDF</button>
     </div>
 </div>
 
 <a href="new_customer.html" style="background: #2f3542; color: white; width: 100%; max-width: 600px; margin-top: 15px; text-decoration: none; text-align: center; display: block; border-radius: 12px; padding: 12px; font-weight: bold; font-size: 0.9rem;">New Customer</a>
 
-<!-- نافذة GPS المعدلة -->
-<div id="gpsOverlay" class="modal-overlay">
-    <div class="modal-content">
-        <h3>بيانات الموقع (قابلة للتعديل)</h3>
-        <div class="gps-inputs-row">
-            <input type="text" id="coordsInput" placeholder="الإحداثيات (مثال: 30.9975, 40.9967)">
-        </div>
-        <div class="paste-wrapper">
-            <input type="text" id="plusCodeManual" placeholder="Plus Code">
-            <button class="btn-paste" onclick="pasteFromClipboard()">📋 لصق</button>
-        </div>
-        <div style="display:flex; gap:10px;">
-            <button class="btn" style="background:#009432; flex:1" onclick="openMapsWindow()">فتح الخرائط</button>
-            <button class="btn" style="background:var(--primary); flex:1" onclick="addGPSItem()">تأكيد</button>
-        </div>
-        <button onclick="document.getElementById('gpsOverlay').style.display='none'" style="background:none; border:none; color:red; margin-top:15px; cursor:pointer;">إلغاء</button>
-    </div>
-</div>
-
-<!-- نافذة المعاينة -->
 <div id="previewOverlay" class="modal-overlay">
     <div class="modal-content">
-        <h3 id="previewTitle" style="margin-top:0; font-size:1rem;">معاينة الصفحة</h3>
+        <h3>معاينة الصفحة</h3>
         <div id="previewBox"></div>
         <button class="btn" style="background:var(--danger); margin-top:15px;" onclick="document.getElementById('previewOverlay').style.display='none'">إغلاق</button>
     </div>
@@ -125,25 +110,6 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
     let items = [];
-
-    function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
-        const lines = text.split('\n');
-        for (let i = 0; i < lines.length; i++) {
-            let words = lines[i].split(' ');
-            let line = '';
-            for (let n = 0; n < words.length; n++) {
-                let testLine = line + words[n] + ' ';
-                let metrics = ctx.measureText(testLine);
-                if (metrics.width > maxWidth && n > 0) {
-                    ctx.fillText(line, x, y);
-                    line = words[n] + ' ';
-                    y += lineHeight;
-                } else { line = testLine; }
-            }
-            ctx.fillText(line, x, y);
-            y += lineHeight;
-        }
-    }
 
     function updateItemData(idx, field, value) { items[idx][field] = value; }
 
@@ -191,14 +157,6 @@
         }
     });
 
-    async function createTextLabelImage(text, fontSize = 28, color = "#4834d4") {
-        const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
-        ctx.font = `bold ${fontSize}px Arial`; const textWidth = ctx.measureText(text).width;
-        canvas.width = textWidth + 50; canvas.height = fontSize + 50;
-        ctx.fillStyle = color; ctx.font = `bold ${fontSize}px Arial`; ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.direction = 'rtl';
-        ctx.fillText(text, canvas.width - 20, canvas.height / 2); return canvas.toDataURL('image/png');
-    }
-
     const handleFiles = async (e) => {
         const files = Array.from(e.target.files);
         for (const file of files) {
@@ -207,14 +165,23 @@
                 const pdf = await pdfjsLib.getDocument({data: buffer.slice(0)}).promise;
                 for (let i = 1; i <= pdf.numPages; i++) {
                     const page = await pdf.getPage(i);
-                    const viewport = page.getViewport({scale: 0.2});
-                    const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
+                    const viewport = page.getViewport({scale: 0.3});
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
                     canvas.height = viewport.height; canvas.width = viewport.width;
                     await page.render({canvasContext: ctx, viewport: viewport}).promise;
-                    items.push({ id: Math.random(), type: 'pdf', customName: "", pageIdx: i-1, data: buffer, thumb: canvas.toDataURL(), rotation: 0, includeName: false });
+                    items.push({ 
+                        id: Math.random(), type: 'pdf', customName: "", 
+                        pageIdx: i-1, data: buffer, thumb: canvas.toDataURL(), 
+                        rotation: 0, includeName: false 
+                    });
                 }
             } else if (file.type.startsWith('image/')) {
-                items.push({ id: Math.random(), type: 'image', customName: "", file: file, thumb: URL.createObjectURL(file), rotation: 0, includeName: false });
+                items.push({ 
+                    id: Math.random(), type: 'image', customName: "", 
+                    file: file, thumb: URL.createObjectURL(file), 
+                    rotation: 0, includeName: false 
+                });
             }
         }
         renderUI(); e.target.value = '';
@@ -223,171 +190,166 @@
     document.getElementById('fileInput').addEventListener('change', handleFiles);
     document.getElementById('cameraInput').addEventListener('change', handleFiles);
 
-    async function handleTextAddition() {
-        const text = document.getElementById('textPageInput').value.trim();
-        if (!text) return;
-        const canvas = document.createElement('canvas'); canvas.width = 800; canvas.height = 1131;
-        const ctx = canvas.getContext('2d'); ctx.fillStyle = 'white'; ctx.fillRect(0, 0, 800, 1131);
-        ctx.fillStyle = 'black'; ctx.font = '28px Arial'; ctx.textAlign = 'right'; ctx.direction = 'rtl';
-        wrapText(ctx, text, 750, 80, 700, 40);
-        items.push({ id: Math.random(), type: 'text_page', customName: "", thumb: canvas.toDataURL(), dataURL: canvas.toDataURL(), rotation: 0, includeName: false });
-        document.getElementById('textPageInput').value = ''; renderUI();
-    }
-
-    // GPS وظائف محسنة لخانة واحدة
-    function startGPS() {
-        navigator.geolocation.getCurrentPosition((pos) => {
-            document.getElementById('coordsInput').value = pos.coords.latitude + ", " + pos.coords.longitude;
-            document.getElementById('gpsOverlay').style.display = 'flex';
-        }, () => {
-            document.getElementById('gpsOverlay').style.display = 'flex';
-        });
-    }
-
-    async function pasteFromClipboard() {
-        try {
-            const text = await navigator.clipboard.readText();
-            document.getElementById('plusCodeManual').value = text;
-        } catch (err) { alert("يرجى اللصق يدوياً."); }
-    }
-
-    function parseCoords() {
-        const val = document.getElementById('coordsInput').value;
-        const parts = val.split(',').map(s => s.trim());
-        return { lat: parts[0] || "0", lon: parts[1] || "0" };
-    }
-
-    function openMapsWindow() { 
-        const c = parseCoords();
-        window.open(`https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lon}`, 'Maps', 'width=500,height=600'); 
-    }
-
-    async function addGPSItem() {
-        const c = parseCoords();
-        const plusCode = document.getElementById('plusCodeManual').value.trim() || "غير محدد";
-        const content = `GPS LOCATION DATA\nCoordinates: ${c.lat},${c.lon}\nPlus Code: ${plusCode}\nGoogle Maps: https://www.google.com/maps?q=${c.lat},${c.lon}`;
-        items.push({ id: Math.random(), type: 'gps', customName: "", content: content, rotation: 0, thumb: await genSimpleThumb("📍 Location"), includeName: false });
-        document.getElementById('gpsOverlay').style.display = 'none'; 
-        document.getElementById('plusCodeManual').value = "";
-        renderUI();
+    // دالة إنشاء ملصق العنوان كصورة شفافة (لحل مشكلة اللغة العربية في الـ PDF)
+    async function createTextLabelImage(text, fontSize) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.font = `bold ${fontSize}px Arial`;
+        const textWidth = ctx.measureText(text).width;
+        canvas.width = textWidth + 40;
+        canvas.height = fontSize + 40;
+        ctx.fillStyle = 'rgba(255,255,255,0.7)'; // خلفية بيضاء شفافة
+        ctx.fillRect(0,0, canvas.width, canvas.height);
+        ctx.fillStyle = '#4834d4';
+        ctx.font = `bold ${fontSize}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, canvas.width/2, canvas.height/2);
+        return canvas.toDataURL('image/png');
     }
 
     async function showPreview(idx) {
-        const item = items[idx]; const overlay = document.getElementById('previewOverlay');
+        const item = items[idx];
+        const overlay = document.getElementById('previewOverlay');
         const previewBox = document.getElementById('previewBox');
-        overlay.style.display = 'flex'; previewBox.innerHTML = '<p>جاري التحميل...</p>';
+        overlay.style.display = 'flex';
+        previewBox.innerHTML = '<p style="padding:20px">جاري تحميل المعاينة...</p>';
+
         let url = "";
         if (item.type === 'pdf') {
             const pdf = await pdfjsLib.getDocument({data: item.data.slice(0)}).promise;
             const page = await pdf.getPage(item.pageIdx + 1);
             const viewport = page.getViewport({scale: 1.0});
-            const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
             canvas.height = viewport.height; canvas.width = viewport.width;
             await page.render({canvasContext: ctx, viewport: viewport}).promise;
             url = canvas.toDataURL();
-        } else if (item.type === 'image') { url = URL.createObjectURL(item.file); }
-        else if (item.type === 'text_page') { url = item.dataURL; }
-        else if (item.type === 'gps') {
-            const canvas = document.createElement('canvas'); canvas.width = 500; canvas.height = 600;
-            const ctx = canvas.getContext('2d'); ctx.fillStyle = 'white'; ctx.fillRect(0,0,500,600);
-            ctx.fillStyle = 'black'; ctx.font = '16px Arial';
-            item.content.split('\n').forEach((l, i) => ctx.fillText(l, 20, 40+(i*25)));
+        } else if (item.type === 'image') {
+            url = URL.createObjectURL(item.file);
+        } else {
+            const canvas = await getProcessedCanvas(item, 1.0);
             url = canvas.toDataURL();
         }
-        previewBox.innerHTML = `<img src="${url}" style="transform: rotate(${item.rotation}deg)">`;
-    }
-
-    async function getProcessedCanvas(item) {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (item.type === 'pdf') {
-            const pdf = await pdfjsLib.getDocument({data: item.data.slice(0)}).promise;
-            const page = await pdf.getPage(item.pageIdx + 1);
-            const vp = page.getViewport({scale: 2.0});
-            canvas.width = vp.width; canvas.height = vp.height;
-            await page.render({canvasContext: ctx, viewport: vp}).promise;
-        } else if (item.type === 'image') {
-            const img = new Image(); img.src = URL.createObjectURL(item.file);
-            await new Promise(r => img.onload = r);
-            canvas.width = img.width; canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-        } else if (item.type === 'text_page' || item.type === 'gps') {
-            const img = new Image();
-            if(item.type === 'gps') {
-                const gCanvas = document.createElement('canvas'); gCanvas.width = 800; gCanvas.height = 1100;
-                const gCtx = gCanvas.getContext('2d'); gCtx.fillStyle = 'white'; gCtx.fillRect(0,0,800,1100);
-                gCtx.fillStyle = 'black'; gCtx.font = '24px Arial';
-                item.content.split('\n').forEach((l, i) => gCtx.fillText(l, 50, 80+(i*35)));
-                img.src = gCanvas.toDataURL();
-            } else { img.src = item.dataURL; }
-            await new Promise(r => img.onload = r);
-            canvas.width = img.width; canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-        }
-
-        const finalCanvas = document.createElement('canvas');
-        const fCtx = finalCanvas.getContext('2d');
-        const isRot = (item.rotation / 90) % 2 !== 0;
-        finalCanvas.width = isRot ? canvas.height : canvas.width;
-        finalCanvas.height = isRot ? canvas.width : canvas.height;
-        fCtx.translate(finalCanvas.width/2, finalCanvas.height/2);
-        fCtx.rotate(item.rotation * Math.PI / 180);
-        fCtx.drawImage(canvas, -canvas.width/2, -canvas.height/2);
-        fCtx.setTransform(1,0,0,1,0,0);
-
-        if (item.includeName && item.customName) {
-            const labelUrl = await createTextLabelImage(item.customName, finalCanvas.width/25);
-            const labelImg = new Image(); labelImg.src = labelUrl;
-            await new Promise(r => labelImg.onload = r);
-            fCtx.drawImage(labelImg, finalCanvas.width - labelImg.width - 20, 20);
-        }
-        return finalCanvas;
+        previewBox.innerHTML = `<img src="${url}" style="transform: rotate(${item.rotation}deg); max-width:100%">`;
     }
 
     async function mergeAll() {
         const status = document.getElementById('status'); status.style.display = 'block';
-        status.textContent = "جاري إنشاء ملف PDF...";
+        status.textContent = "جاري معالجة ودمج الصفحات...";
+        const quality = parseFloat(document.getElementById('compressionQuality').value);
+
         try {
             const { PDFDocument } = PDFLib;
             const pdfDoc = await PDFDocument.create();
+            
             for (const item of items) {
-                const canvas = await getProcessedCanvas(item);
-                const imgBytes = await fetch(canvas.toDataURL('image/jpeg', 0.85)).then(r => r.arrayBuffer());
-                const pdfImg = await pdfDoc.embedJpg(imgBytes);
-                const page = pdfDoc.addPage([canvas.width * 0.75, canvas.height * 0.75]);
-                page.drawImage(pdfImg, { x: 0, y: 0, width: page.getWidth(), height: page.getHeight() });
+                if (item.type === 'pdf') {
+                    const srcDoc = await PDFDocument.load(item.data);
+                    const [copiedPage] = await pdfDoc.copyPages(srcDoc, [item.pageIdx]);
+                    
+                    if(item.rotation !== 0) copiedPage.setRotation(PDFLib.degrees(item.rotation));
+                    
+                    if (item.includeName && item.customName) {
+                        const labelDataUrl = await createTextLabelImage(item.customName, 30);
+                        const labelImgBytes = await fetch(labelDataUrl).then(res => res.arrayBuffer());
+                        const labelImg = await pdfDoc.embedPng(labelImgBytes);
+                        const { width, height } = copiedPage.getSize();
+                        // وضع العنوان في الزاوية العلوية
+                        copiedPage.drawImage(labelImg, {
+                            x: width - labelImg.width - 20,
+                            y: height - labelImg.height - 20,
+                            width: labelImg.width,
+                            height: labelImg.height
+                        });
+                    }
+                    pdfDoc.addPage(copiedPage);
+                } else {
+                    const canvas = await getProcessedCanvas(item, quality);
+                    const imgBytes = await fetch(canvas.toDataURL('image/jpeg', quality)).then(r => r.arrayBuffer());
+                    const pdfImg = await pdfDoc.embedJpg(imgBytes);
+                    const page = pdfDoc.addPage([canvas.width * 0.75, canvas.height * 0.75]);
+                    page.drawImage(pdfImg, { x: 0, y: 0, width: page.getWidth(), height: page.getHeight() });
+                }
             }
+
+            const pdfBytes = await pdfDoc.save();
             const link = document.createElement("a");
-            link.href = URL.createObjectURL(new Blob([await pdfDoc.save()], { type: "application/pdf" }));
+            link.href = URL.createObjectURL(new Blob([pdfBytes], { type: "application/pdf" }));
             link.download = document.getElementById('fileNameInput').value + ".pdf";
             link.click();
             status.textContent = "✅ تم الحفظ!"; setTimeout(() => status.style.display = 'none', 3000);
-        } catch (e) { alert("خطأ: " + e.message); status.style.display = 'none'; }
+        } catch (e) { 
+            console.error(e);
+            alert("حدث خطأ أثناء الدمج: " + e.message); 
+            status.style.display = 'none'; 
+        }
+    }
+
+    async function getProcessedCanvas(item, quality) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (item.type === 'image') {
+            const img = new Image(); img.src = URL.createObjectURL(item.file);
+            await new Promise(r => img.onload = r);
+            canvas.width = img.width; canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+        } else {
+            canvas.width = 800; canvas.height = 1100;
+            ctx.fillStyle = 'white'; ctx.fillRect(0,0,800,1100);
+            ctx.fillStyle = 'black'; ctx.font = '24px Arial';
+            const content = item.type === 'gps' ? item.content : item.text;
+            content.split('\n').forEach((l, i) => ctx.fillText(l, 50, 80+(i*35)));
+        }
+
+        if (item.includeName && item.customName && item.type !== 'pdf') {
+            const labelUrl = await createTextLabelImage(item.customName, 30);
+            const labelImg = new Image(); labelImg.src = labelUrl;
+            await new Promise(r => labelImg.onload = r);
+            ctx.drawImage(labelImg, canvas.width - labelImg.width - 20, 20);
+        }
+        return canvas;
+    }
+
+    async function handleTextAddition() {
+        const text = document.getElementById('textPageInput').value.trim();
+        if (!text) return;
+        items.push({ id: Math.random(), type: 'text_page', customName: "", text: text, thumb: await genSimpleThumb("📄 Text"), rotation: 0, includeName: false });
+        document.getElementById('textPageInput').value = ''; renderUI();
+    }
+
+    function startGPS() {
+        navigator.geolocation.getCurrentPosition((pos) => {
+            const lat = pos.coords.latitude.toFixed(6);
+            const lon = pos.coords.longitude.toFixed(6);
+            const c = `GPS LOCATION DATA\nCoordinates: ${lat}, ${lon}\nGoogle Maps: https://www.google.com/maps?q=${lat},${lon}`;
+            items.push({ id: Math.random(), type: 'gps', customName: "Location", content: c, rotation: 0, thumb: "", includeName: true });
+            // تحديث مصغر الـ GPS
+            const last = items[items.length-1];
+            genSimpleThumb("📍 GPS").then(t => { last.thumb = t; renderUI(); });
+        }, () => alert("يرجى تفعيل صلاحية الوصول للموقع"));
     }
 
     async function saveAsImages() {
-        const status = document.getElementById('status'); status.style.display = 'block';
-        status.textContent = "جاري تحميل الصور...";
-        try {
-            for (let i = 0; i < items.length; i++) {
-                const canvas = await getProcessedCanvas(items[i]);
-                const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.9));
-                const name = (items[i].customName || `page_${i+1}`).replace(/[/\\?%*:|"<>]/g, '-') + ".jpg";
-                const link = document.createElement("a");
-                link.href = URL.createObjectURL(blob);
-                link.download = name;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                await new Promise(r => setTimeout(r, 400));
-            }
-            status.textContent = "✅ تمت العملية!"; setTimeout(() => status.style.display = 'none', 3000);
-        } catch (e) { alert("خطأ: " + e.message); status.style.display = 'none'; }
+        const q = parseFloat(document.getElementById('compressionQuality').value);
+        for (let i = 0; i < items.length; i++) {
+            const canvas = await getProcessedCanvas(items[i], q);
+            const link = document.createElement("a");
+            link.href = canvas.toDataURL('image/jpeg', q);
+            link.download = (items[i].customName || `page_${i+1}`) + ".jpg";
+            link.click();
+            await new Promise(r => setTimeout(r, 300));
+        }
     }
 
     function rotateItem(i) { items[i].rotation = (items[i].rotation + 90) % 360; renderUI(); }
     function removeItem(i) { items.splice(i, 1); renderUI(); }
-    async function genSimpleThumb(t) { const canvas = document.createElement('canvas'); canvas.width = 100; canvas.height = 100; const ctx = canvas.getContext('2d'); ctx.fillStyle = '#eee'; ctx.fillRect(0,0,100,100); ctx.fillStyle = '#333'; ctx.font = '12px Arial'; ctx.textAlign = 'center'; ctx.fillText(t.substring(0,20), 50, 55); return canvas.toDataURL(); }
+    async function genSimpleThumb(t) { 
+        const canvas = document.createElement('canvas'); canvas.width = 100; canvas.height = 100;
+        const ctx = canvas.getContext('2d'); ctx.fillStyle = '#eee'; ctx.fillRect(0,0,100,100);
+        ctx.fillStyle = '#333'; ctx.font = '12px Arial'; ctx.textAlign = 'center'; ctx.fillText(t, 50, 55);
+        return canvas.toDataURL();
+    }
 </script>
 </body>
 </html>
