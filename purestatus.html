@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Status Converter</title>
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.7/dist/umd/ffmpeg.umd.js"></script>
+    <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #121b22;
+            color: #e9edef;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: #1f2c33;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        h2 { color: #00a884; }
+        .upload-area {
+            border: 2px dashed #8696a0;
+            padding: 30px;
+            border-radius: 8px;
+            margin: 20px 0;
+            cursor: pointer;
+        }
+        input[type="file"] { display: none; }
+        button {
+            background-color: #00a884;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+        button:disabled { background-color: #3b4a54; cursor: not-allowed; }
+        #log {
+            font-size: 12px;
+            color: #8696a0;
+            margin-top: 15px;
+            text-align: left;
+            height: 60px;
+            overflow-y: auto;
+            background: #111b21;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #3b4a54;
+            border-radius: 4px;
+            margin: 15px 0;
+            display: none;
+        }
+        #progress-fill {
+            width: 0%;
+            height: 100%;
+            background: #00a884;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+        video {
+            width: 100%;
+            margin-top: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Status Optimizer</h2>
+    <p>Convert to 900x1600 (5s) MP4</p>
+    
+    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+        Click to Upload Image or Video
+        <input type="file" id="fileInput" accept="image/*,video/*">
+    </div>
+
+    <button id="convertBtn" disabled>Loading Engine...</button>
+
+    <div class="progress-bar" id="progressBar">
+        <div id="progress-fill"></div>
+    </div>
+
+    <div id="log">Ready to load ffmpeg...</div>
+
+    <video id="outputVideo" controls></video>
+    <a id="downloadLink" style="display:none; color:#00a884; margin-top:10px; text-decoration:none; font-weight:bold;">Download Result</a>
+</div>
+
+<script>
+    const { FFmpeg } = window.FFmpegWASM;
+    const { fetchFile, toBlobURL } = window.FFmpegUtil;
+    let ffmpeg = null;
+
+    const convertBtn = document.getElementById('convertBtn');
+    const fileInput = document.getElementById('fileInput');
+    const log = document.getElementById('log');
+    const progressFill = document.getElementById('progress-fill');
+    const progressBar = document.getElementById('progressBar');
+    const outputVideo = document.getElementById('outputVideo');
+    const downloadLink = document.getElementById('downloadLink');
+
+    async function init() {
+        ffmpeg = new FFmpeg();
+        const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+        
+        log.innerHTML = "Downloading processing engine...";
+        
+        await ffmpeg.load({
+            coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+            wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+        });
+
+        log.innerHTML = "Engine Ready. Select a file.";
+        convertBtn.disabled = false;
+        convertBtn.innerText = "Convert & Optimize";
+    }
+
+    convertBtn.addEventListener('click', async () => {
+        const file = fileInput.files[0];
+        if (!file) return alert("Please select a file first");
+
+        convertBtn.disabled = true;
+        progressBar.style.display = 'block';
+        outputVideo.style.display = 'none';
+        downloadLink.style.display = 'none';
+
+        const isVideo = file.type.startsWith('video');
+        const inputName = 'input_file';
+        const outputName = 'output.mp4';
+
+        log.innerHTML = "Reading file...";
+        await ffmpeg.writeFile(inputName, await fetchFile(file));
+
+        ffmpeg.on('progress', ({ progress }) => {
+            progressFill.style.width = `${Math.round(progress * 100)}%`;
+            log.innerHTML = `Processing: ${Math.round(progress * 100)}%`;
+        });
+
+        // FFmpeg Command tailored to your CSV metadata:
+        // -vf: Scale to 900x1600, pad to fit (aspect ratio preserved)
+        // -r 25: 25 frames per second
+        // -t 5: Force 5 seconds duration
+        // -b:v 600k: Target average bitrate
+        // -maxrate / -bufsize: Enforce limits found in CSV
+        // -pix_fmt yuv420p: Standard for mobile compatibility
+        
+        const ffmpegArgs = isVideo 
+            ? ['-i', inputName] 
+            : ['-loop', '1', '-i', inputName];
+
+        ffmpegArgs.push(
+            '-vf', "scale=900:1600:force_original_aspect_ratio=increase,crop=900:1600,format=yuv420p",
+            '-t', '5',
+            '-r', '25',
+            '-c:v', 'libx264',
+            '-b:v', '605k',
+            '-maxrate', '1600k',
+            '-bufsize', '1600k',
+            '-profile:v', 'main',
+            '-level', '4.0',
+            '-movflags', '+faststart',
+            outputName
+        );
+
+        log.innerHTML = "Encoding... (this may take a moment)";
+        await ffmpeg.exec(ffmpegArgs);
+
+        const data = await ffmpeg.readFile(outputName);
+        const url = URL.createObjectURL(new Blob([data.buffer], { type: 'video/mp4' }));
+        
+        log.innerHTML = "Success! Optimization Complete.";
+        outputVideo.src = url;
+        outputVideo.style.display = 'block';
+        
+        downloadLink.href = url;
+        downloadLink.download = `VID_OPTIMIZED_${Date.now()}.mp4`;
+        downloadLink.style.display = 'block';
+        downloadLink.innerText = "Click to Download Optimized Video";
+        
+        convertBtn.disabled = false;
+    });
+
+    init();
+</script>
+
+</body>
+</html>
