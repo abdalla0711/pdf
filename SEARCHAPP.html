@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام فحص فواتير العملاء</title>
+    <!-- مكتبة SheetJS لقراءة ملفات الاكسل -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #27ae60;
+            --bg-color: #f4f7f6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+
+        input[type="text"] {
+            padding: 12px;
+            width: 60%;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-color);
+        }
+
+        button {
+            padding: 10px 25px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background-color: #219150;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border-right: 5px solid var(--accent-color);
+        }
+
+        .stat-card h3 {
+            margin: 0;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .stat-card p {
+            margin: 10px 0 0 0;
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: right;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .error {
+            color: red;
+            text-align: center;
+            margin: 10px;
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>نظام استعلام فواتير العملاء</h1>
+
+    <div id="loadingMsg" class="loading">جاري تحميل قاعدة البيانات (1.xlsx)...</div>
+
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="أدخل كود العميل أو اسم العميل...">
+        <button onclick="searchCustomer()">بحث</button>
+    </div>
+
+    <div id="errorMsg" class="error">لم يتم العثور على بيانات لهذا العميل.</div>
+
+    <div id="resultsArea" style="display: none;">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>إجمالي مبالغ الفواتير</h3>
+                <p id="totalAmount">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>أقصى مدة سداد (يوم)</h3>
+                <p id="maxDays">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>متوسط عمر الدين</h3>
+                <p id="avgDays">0</p>
+            </div>
+        </div>
+
+        <table id="detailsTable">
+            <thead>
+                <tr>
+                    <th>كود العميل</th>
+                    <th>اسم العميل</th>
+                    <th>مبلغ الفاتورة</th>
+                    <th>عدد السندات</th>
+                    <th>عمر الدين (بالأيام)</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- النتائج تظهر هنا -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let excelData = [];
+
+    // تحميل الملف تلقائياً عند فتح الصفحة
+    window.onload = function() {
+        fetch('1.xlsx')
+            .then(response => {
+                if (!response.ok) throw new Error("لم يتم العثور على ملف 1.xlsx بجانب الصفحة");
+                return response.arrayBuffer();
+            })
+            .then(data => {
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                
+                // تحويل البيانات إلى JSON
+                // header: 1 تجعلنا نتعامل مع مصفوفات للوصول للأعمدة A, B, C...
+                excelData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                // إزالة الصف الأول إذا كان يحتوي على العناوين
+                if (excelData.length > 0 && isNaN(excelData[0][1])) {
+                    excelData.shift(); 
+                }
+
+                document.getElementById('loadingMsg').style.display = 'none';
+                console.log("تم تحميل البيانات بنجاح");
+            })
+            .catch(error => {
+                document.getElementById('loadingMsg').innerHTML = `<span style="color:red">خطأ: ${error.message}</span>`;
+                console.error(error);
+            });
+    };
+
+    function searchCustomer() {
+        const query = document.getElementById('searchInput').value.trim().toLowerCase();
+        const resultsArea = document.getElementById('resultsArea');
+        const errorMsg = document.getElementById('errorMsg');
+        const tableBody = document.getElementById('tableBody');
+
+        if (!query) return;
+
+        // فلترة البيانات بناءً على العمود A (الكود) أو العمود E (الاسم) إن وجد
+        const filtered = excelData.filter(row => {
+            const code = String(row[0] || "").toLowerCase();
+            const name = String(row[4] || "").toLowerCase(); // العمود E هو رقم 4 في المصفوفة
+            return code.includes(query) || name.includes(query);
+        });
+
+        if (filtered.length === 0) {
+            resultsArea.style.display = 'none';
+            errorMsg.style.display = 'block';
+            return;
+        }
+
+        errorMsg.style.display = 'none';
+        resultsArea.style.display = 'block';
+        tableBody.innerHTML = "";
+
+        let totalSum = 0;
+        let maxAge = 0;
+        let totalAge = 0;
+
+        filtered.forEach(row => {
+            const amount = parseFloat(row[1]) || 0;
+            const bonds = row[2] || 0;
+            const age = parseInt(row[3]) || 0;
+            const name = row[4] || "---"; // اسم العميل
+
+            totalSum += amount;
+            totalAge += age;
+            if (age > maxAge) maxAge = age;
+
+            // إضافة صف للجدول
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${row[0]}</td>
+                <td>${name}</td>
+                <td>${amount.toLocaleString()}</td>
+                <td>${bonds}</td>
+                <td>${age}</td>
+            `;
+            tableBody.appendChild(tr);
+        });
+
+        // تحديث البطاقات الإحصائية
+        document.getElementById('totalAmount').innerText = totalSum.toLocaleString(undefined, {minimumFractionDigits: 2}) + " ريال";
+        document.getElementById('maxDays').innerText = maxAge;
+        document.getElementById('avgDays').innerText = (totalAge / filtered.length).toFixed(1);
+    }
+
+    // إضافة إمكانية البحث عند الضغط على Enter
+    document.getElementById('searchInput').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            searchCustomer();
+        }
+    });
+</script>
+
+</body>
+</html>
