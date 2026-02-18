@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام تقييم سداد العملاء</title>
+    <title>نظام إدارة مديونيات العملاء الذكي</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
             --primary: #2c3e50;
             --accent: #3498db;
             --danger: #e74c3c;
+            --success: #27ae60;
             --bg: #f4f7f6;
         }
 
@@ -33,11 +34,11 @@
         h1 { text-align: center; color: var(--primary); margin-bottom: 30px; }
 
         /* منطقة البحث */
-        .search-container {
+        .search-box {
             display: flex;
             gap: 10px;
             justify-content: center;
-            margin-bottom: 40px;
+            margin-bottom: 20px;
         }
 
         input[type="text"] {
@@ -47,35 +48,72 @@
             border-radius: 50px;
             font-size: 16px;
             outline: none;
-            transition: 0.3s;
         }
 
-        input[type="text"]:focus { border-color: var(--accent); }
-
         button {
-            padding: 15px 35px;
+            padding: 12px 25px;
             background: var(--accent);
             color: white;
             border: none;
             border-radius: 50px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 16px;
+            transition: 0.3s;
         }
 
-        /* معلومات العميل العلوية */
+        button:hover { opacity: 0.8; }
+
+        /* قائمة اختيار العميل */
+        #selectionArea {
+            display: none;
+            background: #fffbe6;
+            padding: 15px;
+            border: 1px solid #ffe58f;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .customer-btn {
+            background: white;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .customer-btn:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        /* رأس البيانات */
         .customer-header {
             background: #ecf0f1;
             padding: 20px;
             border-radius: 10px;
             display: flex;
             justify-content: space-around;
+            align-items: center;
             margin-bottom: 25px;
-            border-right: 8px solid var(--accent);
+            position: relative;
         }
 
         .header-item b { color: var(--accent); display: block; margin-bottom: 5px; }
         .header-item span { font-size: 18px; font-weight: bold; }
+
+        .hide-btn {
+            background: #95a5a6;
+            font-size: 12px;
+            padding: 5px 10px;
+        }
+
+        .hidden-text {
+            filter: blur(5px);
+            user-select: none;
+        }
 
         /* الإحصائيات */
         .stats-grid {
@@ -93,65 +131,59 @@
         }
 
         .stat-card.blue { background: #34495e; }
-        .stat-card.green { background: #27ae60; }
         .stat-card.orange { background: #d35400; }
-
-        .stat-card h3 { margin: 0; font-size: 14px; opacity: 0.9; }
+        .stat-card.green { background: #27ae60; }
         .stat-card p { margin: 10px 0 0; font-size: 24px; font-weight: bold; }
 
         /* الجدول */
-        .table-wrapper { overflow-x: auto; margin-top: 20px; }
+        .table-wrapper { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; min-width: 1000px; }
-        th { background: #eee; padding: 12px; text-align: center; font-size: 13px; }
-        td { padding: 12px; text-align: center; border-bottom: 1px solid #eee; font-size: 14px; }
+        th { background: #eee; padding: 12px; font-size: 13px; }
+        td { padding: 12px; text-align: center; border-bottom: 1px solid #eee; }
 
-        /* حالة خاصة: عمر الدين > 30 */
         .over-30 { color: var(--danger) !important; font-weight: bold; }
-        .over-30 td { color: var(--danger); }
-
-        .loading { text-align: center; color: #666; padding: 20px; }
-        .error { color: var(--danger); text-align: center; padding: 20px; display: none; }
+        
+        .loading { text-align: center; padding: 20px; }
+        .error { color: var(--danger); text-align: center; display: none; padding: 20px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>كاشف مديونيات العملاء</h1>
+    <h1>كاشف المديونيات المطور</h1>
 
-    <div id="loadingMsg" class="loading">جاري تحميل ملف البيانات (1.xlsx)...</div>
+    <div id="loadingMsg" class="loading">جاري مزامنة ملف 1.xlsx...</div>
 
-    <div class="search-container">
-        <input type="text" id="searchInput" placeholder="أدخل جزء من اسم العميل أو الكود...">
-        <button onclick="search()">تحليل البيانات</button>
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="ابحث بجزء من الاسم أو الكود...">
+        <button onclick="handleSearch()">بحث</button>
     </div>
 
-    <div id="errorMsg" class="error">⚠️ لم يتم العثور على نتائج تطابق هذا البحث.</div>
+    <!-- منطقة اختيار العميل عند وجود نتائج متعددة -->
+    <div id="selectionArea">
+        <p>وجدنا أكثر من عميل، يرجى اختيار العميل المطلوب:</p>
+        <div id="customerList"></div>
+    </div>
+
+    <div id="errorMsg" class="error">❌ لم يتم العثور على نتائج.</div>
 
     <div id="resultsArea" style="display: none;">
-        <!-- بيانات العميل الرئيسية -->
         <div class="customer-header">
-            <div class="header-item"><b>اسم العميل</b><span id="res_name"></span></div>
+            <div class="header-item">
+                <b>اسم العميل</b>
+                <span id="res_name"></span>
+                <button class="hide-btn" onclick="toggleName()">إخفاء/إظهار الاسم</button>
+            </div>
             <div class="header-item"><b>كود العميل</b><span id="res_code"></span></div>
-            <div class="header-item"><b>اسم المندوب</b><span id="res_salesman"></span></div>
+            <div class="header-item"><b>المندوب</b><span id="res_salesman"></span></div>
         </div>
 
-        <!-- إحصائيات سريعة -->
         <div class="stats-grid">
-            <div class="stat-card blue">
-                <h3>إجمالي المشتريات</h3>
-                <p id="stat_total">0</p>
-            </div>
-            <div class="stat-card orange">
-                <h3>أقصى مدة سداد</h3>
-                <p id="stat_max">0</p>
-            </div>
-            <div class="stat-card green">
-                <h3>متوسط عمر الدين</h3>
-                <p id="stat_avg">0</p>
-            </div>
+            <div class="stat-card blue"><h3>إجمالي الفواتير</h3><p id="stat_total">0</p></div>
+            <div class="stat-card orange"><h3>أقصى مدة سداد</h3><p id="stat_max">0</p></div>
+            <div class="stat-card green"><h3>متوسط عمر الدين</h3><p id="stat_avg">0</p></div>
         </div>
 
-        <!-- جدول الفواتير -->
         <div class="table-wrapper">
             <table>
                 <thead>
@@ -159,13 +191,13 @@
                         <th>رقم الفاتورة</th>
                         <th>التاريخ</th>
                         <th>السندات</th>
-                        <th>قيمة الفاتورة</th>
+                        <th>القيمة</th>
                         <th>المرتجعات</th>
                         <th>المحصل</th>
                         <th>الخصم</th>
                         <th>المتبقي</th>
                         <th>تاريخ الإقفال</th>
-                        <th>عمر الدين (يوم)</th>
+                        <th>عمر الدين</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
@@ -177,102 +209,126 @@
 <script>
     let db = [];
 
-    // تحميل ملف الاكسل
+    // تحميل الملف
     window.onload = function() {
         fetch('1.xlsx')
             .then(res => res.arrayBuffer())
             .then(data => {
                 const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-                const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                db = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                
-                // تنظيف البيانات من العناوين
+                db = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
                 if (db.length > 0 && isNaN(db[0][1])) db.shift();
-                
                 document.getElementById('loadingMsg').style.display = 'none';
             })
-            .catch(err => {
-                document.getElementById('loadingMsg').innerHTML = "❌ خطأ في تحميل ملف 1.xlsx";
-            });
+            .catch(() => { document.getElementById('loadingMsg').innerHTML = "❌ خطأ في تحميل ملف 1.xlsx"; });
     };
 
-    function search() {
+    function handleSearch() {
         const query = document.getElementById('searchInput').value.trim().toLowerCase();
-        const resultsArea = document.getElementById('resultsArea');
-        const errorMsg = document.getElementById('errorMsg');
-        const tableBody = document.getElementById('tableBody');
-
         if (!query) return;
 
-        // فلترة (البحث بجزء من الاسم A أو الكود B)
-        const results = db.filter(row => {
-            const name = String(row[0] || "").toLowerCase();
-            const code = String(row[1] || "").toLowerCase();
-            return name.includes(query) || code.includes(query);
-        });
+        // إخفاء النتائج السابقة
+        document.getElementById('resultsArea').style.display = 'none';
+        document.getElementById('selectionArea').style.display = 'none';
+        document.getElementById('errorMsg').style.display = 'none';
 
-        if (results.length === 0) {
-            resultsArea.style.display = 'none';
-            errorMsg.style.display = 'block';
+        // البحث عن كل الصفوف المطابقة
+        const allMatches = db.filter(row => 
+            String(row[0] || "").toLowerCase().includes(query) || 
+            String(row[1] || "").toLowerCase().includes(query)
+        );
+
+        if (allMatches.length === 0) {
+            document.getElementById('errorMsg').style.display = 'block';
             return;
         }
 
-        errorMsg.style.display = 'none';
-        resultsArea.style.display = 'block';
+        // استخراج العملاء الفريدين (اسم + كود)
+        const uniqueCustomers = [];
+        const map = new Map();
+        for (const row of allMatches) {
+            const key = row[0] + "|" + row[1];
+            if (!map.has(key)) {
+                map.set(key, true);
+                uniqueCustomers.push({ name: row[0], code: row[1], salesman: row[2] });
+            }
+        }
+
+        if (uniqueCustomers.length > 1) {
+            // إظهار قائمة للاختيار
+            const listDiv = document.getElementById('customerList');
+            listDiv.innerHTML = "";
+            uniqueCustomers.forEach(c => {
+                const btn = document.createElement('button');
+                btn.className = 'customer-btn';
+                btn.innerText = `${c.name} (كود: ${c.code})`;
+                btn.onclick = () => showFinalResults(c.code);
+                listDiv.appendChild(btn);
+            });
+            document.getElementById('selectionArea').style.display = 'block';
+        } else {
+            // عميل واحد فقط، أظهر النتائج مباشرة
+            showFinalResults(uniqueCustomers[0].code);
+        }
+    }
+
+    function showFinalResults(customerCode) {
+        document.getElementById('selectionArea').style.display = 'none';
+        const resultsArea = document.getElementById('resultsArea');
+        const tableBody = document.getElementById('tableBody');
         tableBody.innerHTML = "";
 
-        // عرض بيانات الرأس (من أول نتيجة مطابقة)
-        document.getElementById('res_name').innerText = results[0][0] || "غير متوفر";
-        document.getElementById('res_code').innerText = results[0][1] || "غير متوفر";
-        document.getElementById('res_salesman').innerText = results[0][2] || "غير متوفر";
+        // فلترة البيانات لهذا العميل المحدد فقط
+        const customerRows = db.filter(row => String(row[1]) === String(customerCode));
 
-        let totalPurchases = 0;
-        let maxDays = 0;
-        let sumDays = 0;
+        // تعبئة الرأس
+        document.getElementById('res_name').innerText = customerRows[0][0];
+        document.getElementById('res_code').innerText = customerRows[0][1];
+        document.getElementById('res_salesman').innerText = customerRows[0][2];
+        document.getElementById('res_name').classList.remove('hidden-text');
 
-        results.forEach(row => {
-            const invoiceAmt = parseFloat(row[6]) || 0;
-            const debtAge = parseInt(row[13]) || 0;
-            
-            totalPurchases += invoiceAmt;
-            sumDays += debtAge;
-            if (debtAge > maxDays) maxDays = debtAge;
+        let sumInvoices = 0, maxAge = 0, totalAge = 0;
 
-            // تحديد إذا كان العمر > 30 لتغيير اللون
-            const isCritical = debtAge > 30 ? 'class="over-30"' : '';
+        customerRows.forEach(row => {
+            const amount = parseFloat(row[6]) || 0;
+            const age = parseInt(row[13]) || 0;
+            sumInvoices += amount;
+            totalAge += age;
+            if (age > maxAge) maxAge = age;
 
-            // تنسيق التواريخ
+            const tr = document.createElement('tr');
+            if(age > 30) tr.classList.add('over-30');
+
             const dateInv = row[4] instanceof Date ? row[4].toLocaleDateString('en-GB') : (row[4] || '-');
             const dateClose = row[12] instanceof Date ? row[12].toLocaleDateString('en-GB') : (row[12] || '-');
 
-            const tr = document.createElement('tr');
-            if(debtAge > 30) tr.classList.add('over-30');
-            
             tr.innerHTML = `
                 <td>${row[3] || '-'}</td>
                 <td>${dateInv}</td>
                 <td>${row[5] || '0'}</td>
-                <td>${invoiceAmt.toLocaleString()}</td>
+                <td>${amount.toLocaleString()}</td>
                 <td>${(row[7] || 0).toLocaleString()}</td>
                 <td>${(row[8] || 0).toLocaleString()}</td>
                 <td>${(row[9] || 0).toLocaleString()}</td>
                 <td>${(row[11] || 0).toLocaleString()}</td>
                 <td>${dateClose}</td>
-                <td>${debtAge}</td>
+                <td>${age}</td>
             `;
             tableBody.appendChild(tr);
         });
 
-        // تحديث الإحصائيات
-        document.getElementById('stat_total').innerText = totalPurchases.toLocaleString() + " ريال";
-        document.getElementById('stat_max').innerText = maxDays + " يوم";
-        document.getElementById('stat_avg').innerText = (sumDays / results.length).toFixed(1) + " يوم";
+        document.getElementById('stat_total').innerText = sumInvoices.toLocaleString() + " ريال";
+        document.getElementById('stat_max').innerText = maxAge + " يوم";
+        document.getElementById('stat_avg').innerText = (totalAge / customerRows.length).toFixed(1) + " يوم";
+
+        resultsArea.style.display = 'block';
+    }
+
+    function toggleName() {
+        document.getElementById('res_name').classList.toggle('hidden-text');
     }
 
     // البحث عند الضغط على Enter
-    document.getElementById('searchInput').addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') search();
-    });
+    document.getElementById('searchInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSearch(); });
 </script>
 
 </body>
