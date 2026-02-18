@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام فحص فواتير العملاء</title>
+    <title>نظام تحليل فواتير العملاء الشامل</title>
     <!-- مكتبة SheetJS لقراءة ملفات الاكسل -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
             --primary-color: #2c3e50;
-            --accent-color: #27ae60;
-            --bg-color: #f4f7f6;
+            --accent-color: #2980b9;
+            --success-color: #27ae60;
+            --bg-color: #f8f9fa;
         }
 
         body {
@@ -18,203 +19,230 @@
             background-color: var(--bg-color);
             margin: 0;
             padding: 20px;
-            color: #333;
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1300px;
             margin: 0 auto;
             background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
         }
 
         h1 {
             text-align: center;
             color: var(--primary-color);
-            border-bottom: 2px solid var(--accent-color);
+            margin-bottom: 30px;
+            border-bottom: 3px solid var(--accent-color);
+            display: inline-block;
+            width: 100%;
             padding-bottom: 10px;
         }
 
-        .search-box {
+        .search-section {
             display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
+            gap: 15px;
             justify-content: center;
+            margin-bottom: 30px;
         }
 
         input[type="text"] {
-            padding: 12px;
-            width: 60%;
+            padding: 12px 20px;
+            width: 400px;
             border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            outline: none;
-        }
-
-        input[type="text"]:focus {
-            border-color: var(--accent-color);
-        }
-
-        button {
-            padding: 10px 25px;
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
+            border-radius: 30px;
             font-size: 16px;
             transition: 0.3s;
         }
 
-        button:hover {
-            background-color: #219150;
+        input[type="text"]:focus {
+            border-color: var(--accent-color);
+            outline: none;
+            box-shadow: 0 0 8px rgba(41, 128, 185, 0.3);
         }
 
-        .stats-grid {
+        button {
+            padding: 12px 30px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #1c5982;
+        }
+
+        /* الإحصائيات */
+        .stats-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
             margin-bottom: 30px;
         }
 
         .stat-card {
-            background: #e8f5e9;
-            padding: 15px;
-            border-radius: 8px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
             text-align: center;
-            border-right: 5px solid var(--accent-color);
+            border: 1px solid #eee;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .stat-card.highlight {
+            border-top: 5px solid var(--success-color);
         }
 
         .stat-card h3 {
             margin: 0;
-            font-size: 14px;
-            color: #666;
+            font-size: 15px;
+            color: #7f8c8d;
         }
 
-        .stat-card p {
-            margin: 10px 0 0 0;
-            font-size: 20px;
+        .stat-card .value {
+            font-size: 22px;
             font-weight: bold;
             color: var(--primary-color);
+            margin-top: 10px;
+        }
+
+        /* الجدول */
+        .table-wrapper {
+            overflow-x: auto; /* للسماح بالتمرير الجانبي */
+            border-radius: 10px;
+            border: 1px solid #eee;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        th, td {
-            padding: 12px;
-            text-align: right;
-            border-bottom: 1px solid #ddd;
+            min-width: 1500px; /* لضمان عدم تداخل الأعمدة الكثيرة */
         }
 
         th {
             background-color: var(--primary-color);
             color: white;
+            padding: 15px;
+            font-size: 13px;
+            white-space: nowrap;
         }
 
-        tr:hover {
+        td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        tr:nth-child(even) {
             background-color: #f9f9f9;
         }
 
-        .error {
-            color: red;
-            text-align: center;
-            margin: 10px;
-            display: none;
+        tr:hover {
+            background-color: #f1f4f6;
         }
 
-        .loading {
-            text-align: center;
-            color: #666;
-        }
+        .loading { text-align: center; padding: 20px; color: #666; }
+        .error { color: #e74c3c; text-align: center; display: none; padding: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>نظام استعلام فواتير العملاء</h1>
+    <h1>نظام استعلام وتحليل الفواتير</h1>
 
-    <div id="loadingMsg" class="loading">جاري تحميل قاعدة البيانات (1.xlsx)...</div>
+    <div id="loadingMsg" class="loading">جاري مزامنة قاعدة البيانات (1.xlsx)...</div>
 
-    <div class="search-box">
-        <input type="text" id="searchInput" placeholder="أدخل كود العميل أو اسم العميل...">
-        <button onclick="searchCustomer()">بحث</button>
+    <div class="search-section">
+        <input type="text" id="searchInput" placeholder="ابحث باسم العميل أو كود العميل...">
+        <button onclick="searchData()">فحص البيانات</button>
     </div>
 
-    <div id="errorMsg" class="error">لم يتم العثور على بيانات لهذا العميل.</div>
+    <div id="errorMsg" class="error">عذراً، لم يتم العثور على أي بيانات مطابقة.</div>
 
     <div id="resultsArea" style="display: none;">
-        <div class="stats-grid">
-            <div class="stat-card">
-                <h3>إجمالي مبالغ الفواتير</h3>
-                <p id="totalAmount">0</p>
+        <!-- بطاقات الملخص -->
+        <div class="stats-container">
+            <div class="stat-card highlight">
+                <h3>إجمالي مبالغ الفواتير المشتراه</h3>
+                <div class="value" id="totalInvoices">0</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card highlight">
                 <h3>أقصى مدة سداد (يوم)</h3>
-                <p id="maxDays">0</p>
+                <div class="value" id="maxDebtAge">0</div>
             </div>
-            <div class="stat-card">
-                <h3>متوسط عمر الدين</h3>
-                <p id="avgDays">0</p>
+            <div class="stat-card highlight">
+                <h3>متوسط عمر الدين التقريبي</h3>
+                <div class="value" id="avgDebtAge">0</div>
             </div>
         </div>
 
-        <table id="detailsTable">
-            <thead>
-                <tr>
-                    <th>كود العميل</th>
-                    <th>اسم العميل</th>
-                    <th>مبلغ الفاتورة</th>
-                    <th>عدد السندات</th>
-                    <th>عمر الدين (بالأيام)</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                <!-- النتائج تظهر هنا -->
-            </tbody>
-        </table>
+        <!-- الجدول التفصيلي -->
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>اسم العميل</th>
+                        <th>كود العميل</th>
+                        <th>اسم المندوب</th>
+                        <th>رقم الفاتورة</th>
+                        <th>تاريخ الفاتورة</th>
+                        <th>سندات التحصيل</th>
+                        <th>إجمالي الفاتورة</th>
+                        <th>المرتجعات</th>
+                        <th>مبلغ التحصيل</th>
+                        <th>الخصم النقدي</th>
+                        <th>نسبة الخصم %</th>
+                        <th>المتبقي</th>
+                        <th>تاريخ الإقفال</th>
+                        <th>عمر الدين (يوم)</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- البيانات ستوضع هنا -->
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <script>
-    let excelData = [];
+    let rawExcelData = [];
 
-    // تحميل الملف تلقائياً عند فتح الصفحة
+    // تحميل الملف عند فتح الصفحة
     window.onload = function() {
         fetch('1.xlsx')
             .then(response => {
-                if (!response.ok) throw new Error("لم يتم العثور على ملف 1.xlsx بجانب الصفحة");
+                if (!response.ok) throw new Error("ملف 1.xlsx غير موجود بجانب ملف index.html");
                 return response.arrayBuffer();
             })
             .then(data => {
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
+                const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                 
-                // تحويل البيانات إلى JSON
-                // header: 1 تجعلنا نتعامل مع مصفوفات للوصول للأعمدة A, B, C...
-                excelData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                
-                // إزالة الصف الأول إذا كان يحتوي على العناوين
-                if (excelData.length > 0 && isNaN(excelData[0][1])) {
-                    excelData.shift(); 
+                // تحويل لصفوف (مصفوفات داخل مصفوفة)
+                // {header: 1} تعني أن A=0, B=1, C=2...
+                rawExcelData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+                // إزالة صف العناوين إذا كان موجوداً
+                if (rawExcelData.length > 0 && isNaN(rawExcelData[0][1])) {
+                    rawExcelData.shift();
                 }
 
                 document.getElementById('loadingMsg').style.display = 'none';
-                console.log("تم تحميل البيانات بنجاح");
+                console.log("Database Loaded");
             })
-            .catch(error => {
-                document.getElementById('loadingMsg').innerHTML = `<span style="color:red">خطأ: ${error.message}</span>`;
-                console.error(error);
+            .catch(err => {
+                document.getElementById('loadingMsg').innerHTML = `<b style="color:red">خطأ: ${err.message}</b>`;
             });
     };
 
-    function searchCustomer() {
+    function searchData() {
         const query = document.getElementById('searchInput').value.trim().toLowerCase();
         const resultsArea = document.getElementById('resultsArea');
         const errorMsg = document.getElementById('errorMsg');
@@ -222,11 +250,11 @@
 
         if (!query) return;
 
-        // فلترة البيانات بناءً على العمود A (الكود) أو العمود E (الاسم) إن وجد
-        const filtered = excelData.filter(row => {
-            const code = String(row[0] || "").toLowerCase();
-            const name = String(row[4] || "").toLowerCase(); // العمود E هو رقم 4 في المصفوفة
-            return code.includes(query) || name.includes(query);
+        // تصفية البيانات (بحث في A: الاسم أو B: الكود)
+        const filtered = rawExcelData.filter(row => {
+            const clientName = String(row[0] || "").toLowerCase();
+            const clientCode = String(row[1] || "").toLowerCase();
+            return clientName.includes(query) || clientCode.includes(query);
         });
 
         if (filtered.length === 0) {
@@ -239,43 +267,50 @@
         resultsArea.style.display = 'block';
         tableBody.innerHTML = "";
 
-        let totalSum = 0;
+        // متغيرات الحسابات
+        let sumInvoices = 0;
         let maxAge = 0;
-        let totalAge = 0;
+        let totalAgeForAvg = 0;
 
         filtered.forEach(row => {
-            const amount = parseFloat(row[1]) || 0;
-            const bonds = row[2] || 0;
-            const age = parseInt(row[3]) || 0;
-            const name = row[4] || "---"; // اسم العميل
+            // استخراج القيم بناءً على ترتيب الأعمدة الجديد
+            const invoiceAmount = parseFloat(row[6]) || 0; // العمود G
+            const debtAge = parseInt(row[13]) || 0;       // العمود N
+            
+            sumInvoices += invoiceAmount;
+            totalAgeForAvg += debtAge;
+            if (debtAge > maxAge) maxAge = debtAge;
 
-            totalSum += amount;
-            totalAge += age;
-            if (age > maxAge) maxAge = age;
-
-            // إضافة صف للجدول
+            // بناء صف الجدول
             const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${row[0]}</td>
-                <td>${name}</td>
-                <td>${amount.toLocaleString()}</td>
-                <td>${bonds}</td>
-                <td>${age}</td>
-            `;
+            // نقوم بالمرور على الأعمدة من 0 إلى 13 (A إلى N)
+            for(let i=0; i<14; i++) {
+                let cellValue = row[i];
+                
+                // تنسيق التاريخ إذا كان الخلية تحتوي على تاريخ
+                if(cellValue instanceof Date) {
+                    cellValue = cellValue.toLocaleDateString('en-GB');
+                }
+                
+                // تنسيق الأرقام الكبيرة بفاصلة
+                if(typeof cellValue === 'number' && i !== 1 && i !== 3) {
+                    cellValue = cellValue.toLocaleString();
+                }
+
+                tr.innerHTML += `<td>${cellValue || '0'}</td>`;
+            }
             tableBody.appendChild(tr);
         });
 
-        // تحديث البطاقات الإحصائية
-        document.getElementById('totalAmount').innerText = totalSum.toLocaleString(undefined, {minimumFractionDigits: 2}) + " ريال";
-        document.getElementById('maxDays').innerText = maxAge;
-        document.getElementById('avgDays').innerText = (totalAge / filtered.length).toFixed(1);
+        // تحديث البطاقات
+        document.getElementById('totalInvoices').innerText = sumInvoices.toLocaleString() + " ريال";
+        document.getElementById('maxDebtAge').innerText = maxAge + " يوم";
+        document.getElementById('avgDebtAge').innerText = (totalAgeForAvg / filtered.length).toFixed(1) + " يوم";
     }
 
-    // إضافة إمكانية البحث عند الضغط على Enter
+    // تشغيل البحث عند ضغط Enter
     document.getElementById('searchInput').addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-            searchCustomer();
-        }
+        if (e.key === 'Enter') searchData();
     });
 </script>
 
