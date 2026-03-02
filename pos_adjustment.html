@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html dir="rtl"><meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8"> <meta charset="UTF-8">
+
+  <head>
+    <title>POS ADJUSTMENT</title>
+
+
+
+
+<style>
+  body {
+   font-family: "Arial", sans-serif;
+  }
+  h1 {
+    color: navy;
+  }
+  form {
+    max-width: 500px;
+    margin: 10px auto;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  label {
+    display: block;
+    margin-bottom: 5px;
+  }
+  input[type="number"] {
+    width: 100%;
+    height: 40px;
+    padding: 0 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  h2 {
+    margin-top: 20px;
+    color: green;
+  }
+  p {
+    margin: 10px 0;
+    
+
+  }
+  span {
+    font-weight: bold;
+  }
+
+.watermark {
+  font-size: 72px;
+  font-weight: bold;
+  color: rgba(0, 0, 0, 0.05);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+</style>
+
+
+
+
+
+
+
+
+  </head>
+  <body>
+<div class="watermark">abdalla elmorsi 0550178050</div>
+   <center> <h1>للحصول على الاجمالي  </h1></center>
+    <form>
+      <label for="net_amount">ادخل صافي مبلغ الموازنة من كشف حساب البنك:</label><br>
+      <input type="number" id="net_amount" name="net_amount"><br>
+    </form> 
+    <h2>المخرجات:</h2>
+    <p> عمولة البنك 8 في الالف: <span id="bank_comm">0</span></p>
+    <p> الضريبة على عمولة البنك 15 في الميه: <span id="comm_vat">0</span></p>
+    <p>اجمالي المبلغ(كما هو موجود في بيان الموازنة): <span id="gross_amount">0</span></p>
+<br>
+<center>*************************************************</center>
+<br>
+
+
+ <center><h1> للحصول على الصافي </h1></center>
+    <form>
+      <label for="gross_amount_2">ادخل الاجمالي من بيان الموازنة من جهاز نقاط البيع:</label><br>
+      <input type="number" id="gross_amount_2" name="gross_amount_2"><br>
+    </form> 
+    <h2>المخرجات:</h2>
+    <p>عمولة البنك 8 في الالف: <span id="bank_comm_2">0</span></p>
+    <p>ضريبة القيمة المضافة على عمولة البنك 15 في الميه : <span id="comm_vat_2">0</span></p>
+    <p>صافي مبلغ الموازنة (كما سيظهر في كشف حساب البنك): <span id="net_amount_2">0</span></p>
+
+
+
+
+
+
+<script>
+  function updateOutput() {
+    var netAmount = document.getElementById("net_amount").value;
+    var bankComm = netAmount * (80/9908);
+    var commVat = bankComm * 0.15;
+    var grossAmount = parseFloat(netAmount) + parseFloat(bankComm) + parseFloat(commVat);
+    document.getElementById("bank_comm").innerHTML = bankComm.toFixed(2);
+    document.getElementById("comm_vat").innerHTML = commVat.toFixed(2);
+    document.getElementById("gross_amount").innerHTML = grossAmount.toFixed(2);
+  }
+  document.getElementById("net_amount").addEventListener("input", updateOutput);
+</script>
+
+
+
+
+<script>
+  function updateOutput() {
+    var grossAmount2 = document.getElementById("gross_amount_2").value;
+    var bankComm2 = grossAmount2 * (.008);
+    var commVat2 = bankComm2 * 0.15;
+    var netAmount2 = parseFloat(grossAmount2) - (parseFloat(bankComm2) + parseFloat(commVat2));
+    document.getElementById("bank_comm_2").innerHTML = bankComm2.toFixed(2);
+    document.getElementById("comm_vat_2").innerHTML = commVat2.toFixed(2);
+    document.getElementById("net_amount_2").innerHTML = netAmount2.toFixed(2);
+  }
+  document.getElementById("gross_amount_2").addEventListener("input", updateOutput);
+</script>
+
+
+
+
+  </body>
+</html>

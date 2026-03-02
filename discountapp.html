@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>حاسبة الخصومات المركبة</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: #f4f4f9;
+            padding: 10px;
+            margin: 0;
+            direction: rtl;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            margin: auto;
+            border-collapse: collapse;
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+
+        td {
+            padding: 10px;
+            text-align: right;
+            vertical-align: middle;
+        }
+
+        .input-cell input, .result-cell input {
+            width: 100%;
+            padding: 8px;
+            font-size: 14px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+
+        .result-cell input {
+            background-color: #f0f0f0;
+            color: #000;
+        }
+
+        .toggle-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+        }
+
+        #copyBtn {
+            display: block;
+            margin: 20px auto;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        #copyBtn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+<h2>حاسبة الخصم المركب</h2>
+
+<table>
+    <tr>
+        <th colspan="2">البيانات الأساسية</th>
+    </tr>
+
+    <tr>
+        <td>اسم العميل:</td>
+        <td class="input-cell">
+            <input type="text" id="customerName">
+        </td>
+    </tr>
+
+    <tr>
+        <td>كود العميل:</td>
+        <td class="input-cell">
+            <input type="text" id="customerCode">
+        </td>
+    </tr>
+
+    <tr>
+        <td>رقم الفاتورة:</td>
+        <td class="input-cell">
+            <input type="text" id="invoiceNumber">
+        </td>
+    </tr>
+
+    <tr>
+        <th colspan="2">المدخلات</th>
+    </tr>
+
+    <tr>
+        <td>إجمالي مبلغ الفاتورة شامل الضريبة:</td>
+        <td class="input-cell">
+            <input type="number" id="invoiceAmountWithTax" oninput="calculate()">
+        </td>
+    </tr>
+
+    <tr>
+        <td>اسم الصنف المشمول بالخصم:</td>
+        <td class="input-cell">
+            <input type="text" id="discountedItemName"
+                   value="مناديل ايجل 600 منديل"
+                   oninput="calculate()">
+        </td>
+    </tr>
+
+    <tr>
+        <td>إجمالي قيمة الصنف الذي يشمله العرض مع الضريبة:</td>
+        <td class="input-cell">
+            <input type="number" id="discountedItemWithTax" oninput="calculate()">
+        </td>
+    </tr>
+
+    <tr>
+        <td>
+            نسبة خصم الصنف:
+            <div class="toggle-group">
+                <label>
+                    <input type="checkbox" id="itemDiscountWithTaxToggle" onchange="calculate()" checked>
+                    مع ضريبة
+                </label>
+            </div>
+        </td>
+        <td class="input-cell">
+            <input type="number" id="discountPercentageItem" value="3" oninput="calculate()">
+        </td>
+    </tr>
+
+    <tr>
+        <td>
+            نسبة الخصم النقدي للفاتورة (30 يوم):
+            <div class="toggle-group">
+                <label>
+                    <input type="checkbox" id="invoiceDiscountWithTaxToggle" onchange="calculate()" checked>
+                    مع ضريبة
+                </label>
+            </div>
+        </td>
+        <td class="input-cell">
+            <input type="number" id="discountPercentageInvoice" value="0" oninput="calculate()">
+        </td>
+    </tr>
+
+    <tr>
+        <th colspan="2">النتائج</th>
+    </tr>
+
+    <tr>
+        <td>خصم الصنف:</td>
+        <td class="result-cell">
+            <input type="text" id="itemDiscountWithTax" readonly>
+        </td>
+    </tr>
+
+    <tr>
+        <td>قيمة الفاتورة بعد خصم العرض:</td>
+        <td class="result-cell">
+            <input type="text" id="invoiceAfterItemDiscount" readonly>
+        </td>
+    </tr>
+
+    <tr>
+        <td>الخصم النقدي للفاتورة:</td>
+        <td class="result-cell">
+            <input type="text" id="allInvoiceDiscount" readonly>
+        </td>
+    </tr>
+
+    <tr>
+        <td>إجمالي الخصومات:</td>
+        <td class="result-cell">
+            <input type="text" id="allDiscounts" readonly>
+        </td>
+    </tr>
+
+    <tr>
+        <td>المبلغ الواجب تحصيله:</td>
+        <td class="result-cell">
+            <input type="text" id="amountMustCollect" readonly>
+        </td>
+    </tr>
+</table>
+
+<button id="copyBtn" onclick="copyResults()">نسخ النتائج والإدخالات</button>
+
+<script>
+    function formatNumber(number) {
+        return Number(number || 0).toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+
+    function calculate() {
+        const TAX_RATE = 0.15;
+
+        const invoiceAmountWithTax = parseFloat(document.getElementById("invoiceAmountWithTax").value) || 0;
+        const discountedItemWithTax = parseFloat(document.getElementById("discountedItemWithTax").value) || 0;
+        const discountPercentageItem = parseFloat(document.getElementById("discountPercentageItem").value) || 0;
+        const discountPercentageInvoice = parseFloat(document.getElementById("discountPercentageInvoice").value) || 0;
+
+        const isItemDiscountWithTax = document.getElementById("itemDiscountWithTaxToggle").checked;
+        const isInvoiceDiscountWithTax = document.getElementById("invoiceDiscountWithTaxToggle").checked;
+
+        const itemBase = isItemDiscountWithTax ? discountedItemWithTax : discountedItemWithTax / (1 + TAX_RATE);
+        const itemDiscount = itemBase * (discountPercentageItem / 100);
+
+        const invoiceAfterItemDiscount = invoiceAmountWithTax - itemDiscount;
+
+        const invoiceBase = isInvoiceDiscountWithTax ? invoiceAfterItemDiscount : invoiceAfterItemDiscount / (1 + TAX_RATE);
+        const invoiceDiscount = invoiceBase * (discountPercentageInvoice / 100);
+
+        const allDiscounts = itemDiscount + invoiceDiscount;
+        const amountMustCollect = invoiceAmountWithTax - allDiscounts;
+
+        document.getElementById("itemDiscountWithTax").value = formatNumber(itemDiscount);
+        document.getElementById("invoiceAfterItemDiscount").value = formatNumber(invoiceAfterItemDiscount);
+        document.getElementById("allInvoiceDiscount").value = formatNumber(invoiceDiscount);
+        document.getElementById("allDiscounts").value = formatNumber(allDiscounts);
+        document.getElementById("amountMustCollect").value = formatNumber(amountMustCollect);
+    }
+
+    function copyResults() {
+        const getVal = id => document.getElementById(id).value;
+
+        const text = `
+📄 *بيانات الفاتورة*
+اسم العميل: ${getVal("customerName")}
+كود العميل: ${getVal("customerCode")}
+رقم الفاتورة: ${getVal("invoiceNumber")}
+
+🔢 *المدخلات:*
+إجمالي الفاتورة شامل الضريبة: ${formatNumber(getVal("invoiceAmountWithTax"))}
+اسم الصنف المشمول بالعرض: ${getVal("discountedItemName")}
+إجمالي الصنف المشمول بالعرض: ${formatNumber(getVal("discountedItemWithTax"))}
+نسبة خصم الصنف: ${getVal("discountPercentageItem")}% (${document.getElementById("itemDiscountWithTaxToggle").checked ? "مع ضريبة" : "بدون ضريبة"})
+نسبة الخصم النقدي: ${getVal("discountPercentageInvoice")}% (${document.getElementById("invoiceDiscountWithTaxToggle").checked ? "مع ضريبة" : "بدون ضريبة"})
+
+📊 *النتائج:*
+خصم الصنف: ${getVal("itemDiscountWithTax")}
+قيمة الفاتورة بعد خصم العرض: ${getVal("invoiceAfterItemDiscount")}
+الخصم النقدي: ${getVal("allInvoiceDiscount")}
+إجمالي الخصومات: ${getVal("allDiscounts")}
+المبلغ الواجب تحصيله: ${getVal("amountMustCollect")}
+        `.trim();
+
+        navigator.clipboard.writeText(text).then(() => {
+            alert("تم النسخ بنجاح");
+        });
+    }
+</script>
+
+</body>
+</html>
