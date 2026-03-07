@@ -1,76 +1,280 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp Status Converter</title>
+    <title>محول حالات الواتساب الذكي</title>
+    <!-- Tailwind CSS للتصميم السريع -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FFmpeg.wasm Core -->
     <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.7/dist/umd/ffmpeg.umd.js"></script>
     <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #121b22;
-            color: #e9edef;
+            font-family: 'Cairo', sans-serif;
+            background-color: #f0f2f5;
+            user-select: none;
+        }
+        .app-container {
+            max-width: 500px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
-            align-items: center;
-            padding: 20px;
         }
-        .container {
-            max-width: 500px;
-            width: 100%;
-            background: #1f2c33;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            text-align: center;
-        }
-        h2 { color: #00a884; }
-        .upload-area {
-            border: 2px dashed #8696a0;
-            padding: 30px;
-            border-radius: 8px;
-            margin: 20px 0;
-            cursor: pointer;
-        }
-        input[type="file"] { display: none; }
-        button {
-            background-color: #00a884;
+        .glass-header {
+            background: #075e54;
             color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 20px;
-            font-weight: bold;
+            padding: 20px;
+            text-align: center;
+            border-radius: 0 0 20px 20px;
+        }
+        .upload-zone {
+            border: 2px dashed #25d366;
+            border-radius: 15px;
+            padding: 40px 20px;
+            text-align: center;
+            margin: 20px;
             cursor: pointer;
-            width: 100%;
-            font-size: 16px;
+            transition: 0.3s;
         }
-        button:disabled { background-color: #3b4a54; cursor: not-allowed; }
-        #log {
-            font-size: 12px;
-            color: #8696a0;
+        .upload-zone:hover {
+            background: #e8f9ee;
+        }
+        #preview-container video, #preview-container img {
+            max-height: 400px;
+            width: 100%;
+            object-fit: contain;
+            border-radius: 10px;
             margin-top: 15px;
-            text-align: left;
-            height: 60px;
-            overflow-y: auto;
-            background: #111b21;
-            padding: 10px;
-            border-radius: 5px;
         }
-        .progress-bar {
+        .btn-primary {
+            background: #25d366;
+            color: white;
+            padding: 15px;
+            border-radius: 50px;
+            font-weight: bold;
             width: 100%;
-            height: 8px;
-            background: #3b4a54;
-            border-radius: 4px;
-            margin: 15px 0;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-primary:disabled {
+            background: #ccc;
+        }
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
             display: none;
         }
-        #progress-fill {
-            width: 0%;
-            height: 100%;
-            background: #00a884;
-            border-radius: 4px;
-            transition: width 0.3s;
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Header -->
+    <div class="glass-header">
+        <h1 class="text-xl font-bold">معالج حالات الواتساب</h1>
+        <p class="text-xs opacity-80">تحويل احترافي بجودة عالية HD</p>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 overflow-y-auto pb-20">
+        <!-- Upload Area -->
+        <div id="drop-zone" class="upload-zone">
+            <input type="file" id="file-input" class="hidden" accept="image/*,video/*">
+            <div id="upload-prompt">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-green-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.587-1.587a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <p class="text-gray-600 font-bold">اضغط لرفع صورة المنتج أو الفيديو</p>
+                <p class="text-xs text-gray-400 mt-1">سيتم ضبط الأبعاد تلقائياً إلى 1080x1920</p>
+            </div>
+            <div id="preview-container" class="hidden">
+                <!-- Preview will be injected here -->
+            </div>
+        </div>
+
+        <!-- Settings Info -->
+        <div class="px-5 mb-5">
+            <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                <h3 class="text-blue-800 font-bold mb-2 text-sm">إعدادات التحويل التلقائي:</h3>
+                <ul class="text-xs text-blue-700 space-y-1">
+                    <li>• الأبعاد: 1080×1920 (Portrait)</li>
+                    <li>• معدل الإطارات: 30fps</li>
+                    <li>• التنسيق: MP4 (H.264) عالي الجودة</li>
+                    <li>• مدة الفيديو: 10 ثوانٍ (للصور)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Action Button -->
+        <div class="px-5">
+            <button id="process-btn" class="btn-primary shadow-lg" disabled>
+                <span id="btn-text">ابدأ التحويل الآن</span>
+                <div id="loader" class="loader"></div>
+            </button>
+            <p id="status-msg" class="text-center text-xs mt-3 text-gray-500"></p>
+        </div>
+    </div>
+
+    <!-- Tab Bar (Design only) -->
+    <div class="border-t flex justify-around p-3 bg-white sticky bottom-0">
+        <div class="text-green-600 flex flex-col items-center">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
+            <span class="text-[10px]">الرئيسية</span>
+        </div>
+        <div class="text-gray-400 flex flex-col items-center">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+            <span class="text-[10px]">الإعدادات</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    const { FFmpeg } = ffmpeg;
+    const { fetchFile, toBlobURL } = ffmpegUtil;
+
+    let ffmpegInstance = null;
+    let selectedFile = null;
+
+    const fileInput = document.getElementById('file-input');
+    const dropZone = document.getElementById('drop-zone');
+    const processBtn = document.getElementById('process-btn');
+    const btnText = document.getElementById('btn-text');
+    const loader = document.getElementById('loader');
+    const statusMsg = document.getElementById('status-msg');
+    const previewContainer = document.getElementById('preview-container');
+    const uploadPrompt = document.getElementById('upload-prompt');
+
+    // 1. Initialize FFmpeg
+    async function initFFmpeg() {
+        if (ffmpegInstance) return;
+        
+        statusMsg.innerText = "جاري تحميل محرك المعالجة...";
+        ffmpegInstance = new FFmpeg();
+        
+        // Loading essential wasm files
+        const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+        await ffmpegInstance.load({
+            coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+            wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+        });
+        
+        statusMsg.innerText = "المحرك جاهز للاستخدام";
+    }
+
+    // 2. Handle File Selection
+    dropZone.onclick = () => fileInput.click();
+
+    fileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            selectedFile = file;
+            displayPreview(file);
+            processBtn.disabled = false;
+            initFFmpeg(); // Pre-load ffmpeg
+        }
+    };
+
+    function displayPreview(file) {
+        uploadPrompt.classList.add('hidden');
+        previewContainer.classList.remove('hidden');
+        previewContainer.innerHTML = '';
+
+        const url = URL.createObjectURL(file);
+        if (file.type.startsWith('image/')) {
+            const img = document.createElement('img');
+            img.src = url;
+            previewContainer.appendChild(img);
+        } else {
+            const video = document.createElement('video');
+            video.src = url;
+            video.controls = true;
+            previewContainer.appendChild(video);
+        }
+    }
+
+    // 3. Core Processing Logic
+    processBtn.onclick = async () => {
+        if (!selectedFile) return;
+
+        try {
+            processBtn.disabled = true;
+            btnText.innerText = "جاري المعالجة...";
+            loader.style.display = "block";
+
+            const inputName = 'input_' + selectedFile.name;
+            const outputName = 'whatsapp_status.mp4';
+
+            // Write file to FFmpeg virtual system
+            await ffmpegInstance.writeFile(inputName, await fetchFile(selectedFile));
+
+            let command = [];
+
+            if (selectedFile.type.startsWith('image/')) {
+                // If Image: Create 10s video, scale and crop to 1080x1920
+                command = [
+                    '-loop', '1', 
+                    '-i', inputName, 
+                    '-c:v', 'libx264', 
+                    '-t', '10', 
+                    '-pix_fmt', 'yuv420p', 
+                    '-vf', 'scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920',
+                    '-r', '30',
+                    outputName
+                ];
+            } else {
+                // If Video: Rescale and crop to 9:16
+                command = [
+                    '-i', inputName,
+                    '-c:v', 'libx264',
+                    '-crf', '23',
+                    '-vf', 'scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920',
+                    '-pix_fmt', 'yuv420p',
+                    outputName
+                ];
+            }
+
+            statusMsg.innerText = "بدأ التحويل.. قد يستغرق ذلك دقيقة للجودة العالية";
+            
+            await ffmpegInstance.exec(command);
+
+            // Read the result
+            const data = await ffmpegInstance.readFile(outputName);
+            const videoBlob = new Blob([data.buffer], { type: 'video/mp4' });
+            const videoUrl = URL.createObjectURL(videoBlob);
+
+            // Download Link
+            const downloadLink = document.createElement('a');
+            downloadLink.href = videoUrl;
+            downloadLink.download = 'Status_High_Quality.mp4';
+            downloadLink.click();
+
+            statusMsg.innerText = "تم التحويل بنجاح! جاري التحميل...";
+        } catch (error) {
+            console.error(error);
+            statusMsg.innerText = "حدث خطأ أثناء المعالجة";
+        } finally {
+            processBtn.disabled = false;
+            btnText.innerText = "ابدأ التحويل الآن";
+            loader.style.display = "none";
+        }
+    };
+</script>
+
+</body>
+</html>            transition: width 0.3s;
         }
         video {
             width: 100%;
