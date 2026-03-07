@@ -3,69 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>محول Eagle للواتساب | الاحترافي</title>
-    <!-- حل مشكلة SharedArrayBuffer تلقائياً -->
+    <title>محول Eagle الاحترافي</title>
+    <!-- حل مشكلة الأمان تلقائياً -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/coi-serviceworker/0.1.7/coi-serviceworker.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.7/dist/umd/ffmpeg.umd.js"></script>
     <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-        body { font-family: 'Cairo', sans-serif; background: #050505; color: white; }
-        .app-card { background: #0f0f0f; border: 1px solid #1f1f1f; border-radius: 40px; }
-        .glow-button { background: #25D366; transition: 0.3s; box-shadow: 0 0 20px rgba(37, 211, 102, 0.2); }
-        .glow-button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 0 30px rgba(37, 211, 102, 0.4); }
-        .progress-bar { height: 6px; background: #1a1a1a; border-radius: 10px; overflow: hidden; }
-        .progress-fill { width: 0%; height: 100%; background: #25D366; transition: width 0.3s ease; }
+        body { font-family: 'Cairo', sans-serif; background: #0c0c0c; color: white; }
+        .mobile-ui { max-width: 480px; width: 100%; background: #151515; border-radius: 40px; border: 1px solid #222; overflow: hidden; }
+        .upload-active { border-color: #25D366 !important; background: rgba(37, 211, 102, 0.05); }
+        .btn-primary { background: #25D366; color: black; font-weight: 900; transition: 0.3s; }
+        .btn-primary:disabled { background: #333; color: #666; cursor: not-allowed; }
+        #loading-screen { position: fixed; inset: 0; background: #000; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #222; border-top-color: #25D366; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-6">
+<body class="min-h-screen flex items-center justify-center p-4">
 
-<div class="max-w-md w-full app-card p-10 shadow-2xl">
+<!-- شاشة التحميل الأولية -->
+<div id="loading-screen">
+    <div class="spinner mb-4"></div>
+    <p class="text-sm font-bold tracking-widest text-gray-400">جاري تجهيز مختبر الجودة...</p>
+    <p class="text-[10px] text-gray-600 mt-2 italic">سيتم إعادة تشغيل الصفحة مرة واحدة تلقائياً لضبط الأمان</p>
+</div>
+
+<div class="mobile-ui shadow-2xl">
     <!-- Header -->
-    <div class="text-center mb-10">
-        <div class="w-16 h-16 bg-green-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-green-500/20">
-            <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-        </div>
-        <h1 class="text-2xl font-black mb-1">EAGLE HQ V4</h1>
-        <p class="text-gray-500 text-[10px] uppercase tracking-[0.3em]">H.264 High Profile 4.2</p>
+    <div class="p-8 text-center border-b border-white/5">
+        <h1 class="text-2xl font-black text-white">EAGLE <span class="text-green-500">PRO</span></h1>
+        <p class="text-[10px] text-gray-500 uppercase mt-1 tracking-[0.3em]">WhatsApp Status Engine</p>
     </div>
 
-    <!-- Upload Zone -->
-    <div id="drop-zone" class="border-2 border-dashed border-gray-800 rounded-[30px] p-12 text-center cursor-pointer hover:border-green-500/50 transition-all mb-8 group bg-black/20">
-        <input type="file" id="file-input" class="hidden" accept="image/*,video/*">
-        <div id="upload-ui">
-            <svg class="w-10 h-10 text-gray-700 mx-auto mb-4 group-hover:text-green-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-            <p class="text-sm font-bold text-gray-400">اختر صورة المنتج أو الفيديو</p>
+    <div class="p-8">
+        <!-- منطقة الرفع -->
+        <div id="drop-zone" class="border-2 border-dashed border-gray-800 rounded-3xl p-10 text-center transition-all cursor-pointer hover:bg-white/5 group relative">
+            <input type="file" id="file-input" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*,video/*">
+            
+            <div id="upload-content">
+                <div class="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.587-1.587a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </div>
+                <p class="text-sm font-bold">اضغط هنا لرفع الملف</p>
+                <p class="text-[10px] text-gray-500 mt-2 italic">الصور سيتم تحويلها لفيديو 10 ثوانٍ</p>
+            </div>
+
+            <div id="selected-content" class="hidden">
+                <p class="text-green-500 font-black mb-1">تم اختيار الملف ✓</p>
+                <p id="file-name" class="text-[10px] text-gray-400 truncate px-4"></p>
+            </div>
         </div>
-        <div id="selected-ui" class="hidden">
-            <p class="text-green-500 font-bold mb-1">تم التحميل ✓</p>
-            <p id="file-name" class="text-[10px] text-gray-600 truncate"></p>
+
+        <!-- Progress Bar -->
+        <div id="progress-area" class="mt-8 hidden">
+            <div class="flex justify-between text-[10px] font-black text-green-500 mb-2 uppercase">
+                <span>جاري المعالجة القصوى</span>
+                <span id="pct">0%</span>
+            </div>
+            <div class="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                <div id="fill" class="h-full bg-green-500 w-0 transition-all"></div>
+            </div>
         </div>
+
+        <!-- Action Button -->
+        <button id="start-btn" disabled class="btn-primary w-full py-5 rounded-2xl mt-8 shadow-xl shadow-green-500/10 uppercase tracking-widest text-xs">
+            بدء التصدير بجودة Eagle
+        </button>
     </div>
 
-    <!-- Processing State -->
-    <div id="process-ui" class="hidden mb-8">
-        <div class="flex justify-between text-[10px] font-bold mb-3 uppercase tracking-widest text-green-500">
-            <span>جاري تطبيق خوارزمية Eagle</span>
-            <span id="pct">0%</span>
-        </div>
-        <div class="progress-bar">
-            <div id="fill" class="progress-fill"></div>
-        </div>
-        <p class="text-[9px] text-gray-600 mt-4 leading-relaxed text-center">
-            إعدادات التحويل: 1080x1920 | 30FPS | YUV420P | CRF 18
-        </p>
-    </div>
-
-    <!-- Button -->
-    <button id="start-btn" disabled class="glow-button w-full py-5 rounded-2xl text-black font-black uppercase tracking-widest text-sm disabled:opacity-10 disabled:cursor-not-allowed">
-        بدء المعالجة الفائقة
-    </button>
-
-    <!-- Console Log -->
-    <div id="console-log" class="mt-8 text-[8px] font-mono text-gray-700 h-20 overflow-y-auto border-t border-gray-900 pt-4 leading-loose">
-        -- النظام بانتظار الملفات --
+    <!-- Footer Console -->
+    <div id="console" class="bg-black/50 p-4 h-24 overflow-y-auto font-mono text-[9px] text-gray-600 border-t border-white/5">
+        -- المحرك في حالة انتظار --
     </div>
 </div>
 
@@ -75,10 +85,20 @@
 
     let ff = null;
     const fileInput = document.getElementById('file-input');
+    const dropZone = document.getElementById('drop-zone');
     const startBtn = document.getElementById('start-btn');
-    const consoleLog = document.getElementById('console-log');
+    const loadingScreen = document.getElementById('loading-screen');
+    const consoleBox = document.getElementById('console');
 
-    async function init() {
+    function log(m) {
+        const d = document.createElement('div');
+        d.innerText = "> " + m;
+        consoleBox.appendChild(d);
+        consoleBox.scrollTop = consoleBox.scrollHeight;
+    }
+
+    // تهيئة المحرك
+    async function initFFmpeg() {
         ff = new FFmpeg();
         const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
         
@@ -87,40 +107,38 @@
                 coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
                 wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
             });
-            log("المحرك جاهز ومعزول أمنياً");
-            document.querySelector('h1').innerHTML += ' <span class="text-green-500 text-xs">●</span>';
+            log("تم تفعيل المحرك بنجاح");
+            loadingScreen.style.display = 'none'; // إخفاء شاشة التحميل عند الجاهزية
         } catch (e) {
-            log("خطأ في التحميل: " + e.message);
+            log("خطأ أمني: تأكد من تشغيل الملف عبر Live Server");
+            console.error(e);
         }
     }
 
-    function log(m) {
-        const d = document.createElement('div');
-        d.innerText = "> " + m;
-        consoleLog.appendChild(d);
-        consoleLog.scrollTop = consoleLog.scrollHeight;
-    }
-
-    fileInput.onchange = (e) => {
-        if(e.target.files[0]) {
+    // التعامل مع اختيار الملف
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            document.getElementById('upload-content').classList.add('hidden');
+            document.getElementById('selected-content').classList.remove('hidden');
+            document.getElementById('file-name').innerText = file.name;
+            dropZone.classList.add('upload-active');
             startBtn.disabled = false;
-            document.getElementById('upload-ui').classList.add('hidden');
-            document.getElementById('selected-ui').classList.remove('hidden');
-            document.getElementById('file-name').innerText = e.target.files[0].name;
-            log("تم اختيار: " + e.target.files[0].name);
+            log("تم استلام الملف: " + file.name);
         }
-    };
+    });
 
-    document.getElementById('drop-zone').onclick = () => fileInput.click();
-
+    // بدء المعالجة
     startBtn.onclick = async () => {
         const file = fileInput.files[0];
+        if (!file) return;
+
         startBtn.disabled = true;
-        document.getElementById('process-ui').classList.remove('hidden');
-        
-        const inName = 'input';
-        const outName = 'eagle_status.mp4';
-        
+        document.getElementById('progress-area').classList.remove('hidden');
+
+        const inName = 'input_raw';
+        const outName = 'eagle_hq_status.mp4';
+
         await ff.writeFile(inName, await fetchFile(file));
 
         ff.on('progress', ({ progress }) => {
@@ -131,17 +149,17 @@
 
         ff.on('log', ({ message }) => log(message));
 
-        // نسخ الـ Metadata للفيديو المرفق بدقة 100%
+        // إعدادات الميتا داتا والجودة للفيديو المرفق (Eagle)
         let args = [
             '-i', inName,
             '-vf', 'scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1',
             '-c:v', 'libx264',
             '-profile:v', 'high',
             '-level', '4.2',
-            '-crf', '18', // دقة بصرية فائقة
-            '-pix_fmt', 'yuv420p', // التنسيق اللوني للواتساب
-            '-r', '30', // معدل الإطارات
-            '-movflags', '+faststart', // تشغيل فوري
+            '-crf', '18',
+            '-pix_fmt', 'yuv420p',
+            '-r', '30',
+            '-movflags', '+faststart',
             outName
         ];
 
@@ -149,21 +167,23 @@
             args = ['-loop', '1', '-t', '10', ...args];
         }
 
+        log("جاري تطبيق خوارزمية الضغط العالي...");
         await ff.exec(args);
 
         const data = await ff.readFile(outName);
         const url = URL.createObjectURL(new Blob([data.buffer], { type: 'video/mp4' }));
-        
+
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'Eagle_HQ_Status.mp4';
+        a.download = 'Eagle_HQ_WhatsApp.mp4';
         a.click();
-        
-        log("تم التحويل! الملف جاهز للرفع.");
+
+        log("تم الاستخراج بنجاح! تحقق من التنزيلات.");
         startBtn.disabled = false;
     };
 
-    init();
+    // تشغيل التهيئة
+    initFFmpeg();
 </script>
 
 </body>
