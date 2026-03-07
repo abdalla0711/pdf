@@ -3,102 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eagle Quality Pro - V3</title>
+    <title>محول Eagle للواتساب | الاحترافي</title>
+    <!-- حل مشكلة SharedArrayBuffer تلقائياً -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/coi-serviceworker/0.1.7/coi-serviceworker.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- استخدام نسخة 0.11.6 المستقرة جداً -->
-    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.7/dist/umd/ffmpeg.umd.js"></script>
+    <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-        body { font-family: 'Cairo', sans-serif; background: #0a0a0a; color: white; }
-        .eagle-card { background: #141414; border: 1px solid #222; border-radius: 40px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
-        .loading-bar { height: 4px; background: #222; border-radius: 2px; overflow: hidden; }
-        .loading-progress { width: 0%; height: 100%; background: #25D366; transition: width 0.3s; box-shadow: 0 0 15px #25D366; }
+        body { font-family: 'Cairo', sans-serif; background: #050505; color: white; }
+        .app-card { background: #0f0f0f; border: 1px solid #1f1f1f; border-radius: 40px; }
+        .glow-button { background: #25D366; transition: 0.3s; box-shadow: 0 0 20px rgba(37, 211, 102, 0.2); }
+        .glow-button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 0 30px rgba(37, 211, 102, 0.4); }
+        .progress-bar { height: 6px; background: #1a1a1a; border-radius: 10px; overflow: hidden; }
+        .progress-fill { width: 0%; height: 100%; background: #25D366; transition: width 0.3s ease; }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen flex items-center justify-center p-6">
 
-<div class="max-w-md w-full eagle-card p-8 relative overflow-hidden">
-    <!-- Status Header -->
-    <div id="setup-status" class="mb-6 text-center">
-        <div class="inline-block px-4 py-1 rounded-full bg-yellow-500/10 text-yellow-500 text-[10px] font-bold uppercase tracking-widest mb-2" id="status-tag">
-            جاري تهيئة المحرك...
+<div class="max-w-md w-full app-card p-10 shadow-2xl">
+    <!-- Header -->
+    <div class="text-center mb-10">
+        <div class="w-16 h-16 bg-green-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-green-500/20">
+            <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
         </div>
-        <h1 class="text-2xl font-black">Eagle Optimizer</h1>
+        <h1 class="text-2xl font-black mb-1">EAGLE HQ V4</h1>
+        <p class="text-gray-500 text-[10px] uppercase tracking-[0.3em]">H.264 High Profile 4.2</p>
     </div>
 
-    <!-- Upload Area -->
-    <div id="drop-zone" class="border-2 border-dashed border-zinc-800 rounded-3xl p-10 text-center cursor-pointer hover:border-green-500 transition-all mb-6 group">
+    <!-- Upload Zone -->
+    <div id="drop-zone" class="border-2 border-dashed border-gray-800 rounded-[30px] p-12 text-center cursor-pointer hover:border-green-500/50 transition-all mb-8 group bg-black/20">
         <input type="file" id="file-input" class="hidden" accept="image/*,video/*">
         <div id="upload-ui">
-            <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">📁</div>
-            <p class="text-zinc-400 text-sm font-bold">ارفع الفيديو أو الصورة</p>
+            <svg class="w-10 h-10 text-gray-700 mx-auto mb-4 group-hover:text-green-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+            <p class="text-sm font-bold text-gray-400">اختر صورة المنتج أو الفيديو</p>
         </div>
         <div id="selected-ui" class="hidden">
-            <p class="text-green-500 font-bold text-sm">تم اختيار الملف ✓</p>
-            <p id="file-name" class="text-[10px] text-zinc-500 mt-1"></p>
+            <p class="text-green-500 font-bold mb-1">تم التحميل ✓</p>
+            <p id="file-name" class="text-[10px] text-gray-600 truncate"></p>
         </div>
     </div>
 
-    <!-- Progress UI (Hidden) -->
-    <div id="progress-container" class="hidden mb-6">
-        <div class="flex justify-between text-[10px] font-bold mb-2 uppercase">
-            <span class="text-green-500">جاري المعالجة بدقة عالية</span>
-            <span id="progress-text">0%</span>
+    <!-- Processing State -->
+    <div id="process-ui" class="hidden mb-8">
+        <div class="flex justify-between text-[10px] font-bold mb-3 uppercase tracking-widest text-green-500">
+            <span>جاري تطبيق خوارزمية Eagle</span>
+            <span id="pct">0%</span>
         </div>
-        <div class="loading-bar">
-            <div id="progress-bar" class="loading-progress"></div>
+        <div class="progress-bar">
+            <div id="fill" class="progress-fill"></div>
         </div>
-        <p id="eta" class="text-[9px] text-zinc-600 mt-2 text-center uppercase tracking-tighter">يتم الآن تطبيق إعدادات Profile High 4.2</p>
+        <p class="text-[9px] text-gray-600 mt-4 leading-relaxed text-center">
+            إعدادات التحويل: 1080x1920 | 30FPS | YUV420P | CRF 18
+        </p>
     </div>
 
-    <!-- Action Button -->
-    <button id="start-btn" disabled class="w-full bg-white text-black font-black py-4 rounded-2xl disabled:opacity-20 transition-all hover:bg-green-500 hover:text-white uppercase tracking-widest text-sm">
-        بدء التصدير النهائي
+    <!-- Button -->
+    <button id="start-btn" disabled class="glow-button w-full py-5 rounded-2xl text-black font-black uppercase tracking-widest text-sm disabled:opacity-10 disabled:cursor-not-allowed">
+        بدء المعالجة الفائقة
     </button>
 
-    <!-- Logs for debugging -->
-    <div id="logs" class="mt-6 text-[8px] font-mono text-zinc-700 h-16 overflow-y-auto border-t border-zinc-900 pt-2"></div>
+    <!-- Console Log -->
+    <div id="console-log" class="mt-8 text-[8px] font-mono text-gray-700 h-20 overflow-y-auto border-t border-gray-900 pt-4 leading-loose">
+        -- النظام بانتظار الملفات --
+    </div>
 </div>
 
 <script>
-    const { createFFmpeg, fetchFile } = FFmpeg;
-    
-    // إعداد FFmpeg بنسخة Single-thread لضمان عدم التجمد محلياً
-    const ffmpeg = createFFmpeg({ 
-        log: true,
-        corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js'
-    });
+    const { FFmpeg } = ffmpeg;
+    const { fetchFile, toBlobURL } = ffmpegUtil;
 
+    let ff = null;
     const fileInput = document.getElementById('file-input');
     const startBtn = document.getElementById('start-btn');
-    const logs = document.getElementById('logs');
-    const progressBar = document.getElementById('progress-bar');
-    const progressText = document.getElementById('progress-text');
+    const consoleLog = document.getElementById('console-log');
 
-    function log(msg) {
-        const div = document.createElement('div');
-        div.innerText = msg;
-        logs.appendChild(div);
-        logs.scrollTop = logs.scrollHeight;
-    }
-
-    // تهيئة المحرك عند التحميل
-    (async () => {
+    async function init() {
+        ff = new FFmpeg();
+        const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+        
         try {
-            await ffmpeg.load();
-            document.getElementById('status-tag').innerText = "المحرك جاهز للاستخراج";
-            document.getElementById('status-tag').className = "inline-block px-4 py-1 rounded-full bg-green-500/10 text-green-500 text-[10px] font-bold uppercase tracking-widest mb-2";
+            await ff.load({
+                coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+                wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+            });
+            log("المحرك جاهز ومعزول أمنياً");
+            document.querySelector('h1').innerHTML += ' <span class="text-green-500 text-xs">●</span>';
         } catch (e) {
             log("خطأ في التحميل: " + e.message);
         }
-    })();
+    }
+
+    function log(m) {
+        const d = document.createElement('div');
+        d.innerText = "> " + m;
+        consoleLog.appendChild(d);
+        consoleLog.scrollTop = consoleLog.scrollHeight;
+    }
 
     fileInput.onchange = (e) => {
-        if (e.target.files[0]) {
+        if(e.target.files[0]) {
             startBtn.disabled = false;
             document.getElementById('upload-ui').classList.add('hidden');
             document.getElementById('selected-ui').classList.remove('hidden');
             document.getElementById('file-name').innerText = e.target.files[0].name;
+            log("تم اختيار: " + e.target.files[0].name);
         }
     };
 
@@ -106,63 +115,55 @@
 
     startBtn.onclick = async () => {
         const file = fileInput.files[0];
-        if (!file) return;
-
         startBtn.disabled = true;
-        document.getElementById('progress-container').classList.remove('hidden');
+        document.getElementById('process-ui').classList.remove('hidden');
+        
+        const inName = 'input';
+        const outName = 'eagle_status.mp4';
+        
+        await ff.writeFile(inName, await fetchFile(file));
 
-        const inName = 'input_file';
-        const outName = 'eagle_final.mp4';
-
-        log("جاري قراءة الملف...");
-        await ffmpeg.writeFile(inName, await fetchFile(file));
-
-        ffmpeg.setProgress(({ ratio }) => {
-            const p = Math.round(ratio * 100);
-            progressBar.style.width = p + '%';
-            progressText.innerText = p + '%';
+        ff.on('progress', ({ progress }) => {
+            const p = Math.round(progress * 100);
+            document.getElementById('fill').style.width = p + '%';
+            document.getElementById('pct').innerText = p + '%';
         });
 
-        // أوامر الـ Metadata المطابقة 100% للفيديو المرفق:
-        // -c:v libx264 : الكوديك العالمي
-        // -pix_fmt yuv420p : لضمان عمله على واتساب بدون تلف
-        // -profile:v high -level 4.2 : إعدادات دقة Eagle
-        // -crf 18 : جودة فائقة جداً
-        const isImage = file.type.startsWith('image');
+        ff.on('log', ({ message }) => log(message));
+
+        // نسخ الـ Metadata للفيديو المرفق بدقة 100%
         let args = [
             '-i', inName,
             '-vf', 'scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1',
             '-c:v', 'libx264',
             '-profile:v', 'high',
             '-level', '4.2',
-            '-crf', '18',
-            '-pix_fmt', 'yuv420p',
-            '-r', '30',
-            '-movflags', '+faststart',
+            '-crf', '18', // دقة بصرية فائقة
+            '-pix_fmt', 'yuv420p', // التنسيق اللوني للواتساب
+            '-r', '30', // معدل الإطارات
+            '-movflags', '+faststart', // تشغيل فوري
             outName
         ];
 
-        if (isImage) {
+        if (file.type.startsWith('image')) {
             args = ['-loop', '1', '-t', '10', ...args];
         }
 
-        log("بدأ الترميز الاحترافي...");
-        await ffmpeg.run(...args);
+        await ff.exec(args);
 
-        log("جاري استخراج الملف النهائي...");
-        const data = ffmpeg.readFile(outName);
-        const blob = new Blob([data.buffer], { type: 'video/mp4' });
-        const url = URL.createObjectURL(blob);
-
+        const data = await ff.readFile(outName);
+        const url = URL.createObjectURL(new Blob([data.buffer], { type: 'video/mp4' }));
+        
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'Eagle_HQ_WhatsApp.mp4';
+        a.download = 'Eagle_HQ_Status.mp4';
         a.click();
-
-        log("تم بنجاح!");
+        
+        log("تم التحويل! الملف جاهز للرفع.");
         startBtn.disabled = false;
-        document.getElementById('status-tag').innerText = "تم التحميل بنجاح ✓";
     };
+
+    init();
 </script>
 
 </body>
