@@ -2,279 +2,1368 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>حاسبة الخصومات المركبة</title>
+    <title>حاسبة الخصومات - نظام إدارة العملاء</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        * {
-            box-sizing: border-box;
-            font-family: 'Arial', sans-serif;
+        :root {
+            --primary-color: #2563eb;
+            --danger-color: #ef4444;
+            --success-color: #22c55e;
+            --bg-color: #f1f5f9;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
         }
 
-        body {
-            background-color: #f4f4f9;
-            padding: 10px;
-            margin: 0;
-            direction: rtl;
-        }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-color); padding: 15px; margin: 0; direction: rtl; }
+        .container { max-width: 650px; margin: 0 auto; }
 
-        h2 {
-            text-align: center;
-            color: #333;
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
         }
 
-        table {
-            width: 100%;
-            margin: auto;
-            border-collapse: collapse;
-            background-color: #ffffff;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            border-radius: 10px;
-            overflow: hidden;
-        }
+        h2 { text-align: center; color: var(--primary-color); margin-top: 0; }
 
-        th {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px;
-            text-align: center;
-        }
-
-        td {
-            padding: 10px;
-            text-align: right;
-            vertical-align: middle;
-        }
-
-        .input-cell input, .result-cell input {
-            width: 100%;
-            padding: 8px;
-            font-size: 14px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            text-align: center;
-        }
-
-        .result-cell input {
-            background-color: #f0f0f0;
-            color: #000;
-        }
-
-        .toggle-group {
+        .section-title {
+            font-weight: bold;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 15px;
+            padding-bottom: 8px;
             display: flex;
             justify-content: space-between;
-            margin-top: 5px;
+            align-items: center;
         }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-size: 0.9rem; font-weight: 600; color: #475569; }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        /* تنسيق رقم الفاتورة */
+        .invoice-wrapper {
+            display: flex; align-items: center; direction: ltr;
+            background: #f8fafc; border: 2px solid var(--border-color);
+            border-radius: 8px; overflow: hidden;
+        }
+        .invoice-prefix { padding: 10px; background: #e2e8f0; font-weight: bold; }
+        .invoice-wrapper input { border: none; text-align: center; background: transparent; flex: 1; }
+        .invoice-sep { font-weight: bold; padding: 0 5px; }
+
+        /* أزرار الأصناف */
+        .btn-add {
+            background: var(--success-color); color: white; border: none;
+            padding: 12px; border-radius: 8px; cursor: pointer;
+            width: 100%; font-weight: bold; margin-bottom: 20px;
+        }
+
+        .btn-remove {
+            background: var(--danger-color); color: white; border: none;
+            padding: 5px 10px; border-radius: 5px; cursor: pointer;
+        }
+
+        .item-card {
+            border: 1px solid #cbd5e1; padding: 15px; border-radius: 10px;
+            margin-bottom: 15px; background: #fdfdfd; position: relative;
+        }
+
+        /* نتائج الحساب */
+        .results-box { background: #1e293b; color: white; padding: 20px; border-radius: 12px; }
+        .res-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .res-total { border-top: 1px solid #475569; padding-top: 10px; font-size: 1.25rem; color: var(--success-color); font-weight: bold; }
 
         #copyBtn {
-            display: block;
-            margin: 20px auto;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            font-size: 16px;
-            border-radius: 8px;
-            cursor: pointer;
+            width: 100%; background: var(--primary-color); color: white;
+            border: none; padding: 16px; border-radius: 8px;
+            font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 15px;
         }
 
-        #copyBtn:hover {
-            background-color: #45a049;
-        }
+        .hidden { display: none; }
+        datalist { background-color: white; }
     </style>
 </head>
 <body>
 
-<h2>حاسبة الخصم المركب</h2>
+<div class="container">
+    <h2>حاسبة الخصومات المتقدمة</h2>
 
-<table>
-    <tr>
-        <th colspan="2">البيانات الأساسية</th>
-    </tr>
+    <!-- بيانات العميل والفاتورة -->
+    <div class="card">
+        <div class="section-title">بيانات العميل والفاتورة</div>
+        
+        <div class="form-group">
+            <label>بحث باسم العميل</label>
+            <input type="text" id="customerName" list="customerNamesList" placeholder="اكتب اسم العميل..." oninput="onNameInput()">
+            <datalist id="customerNamesList"></datalist>
+        </div>
 
-    <tr>
-        <td>اسم العميل:</td>
-        <td class="input-cell">
-            <input type="text" id="customerName">
-        </td>
-    </tr>
-
-    <tr>
-        <td>كود العميل:</td>
-        <td class="input-cell">
-            <input type="text" id="customerCode">
-        </td>
-    </tr>
-
-    <tr>
-        <td>رقم الفاتورة:</td>
-        <td class="input-cell">
-            <input type="text" id="invoiceNumber">
-        </td>
-    </tr>
-
-    <tr>
-        <th colspan="2">المدخلات</th>
-    </tr>
-
-    <tr>
-        <td>إجمالي مبلغ الفاتورة شامل الضريبة:</td>
-        <td class="input-cell">
-            <input type="number" id="invoiceAmountWithTax" oninput="calculate()">
-        </td>
-    </tr>
-
-    <tr>
-        <td>اسم الصنف المشمول بالخصم:</td>
-        <td class="input-cell">
-            <input type="text" id="discountedItemName"
-                   value="مناديل ايجل 600 منديل"
-                   oninput="calculate()">
-        </td>
-    </tr>
-
-    <tr>
-        <td>إجمالي قيمة الصنف الذي يشمله العرض مع الضريبة:</td>
-        <td class="input-cell">
-            <input type="number" id="discountedItemWithTax" oninput="calculate()">
-        </td>
-    </tr>
-
-    <tr>
-        <td>
-            نسبة خصم الصنف:
-            <div class="toggle-group">
-                <label>
-                    <input type="checkbox" id="itemDiscountWithTaxToggle" onchange="calculate()" checked>
-                    مع ضريبة
-                </label>
+        <div class="row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+                <label>كود العميل</label>
+                <input type="text" id="customerCode" placeholder="الكود" oninput="onCodeInput()">
             </div>
-        </td>
-        <td class="input-cell">
-            <input type="number" id="discountPercentageItem" value="3" oninput="calculate()">
-        </td>
-    </tr>
-
-    <tr>
-        <td>
-            نسبة الخصم النقدي للفاتورة (30 يوم):
-            <div class="toggle-group">
-                <label>
-                    <input type="checkbox" id="invoiceDiscountWithTaxToggle" onchange="calculate()" checked>
-                    مع ضريبة
-                </label>
+            <div class="form-group">
+                <label>رقم الفاتورة</label>
+                <div class="invoice-wrapper">
+                    <span class="invoice-prefix">wh0</span>
+                    <input type="number" id="invP1" placeholder="4" oninput="if(this.value.length > 1) this.value = this.value.slice(0,1)">
+                    <span class="invoice-sep">-</span>
+                    <input type="number" id="invP2" placeholder="1031">
+                </div>
             </div>
-        </td>
-        <td class="input-cell">
-            <input type="number" id="discountPercentageInvoice" value="0" oninput="calculate()">
-        </td>
-    </tr>
+        </div>
 
-    <tr>
-        <th colspan="2">النتائج</th>
-    </tr>
+        <div class="form-group">
+            <label>إجمالي الفاتورة (شامل الضريبة)</label>
+            <input type="number" id="mainInvoiceAmount" oninput="calculateAll()" placeholder="0.00">
+        </div>
+    </div>
 
-    <tr>
-        <td>خصم الصنف:</td>
-        <td class="result-cell">
-            <input type="text" id="itemDiscountWithTax" readonly>
-        </td>
-    </tr>
+    <!-- قسم الخصومات -->
+    <div class="section-title">خصومات الأصناف</div>
+    <div id="itemsContainer"></div>
+    <button class="btn-add" onclick="addItemRow()">+ إضافة صنف مخصوم جديد</button>
 
-    <tr>
-        <td>قيمة الفاتورة بعد خصم العرض:</td>
-        <td class="result-cell">
-            <input type="text" id="invoiceAfterItemDiscount" readonly>
-        </td>
-    </tr>
+    <!-- الخصم النقدي -->
+    <div class="card">
+        <div class="section-title">
+            <span>الخصم النقدي (30 يوم)</span>
+            <input type="checkbox" id="cashToggle" onchange="calculateAll()">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+                <label>النسبة %</label>
+                <input type="number" id="cashPercent" value="2" oninput="calculateAll()">
+            </div>
+            <div class="form-group" style="display: flex; align-items: center; padding-top: 25px;">
+                <input type="checkbox" id="cashTaxToggle" checked onchange="calculateAll()" style="width: auto; margin-left: 10px;">
+                <label style="margin-bottom: 0;">شامل الضريبة</label>
+            </div>
+        </div>
+    </div>
 
-    <tr>
-        <td>الخصم النقدي للفاتورة:</td>
-        <td class="result-cell">
-            <input type="text" id="allInvoiceDiscount" readonly>
-        </td>
-    </tr>
+    <!-- النتائج -->
+    <div class="results-box">
+        <div class="res-row"><span>خصومات الأصناف:</span> <span id="outItemTotal">0.00</span></div>
+        <div class="res-row"><span>خصم السداد:</span> <span id="outCashTotal">0.00</span></div>
+        <div class="res-row res-total"><span>الصافي المطلوب:</span> <span id="outFinal">0.00</span></div>
+    </div>
 
-    <tr>
-        <td>إجمالي الخصومات:</td>
-        <td class="result-cell">
-            <input type="text" id="allDiscounts" readonly>
-        </td>
-    </tr>
-
-    <tr>
-        <td>المبلغ الواجب تحصيله:</td>
-        <td class="result-cell">
-            <input type="text" id="amountMustCollect" readonly>
-        </td>
-    </tr>
-</table>
-
-<button id="copyBtn" onclick="copyResults()">نسخ النتائج والإدخالات</button>
+    <button id="copyBtn" onclick="copyToClipboard()">نسخ التقرير النهائي</button>
+</div>
 
 <script>
-    function formatNumber(number) {
-        return Number(number || 0).toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
+    // ==========================================
+    // منطقة لصق بيانات العملاء (الصق الـ 1000 عميل هنا)
+    // ==========================================
+    const rawCustomerData = `
+       2-رواد المنظفات - RWWAD ALMONAZFAT
+4-حسن البارقي-HASSAN ABARQI
+5-مؤسسة سعد سعيد الشمري - ALSHEMMARY
+6-مؤسسة درة السبوق للتجارة - DORT ALSBOOQ FOR TRADING
+7-مؤسسة زين بلس للمنتجات البلاستيكية - ZAIN PLUS EST FOR PLASTIC PRODUCTS
+8-مؤسسة صالح محمد احمد جحلان المروج- SALEH BN GAHLAN MROOJ
+9-مركز زهرة التسوق التجاري - ZAHRET ALTASAWQ
+10-مؤسسة موقع الغذاء للمواد الغذائية-FOOD CENTER
+11-مركز بصمة التوفير للتجارة - BASMT ALTAWFEER CENTER
+1000-مبيعات نقدية نسيم خان-naseem cash
+20210-مؤسسة ايلاف الجوف التجارية - EELAF ALJOUF
+20211- مؤسسة عبدالمحسن حمد سالم القبساني - ALQABASANY
+20213-مجمع خذلك لفه التجارى - KHOZIK IFA MAII
+20214- مؤسسة نسمة الشمال للتجارة - nessmat ash shmal 
+20216-تنزيلات رحمه -RAHMA DISCOUNT
+20217-تنزيلات القمة-ALQEEMA DISCOUNT
+20218-اسواق الخميس -ALKHAMEES MARKTS
+20219-تموينات قف وتسوق-STOP AND SHOP GROCERY
+20220-تموينات الشروق-ALSHROOUQ GROCERY
+20221-تموينات العريعر- erairar grocery
+20222-تموينات الخير - ALKHEER GROCERY
+20223-تخفيضات الشمس - alshams discount
+20236-مؤسسة صالحة علي العمري - SALHA ALI ALEMARY 
+20238-تموينات انعام الفيصل - ANAAM ALFAISAL GROCERY
+20240-درة عبدالعزيز للاواني المنزليه - DORT ABDELAZIZ
+20241-تموينات ركن المصيف - ROKN ALMASEEF GROCERY
+20243-تموينات سلاف ثلاثة للمواد الغذائيه-SOLAF 3 GROCERY
+20244-تموينات ملاك فليح ظاهر الشراري1-malak grocery1
+20245-اسواق لقاء تبوك التجارية- LQAA TABUK MARKETS
+20246-تموينات رغيف الغذاء - RAAGEEF ALGEZAA
+20247-تموينات احمد هليل رشيد العطوي- AHMED HLAYEL ALATWY
+20248-تموينات الوطن الندي للمواد الغذائية-ALWATAN ALNADI
+20249-تموينات قمة ركن طيبة للمواد الغذائية-QMT RKN TYBA
+20250-تموينات سما الاندلس للمواد الغذائية-SMA ALANDALUS 
+20251-تموينات احمد سلطان محمد ابو دميك-AHMED SOLTAN 
+20252-مؤسسة قاسم صبحي البلوي-QASSEM SOBHI ALBALAWY EST
+20253-مؤسسة سلة بيتك للمواد الغذائية-SALT BYTK GROCERY
+20254-تموينات اعمال نجد للمواد الغذائية-amal ngd grocery
+20255-تموينات بندر سالم طريق ضبا -BANDR SALEM GROCERY
+20256-تموينات قطب تبوك - QOTB TABUK GROCERY
+20257-تموينات الماجد - ALMAJED GROCERY
+20258-تموينات شوق 3 - SHOUK 3 GROCERY
+20260-بقالة ليالي نجد - LYALY NAJD GROCERY
+20261-تموينات زهرة الثلاثين للمواد الغذائية-ZAHRT 30TH 
+20262-محل ابداع لمار للمواد الغذائية-EBDAA LAMAR GROCERY
+20264-مؤسسة مناور العنزي لبيع المواد الغذائية - MNAWR ALONAZI EST FOR FOODSTUFFS
+20265-سبأ القريات للأواني المنزلية -SABAA ALQURAYAT
+20266-تموينات الصبغاء للمواد الغذائية-ALSABGHAA GROCERY
+20267-تموينات قرية الحديثه - ALHADITHA VILLAGE GROCERY
+20268-تموينات حسين جواد صبيح العنزي - GAWAD GROCERY
+20269-شركة السالمية للمواد الغذائية - ALSALMYA COMPANY
+20270-مؤسسة خليل محمد حسن عسيري للتجارة النور المبين - KHALEL MOHAMED HASSAN AAESIRI FOR TRDING ALNOOR AMOBEEN
+20271-الشروق المتميز للتجارة - ALSHROOQ ALMOTAMYEEZ 
+20272-مؤسسة هلال المروج - HELAL ALMROJ EST
+20273-مبيعات نقدية حسن قدور - HASSAN KADDOUR CASH
+20274-اسواق السلمان المركزيه - ALSALMAN CENTRAL MARKETS
+20275-تموينات راكان مهدي مسلم العطوي-RAKAN ALAATWY 
+20276-اسواق الشهيلي-ASHHEELY MARKETS
+20278-مبيعات نقدية سرونان-SARAVANAN CASH
+20279-تموينات ليث - LAITH GROCERY
+20280-تموينات لؤلؤة نجد الماسة الأولى بالتسهيلات -LOALAT NJD MSA OLA
+20281-تموينات عائشة محمد البلوي- EASHA ALBALAWY GROCERY
+20282-مؤسسة اسواق الاتحاد للموادالغذائية-ALETHAD MARKETS
+20283-لؤلؤة الشمال للتنزيلات - LOALOAT ASHSHMAL DISCONT
+20284-تموينات سهم الميدان للمواد الغذائية- SAHM ALMYDAN 
+20285-اسواق العرجان-ALARJAN MARKETS
+20286-تموينات الوليد - ALWALEED GROCERY
+20287-مؤسسة روئع مختلفة التجارية - RWAEAA MOKHTLEFA EST
+20289-تموينات دلع الأولى - DALAA ALOLA GROCERY
+20291-شركة متاجر قوت المحدودة-Qout Stores Company Ltd.
+20292-مؤسسة سعيده علي حسين دوداني للمواد الغذائية-SAAIDA
+20293-مؤسسة سندس الخليج - SONDOS ALKHALEEJ EST
+20294-مؤسسة ديوان التوفير التجارية - DEWAN ALTWFEER EST
+20295-تموينات المدينة - ALMADINA GROCERY
+20296-تموينات قمة الصفا للمواد الغذائية- QMT ALSAFA 
+20297-سواق شموع البوادي للمواد الغذائية-SHMOAA ALBWADY
+20298-اسوق قمة الأخضر للمواد الغذائية-QMT AKHDAR GROCERY
+20299-مؤسسة وفاء حسن عبدالكريم هاشم-wafaa hassan est
+20300-مؤسسة احمد سالم حمود العطوي-ahmed Salem alaatwy es
+20301-تموينات جود البوادي للمواد الغذائيه-jwd albwady gr
+20302-تموينات دلال سلامة العطوي-Dalal slama Alaatwy groc
+20303-تموينات احمد محمد البلوي-ahmed mohamed elbalawy gr
+20304-مؤسسة منابر الصفوة-mnaber alsafwa est
+20305-محل البرواز للأواني المنزلية-BRWAZ SHOP
+20306-محل انفال للأواني المنزلية - ANFAL SHOP
+20307-سوبر ماركت بندر بن محمود خالد-BNDR BN MHMOD SUPERM
+20308-تموينات فاطمة سالم علي العطوي للمواد الغذائية-FTMA
+20309-تموينات لوزه شحادي محمد الحسن-LOZA SHAHAZY GROCERY
+20310-تموينات اصالة البوادي-ASALT ALBWADY GROCERY
+20311-تموينات اركان الشفاء للمواد الغذائية-ARKN ASHFAA 
+20312-محامص وعطارة فنجان الشيوخ-FNGAN ASHYOOKH
+20313-تموينات صباح مضحي الشراري للمواد الغذائية-SBAH MDH
+20314-تموينات برق تبوك للمواد الغذائية- BARQ TABUK GROCE
+20315-مؤسسة واحة الشلال للمواد الغذائية-WAHT ALSHLAL EST
+20316-بقالة فواز حماد محمد  الجهني للمواد الغذائية-FAWAZ
+20317-اسواق درة المصيف - DORT AL MASEEF MARKETS
+20318-اسواق زهرة المطار -Zahrt almatar markets
+20319-مؤسسة عالم المنظفات التجارية-ALAM ALMONZFAT EST
+20321-تموينات علي نشبان للمواد الغذائية - ALI NSHBAN GRO
+20322-تموينات ثمار الرزق للمواد الغذائية-THMAR ALREZQ GR
+20323-مؤسسة ركن زهرة الشمال التجارية-ROKN ZHRT ALSHAMAL 
+20324-مؤسسة نجمة الخميس للمواد الغذائية- NGMT ALKHAMEES
+20325-محل ركن بلاش للأواني المنزلية - ROKN BLASH SHOP
+20326-مؤسسة العزم الذهبية للتجارة-ALAZM ALZHBYA EST 
+20327-شركة ساحة الباسم-SAHAT ALBASEM COMPANY
+20328-مؤسسة اورانج ماركت للتجارة1- ORANGE MARKET EST1
+20329-مؤسسة الرفاهية للمواد الغذائية-ALRFAHYAH EST
+20330-مؤسسة اورانج ماركت للتجارة2-ORANG MARKET EST2
+20331-تموينات احدث توفير للمواد الغذائية-AHDAS TAWFEER
+20332-تموينات مساعد للمواد الغذائية - MESAAD GROCERY FOR FOOD STUFF
+20333-أسواق شعلة الريان المركزية-SHOAALT ARYAN MARKETS
+20334-تخفيضات الاسرة - ALOSRA DISCOUNTS 
+20335-مؤسسة فايز محمد حمدان العطوي للمواد الغذائية-fayz 
+20336-مؤسسة ركن عالم الكمليات التجارية-ROKN ALM ALKMLYAT
+20337-تموينات عبدالله سليمان عيد العطوي-EED ALATWY GROC
+20338-تموينات كوكبة الريان-KOKABT ALRYAN GROCERY
+20339-مؤسسة نجود محسن العطوي-NJOOD ALATWY EST
+20340-مؤسسة مسك الفال للتجارة- MISK ALFAL EST for tradin
+20341-أسواق شعلة العيد-shoaalt alaid markets
+20342-تموينات الخميس - ALKHAMEES GROCERY
+20343-هايبر طيبات الرزق-TYBAT ALRIZK HAYBER
+20344-مؤسسة سالم محمد بن جحلان للتجارة-SALEH BN GAHLAN 
+20345-تموينات عمار عود البلوي للمواد الغذائية-AMMAR GROC
+20346-تموينات نجمة فارس للمواد الغذائية-NGMT FARIS GROCE
+20347-مؤسسة ماجد زين الشافعي للتجارة-MAGED ZAIN AL SHAFAAY EST FOR TRADING
+20348-تموينات سلة الوهج-SALT ALWAHAJ GROCERY
+20349-مؤسسة العافية الطبية-ALAAFIA ALTBYA EST
+20350-شركة سلة التوفير الراقية المحدودة-Slt altwfer rkya
+20351-مؤسسة أحمد عبدالله علي العطاس التجارية مركز نور -NOOR CENTER
+20352-مؤسسة صقر للتغليف التجارية-SAQR PACKING
+20353-تموينات مركز طيبة-TIBA GROCERY CENTER
+20354-تموينات الدبكل-ALDABKAL GROCERY
+20355-مؤسسة علي صالح القحطاني للكماليات-ALKAHTANI EST
+20356-مؤسسة كيلو باك التجارية - KILO PACK TRADING EST
+20357-مؤسسة عبدالله علي ساير  العنزي للكماليات - ABDALLA SAEER ALONAZI
+20358-شركة ركن طريف الدولي للمواد الغذائية-ROKN TOREF 
+20359-مؤسسة هدايا النجوم التجارية-HADYA ANJOOM EST
+20360-شركة البيت المنافس التجارية-ALBEET AMONAFES CO
+20361-تموينات ارض الرمال للمواد الغذائية-ARD ALREMAL GROCERY
+20362-مؤسسة درة البركه للمنتجات البلاستيكية-DORT ALBARKA
+20363-بقالة الافراح للمواد الغذائية-ALAFRAH GROCERY
+20364-سويلم حريثان دخيل الله الشراري-SOILAM HRYTHAN GROCERY
+20365-شركة ناصرية الجوف لتجارة الجملة والتجزئة- NASRIT AJOOF COMPANY
+20366-شركة روضة البلاستيك للتجارة الجيلاني -RODAT ALBLASTIC FOR TRADING CO
+20367-مؤسسة دار السالمين للمواد الغذائية-DAR ALSALMEEN EST
+20368-مؤسسة أنور محمد الحويطي التجارية-ANWAR ALHWETTY EST
+20369-تموينات حلا المركزية- HALA CENTRAL GROCERY
+20370-مركز نايف ختام غنمان الشراري التجاريه (اسواق منيرة)-GNMAN ASHRARY
+20371-مجمع سعود سلطان سعود العتيبي الطبي - SAUD SULTAN ALOTIBY MEDICAL MALL
+20372-تموينات سماء الظهران للمواد الغذائية-SMAA ALZAHRAN GROCERY
+20373-تموينات ركن البيدر-ROKN ALBAYDER GROCERY
+20374-مؤسسة مشاري عبدالله العنزي للكماليات- Mashary Abdalla AlEnazzi EST
+20375-اسواق السند المركزية-ALSANAD CENTRAL MARKETS
+20376-اسواق بوادي الشفاء للتجارة-BWADY ALSHEFAA  MARKETS FOR TRADING
+20377-ثلاجة شروق النور للمواد الغذائية -Shorouk El Nour refrigerator for food stuff
+20378-تموينات الخليج الرئيسي للمواد الغذائية-ALKHALEEJ ALRAAESY Grocery for foodstuffs
+20379-تموينات اسواق البندر-Al Bandar Markets Grocery
+20380-تموينات الحمد-ALHAMAD GROCERY
+20381-محلات الهطلاني لبيع المواد الغذائية-ALHATALANY SHOPS FOR FOOD STUFF
+20382-مؤسسة سلة الشامل للتجارة القريات 2-  SLAT ALSHAMEL EST FOR TRADING ALQURAYAT2
+20383-تموينات توحيد العرب للمواد الغذائية-TAWHEED ALARAB GROCERY FOR FOODSTUFF
+20384-أسواق النعيم التجارية-Al Naeem Commercial Markets
+20385-تموينات المبارك - ALMOUBARK GROCERY
+20386-تموينات صالح سحيمان عقلاء الشراري للمواد الغذائية-SALEH GROCERY
+20387-اسواق بساتين تبوك الخضراء للتجارة- BASATEEN TABUK ALKHADRAA MARKTS FOR TRADING
+20388-مزعل عايد صالح العقيلي - MZAAEL AAYED SALEH ALOKELY
+20389-سوبر ماركت غيث للمواد الغذائية-SUPERMARKET GHEETH FOR FOODSTUFF
+20390-تموينات جنة الاسرة الغذائية- GANT ALOSRA GROCERY
+20391-مؤسسة مبارك بنية الشراري التجارية - MUBARK BNYA ALSHRARY COMMERCIAL EST
+20392-تموينات سحاب الجوف للمواد الغذائية-SHAB ALJOUF GROCERY
+20393-تموينات زهور تبوك للمواد الغذائية - ZOHOR TABUK GROCERY FOR FOODSTUFF
+20394-شركة الصخري العربيه التجارية - ALSAKHRY ALARABIA COMMERCIAL CO
+20395-اسواق الريان - ALRAYAN MARKETS
+20396-تموينات قمر النهضة للمواد الغذائية-KAMAR ALNAHDA GROCERY
+20397-مؤسسة عبدالله صالح عبدالله الخضيري-ABDALLA ALKHODERY GROCERY
+20398-اسواق المعارك المركزية - ALMAAREK CENTRAL MARKETS
+20400-تموينات طراد موسى العقبي - tarad mousa aloqaby grocery
+20401-تموينات بيت النهضة - BEET ALNAHDA GROCERY
+20402-محل مريم حسن الكعبي للكماليات - MARIAM ALKAABY SHOP
+20403-تموينات نبع تبوك للواد الغذائية - NABAA TABUK GROCERY FOR FOOD STUFF
+20404-مؤسسة حمدة طلاق عوده البلوي التجارية - HAMDA ODA BLWY EST
+20405-مبيعات نقدية بوني امين - BONI AMIN CASH
+20406-تموينات الهيام للمواد الغذائية - ALHAYAM GROCERY FOR FOOD STUFF
+20407-تموينات محمد مزيد احمد ياسين مباركي للمواد الغذائية - mohamed mazyed yaseen moubarky grocery
+20408-تموينات اطلال القريات للمواد الغذائية - ATLAL ALQURAYAT GROCERY
+20409-مؤسسة جوهرة الروضة للمواد الغذائية - GAWHRT ALRODA EST FOR FOODSTUFF
+20410-اسواق عبدالمحسن علي ناجي المركزية - ABDELMOHSEN AL NAGY CENTRAL MARKETS
+20411-شركة أسواق ومحامص دار الشيوخ التجارية - DAR ALSHEYOOKH
+20412-سلة الخيرات للمواد الغذائية - SALT ALKHAYRAT FOR FOOD STUFF
+20413-مؤسسة امان الشمال التجارية - AMAN ALSHMAL COMERCAL EST
+20414-تموينات الهنوف واحد للمواد الغذائية - ALHANOOF GROCERY FOR FOOD STUFF
+20415-مؤسسة ركن رنداء للمواد الغذائيه - ROKN RANDAA EST FOR FOOD STUFF
+20416-مؤسسة ابتسام صالح بابكير التجارية-EBTSAM SALEH COMMERICAL EST
+20417-تموينات العلا للقمة للمواد الغذائية - ALOLA LLKMA GROCERY 
+20418-محل بندر محمو خالد طريف - BANDR MAHOUD KHALED SHOP
+20419-تموينات لمار - LAMAR GROCERY
+20420-اسواق الخويران المركزية-ALKHOUYRAN CENTRAL MARKTS
+20421-شركة روائع الفرص التجارية-RAWAAE ALFORAS TARDING COMPANY 
+20422-تموينات غطي - GHETTY GROCERY
+20423-تموينات منور - MNWAR GROCERY
+20424-تموينات الزبن - ALZOBAN GROCERY
+20425-محامص سامي عبدالله محمد التيماني للقهوه - SAMY ABDALLA ALTEMANY
+20426-تموبنات الصقيري - ALSEQEERY GROCERY
+20427-اسواق لؤلؤ بلس للمواد الغذائية  - LUAALUAA PLUS MARKETS FOR FOODSTUFFS
+20428-مطعم الاصدقاء الخمسة - Five Friends Resturent
+20429-تموينات زهرة القريات - ZAHRT ALQURAYAT GROCERY
+20430-مطعم فلافل فرن - FALAFEL OVEN RESTURENT
+20431-مؤسسة السراب المضئ للتجارة - ALSRAB ALMODEEAA EST FOR TRADING
+20432-محطة الامان للمحروقات - ALAAMAN GAS STAION
+20433-محل لولاي للمواد الغذائية - LOLAY SHOP FOR FOOD STUFF
+20434-محمصة اليوسف - Al Yousef Roastery
+20435-تموينات بنوتة للمواد الغذائية - BANOTTA GROCERY FOR FOODSTUFF
+20436-مؤسسة صالح محمد احمد جحلان الفيصلية الجنوبية- SALEH BN GAHLAN FYSLYA JANBYA
+20437-تموينات شامخ للمواد الغذائية - SHAMEKH GROCERY FOR FOOD STUFF
+20438-مجمع الدكتور بدر الطبي - Dr. Badr Medical Complex
+20439-سلة الشامل للتجارة القريات1- SLT ASHAMEL FOR TRADING ALQURAYAT1
+20440-تموبنات النجمة - ALNJMA GROCERY
+20441-تموينات دريم للمواد الغذائية - DREAM GROCERY FOR FOOD STUFF
+20442-شركة كاسر الاسعار - price breaker company
+20443-مبيعات نقدية محمد حفني  - mohmed hefny cash
+20444-اسواق المدينة المركزية - Central city Markets
+20445-مؤسسة أنية الذهب لتجارة الجملة والتجزئة - ANYAT ALZHAB EST
+20446-مؤسسة سعود عبدالعزيز جارالله الزيد للمواد الغذائية - SAOUD ALZYID
+20447-توينات سطام- SATAM GROCERY
+20448-محل العهد غير للتجارة - ALAHED GEER SHOP FOR TRADING
+20449-مؤسسة عبدالهادي عطاء البادي التجارية - ALBADY COMMERECAL EST
+20450-تموينات زهرة الأربعين للمواد الغذائية - ZAHRT ALARBAAEN GROCERY FOR FOODSTUFF
+20451-مؤسسة خليفه خليف خليفة المعين التجارية - KHALEFA KHLEF EST
+20452-محل هله ذياب نافع العنزي للاواني المنزلية - HALLA ZEAB SHOP
+20453-مؤسسة سلة الشامل للتجارة دومة الجندل - SALT ALSHAMEL EST FOR TRADING DOMT JNDL
+20454-تموينات المدينة المنورة - ALMADINA ALMONAWRA GROCERY
+20455-تموينات ملاك فليح ظاهر الشراري2-malak grocery2
+20456-تموينات ملاك فليح ظاهر الشراري3-malak grocery3
+20457-محل بشاير عبدالله صبيحان الشراري للاواني المنزلية - BSHAYER SHOP
+20458-تموينات الهملان - ALHAMLAN GROCERY
+20459-محل وجوة الجميلات للعطور - WJOOH ALJMEELAT SHOP
+20460-تموينات اماني خاتم نمر الرويلي للمواد الغذائية - AMANY ALRWELY GROCERY
+20461-الاسواق المركزية الشفاء - CENTRAL MARKETS ALSHEEFAA
+20462-تموينات سلة الورود للمواد الغذائية - SALT ALWOROOD GROCERY
+20463-تموينات شلال العزيزية للمواد الغذائية - SHLAL ALZIZIYA GROCERY
+20464-سوبر ماركت بن دعيجا - SUPERMARKET BN DAAEGA
+20465-تموينات الصفاه - ALSAFAT GROCERY
+20466-محل الشامل طريف للادوات المنزلية - ALSHAMEL TUREEF
+20467-محل ندى خالد الصيخان - NADA ALSYKHAN SHOP
+20468-تنزيلات الريان - ALRAYAN DISCOUNTSHOP
+20469-تموينات الدحلان - ALDAHLAN GROCERY
+20470-تموينات سلطان صالح - SULTAN SALEH GROCERY
+20471-محل علي محمد عبدالله حميدان اسكان طريف - ALI ABDALLA SHOP ESKAN TUREF
+20472-محل ركن الياسمين للاواني المنزلية - Jasmine Corner Store for household utensils
+20473-مؤسسة وسم الشمال التجارية - WASM ALSHAMAL EST FOR TRADING
+20474-مؤسسة الوافر بلس التجارية -AL WAFER PLUS COMMERCIAL EST
+20475-اسواق المروج - ALMROOJ MARKETS
+20476-مدائن التوفير - MADAAEN ALTWFEER
+20477-تموينات اسواق سلة الدار - SALT ALDAR GROCERY
+20478-مطعم حدائق بابل لتقديم الوجبات - Babel Gardens Restaurant for serving meals
+20479-تموينات سهل طيبة للمواد الغذائية - SAHL TEEBA GROCERY
+20480-سوبر ماركت محطة السمح - ALSAMEH STAION GROCERY
+20481-تموينات حمده عطالله سليم العطوي للمواد الغذائية - HAMDALLH SLEEM ALAATWY GROCERY
+20482-مؤسسة حنين للمواد البلاستيكية - HANEEN EST FOR PLASTIC
+20483-مؤسسة بيت توفير تبوك للاواني المنزلية - BEET TAWFEER TABUK EST
+20484-تموينات اطياب تبوك للمواد الغذائية - ATEYAB TABUK GROCERY
+20485-محل عالم اسيل للكماليات - ALAM ASEEL DISCOUNTSHOP
+20486-روائع امازون للتجارة - RAWAA AMAZON FOR TRADING
+20487-بقالة محمد نزال الشراري - MOHAMED NEZAL ALSHARARY GROCERY
+20488-الاسواق المركزية الفيصلية - CENTRAL MARKETS ALFAISLIYA
+20489-تموينات دايمة للمواد الغذائية - DAYMA GROCERY
+20490-العزانيد للمواد الغذائية - ALAZANEED FPR FOOD STUFF
+20491-سلة الخيرات الثانية - SALT ALKHAYRAT ALTHANYA
+20492-مبيعات نقدية نصر بخيت - NASR BKHEET CASH
+20493-تموينات الوطنية للمواد الغذائية - ALWATANIA GROCERY
+20494-اسواق صخر نقي للمواد الغذائية - SAKHR MARKETS
+20495-شركة اللقاص التجارية المحدودة - ALLAQAS COMERICAL COMPANY LTD
+20496-تموينات نور المطار للمواد الغذائية - NOUR ALMATAR GROCERY
+20497-تموينات الهنوف - ALHANOOF GROCERY
+20498-شركة نبراس اسيا المحدودة - NBRAS ASIA LTD. COMPANY
+20499-تموينات الحسن - ALHASSAN GROCERY
+20500-مستودع وثلاجة سلة الثمرات - SALT ALTHEMAR
+20501-مؤسسة غزل مارت للمواد الغذائية -GAZL MART EST FOR FOOD STUFF
+20502-مزعل عايل صاح العقيلي - MZAL AAEL SALEH ALOKELY
+20503-تموينات محمد عبدالله محمد الشهري للمواد الغذائية-  ALSHEHAY GOCERY
+20504-بقالة عيسى مناور للمواد الغذائية-ISSA MNAWER GROCERY
+20505-مؤسسة ريان السعودية للتجارة -RAYAN ALSAUDIA EST FOR TRADING
+20506-تموينات الهيام للمواد الغذائية رقم 2 - ALHAYAM GROCERY NO2
+20507-ركن المسافر للمواد الغذئية - ROKN ALMOSAFER FOR FOOD STUFF
+20508-محل طيف مطرد خالد الرويلي للتجارة سكاكا -TAIF ALRWILY SHOP
+20509-مؤسسة عالم لؤلؤة الجوف التجارية -ALAM LOAALOAAT ALJOUF EST 
+20510-اسواق نحن اوفر التجارية - NAHNO AWFAR MARKETS
+20511-شركة عالم هلا التجارية- ALAM HALA COMMERICAL COMPANY
+20512-تموينات النمرة للمواد الغذائية-NEMRA GROCERY FOR FOODSTUFF
+20513-مؤسسة اسواق بيت الخزامي - BEET ALKHOZAMY MARKETS
+20514-بقالة رهاف بدر كساب الضبعان للمواد الغذائية-RAHAF BADR KSBAN GROCERY
+20515-تموينات شعلة الربيع للمواد الغذائية - SHOAALT ALRABEEA GROCERY
+20516-تموينات ديار العودة - DEEAR ALOWDA GROCERY
+20517-تموينات عامر شايش الهباد للمواد الغذائية - AAMER ALHABAD GROCERY
+20518-تموينات الحبوب - ALHABOB GROCERY
+20519-تموينات النصر واحد للمواد الغذائية - ALNASR ONE GROCERY
+20520-تموينات الخالدية طريف للمواد الغذائية - ALKHALDYA TUREEF GROCERY
+20521-تموينات المملكة - ALMAMMLKA GROCERY
+20522-مركز العودة - ALOWDA CENTER
+20523-تموينات فهد-FAHD GROCERY
+20524-أسواق السراب المضئ المركزية - ALSARAB ALMODEEAA CENTRAL MARKETS
+20525-شركة أسواق ومحامص دار الشيوخ التجارية - DAR ALSHYOOKH
+20526-تموينات الجورى الاربعين للمواد الغذائية - ALJOARY AL40 GROCERY
+20527-محمصة العميد - Toaster AlAmeed 
+20528-تموينات الايمان واحد للمواد الغذائية - ALEEMAN ONE GROCERY
+20529-تموينات روعة الجوف للمواد الغذائية - ROWAAT ALJOUF GROCERY
+20530-اسواق وسط اقارا للمواد الغذائية - WASAT KARA MARKETS FOR FOOD STUFF
+20531-مؤسسة التحالف التجارية - ALTAHLOF COMMERICAL EST
+20532-تموينات عون عبدالله صالح الصيعري - OUN ABDALLA ALSAIAARY GROCERY
+20533-محل توفير الشمال للتجارة - TAWFEER ALSHAMAL SHOP FOR TRADING
+20534-أسواق فهد المركزية - FAHD CENTRAL MARKETS
+20535-تموينات الخالدية طريف للمواد الغذائية - ALKHALDEA TUREF GROCERY
+20536-محل زحل للمنتجات البلاستيكية - ZOHAL SHOP FOR PLASTIC PRODUCTS
+20537-تموينات نورة محمد صياح الشراري - NOURA GROCERY
+20538-تموينات زهور تبوك للمواد الغذائية - ZOHOR TABUK GROCERY
+20539-هزاز الجوف للتسوق - HAZZAZ ALJOOF FOR SHOPPING
+20540-مجمع التوفير الذكي للتجارة - MOGAMAA ALTWOFEER ALZAKI FOR TRADING
+20541-محل المجوهرة مدالله الجميل الرويلي للتجارة-ALJAWHARA ALRWILY FOR TRADING
+20542-اسواق النهضة الثاني للمواد الغذائية - ALNAHDA ALTHANI MARKETS FOR FOOD STUFFS
+20543-تموينات سهل طيبة للمواد الغذائية - SAHL TEEBA GROCERY FOR FOODSTUFF
+20544-شركة زاوية الوسام التجارية 1 سكاكا-ZAWIAT ALWESAM COMMERCIAL COMPANY 1 SKAKA
+20545-مؤسسة نجمة المناسبات لبيع المواد الغذائية -NGMT ALMONASAT EST FOR FOOD STUFF
+20546-محل الجازي عبدالله عايض الشراري للتجارة - ALGHZY ABDALLA SHOP
+20547-محل اسامة حمدان مسهوج الرويلي - OSAMA HAMDAN SHOP
+20548-محل الورده واحد للمواد الغذائية - ALWAEDA ONE SHOP
+20549-شركة تميز الرائد للتجارة - TMAIOZ ALRAAED CO FOR TRADING
+20550-شركة علي سعيد البيشي التجارية  - ALI SAEED ALBIASHY COMMERICAL COMPANY
+20551-مطعم حاشي باشا القريات - HASHY BASHA RESTURANT ALQURAYAT
+20552-تموينات الاحبة للمواد الغذائية - ALAAHEBA GROCERY FOR FOOD STUFF
+20553-محل نجمة الخليج للمواد الغذائية - NGMT ALKHALEEJ SHOP FOR FOODSTUFF
+20554-تموينات سلة الفيصلية-SALT ALFAISLYA GROCERY
+20555-سوبر ماركت اضواء القريات 2-SUPERMARKET ADWAA ALQURYATT 2
+20556-تموينات وجود البركات للمواد الغذائية - WGOOD ALBRAKAT GROCERY
+20557-مؤسسة سعد واحد للمواد الغذائية-SAAD WAHED GROCERY FOR FOODSTUFF
+20558-تموينات سماء الانوار للمواد الغذائية - SAMAA ALANWAR GROCERY FOR STUFF FOODS
+20559-تموينات طراد جمال القبلى -TARAD GAMAL ELQEBLY GROCERY 
+20560-تموينات هند - HIND GROCERY
+20561-سوبر ماركت الكريم - ALKAREEM SUPERMARKET
+20562-مؤسسة خالد محمد راضي الشراري - KHALED MOHAMED RADY ELSHARRY EST
+20563-تموينات غذاء القوت للمواد الغذائية - GHEZAA ALQUOT GROCERY FOR FOOD STUFF
+20564-محل سما نوف للمواد الغذائية - Sama Nouf shop for foods tuff
+20565-مؤسسة فياض عوض صبر العنزي التجارية - fayad awad sabr alainazi commercial est
+20566-تموينات عبدالله فرزل عايض الفرزل للمواد الغذائية - ALFRZAL GROCERY
+20567-مؤسسة خط التوفير طريف التجارية-MAASSA KHT ALTWFYR TURIF ALTJARYA
+20568-تموينات الجارد - ALGARED GROCERY
+20569-محمصة جود - GOOOD ROASTERY
+20570-مؤسسة ركن سيف للأواني المنزلية - ROKN SEEF FOR HOUSE STUFF
+20571-محمصة بيت الضيافة- BEET ALDYAFA ROASTERY
+20572-مؤسسة فهد عبدالرحمن فهد السهيان لتجارة الاغذية-FAHD ALSAHYAN EST
+20573-الشامل للبلاستيك والمنظفات -ALSHAMEL For plastics and detergents
+20574-تنزيلات الخليح - ALKHALEEJ DISCOUNTS
+20575-تموينات رمز الناصرية - RAMZ ALNASRYA GROCERY
+20576-تموينات تسهيلات عالية للمواد الغذائية - TASHEELAT AALYA GROCERY FOR FFODSTUFFS
+20577-مؤسسة عبدالله عبدالعزيز أحمد الفلاح للتجارة - ABDULLA ABDELAZIZ ALFALAH FOR TRADING
+20578-مؤسسة الشروق للمنتجات البلاستيكية- ALSHROOK CENTER FOR PASTIC PRODUCTS
+20579-العناية المتميزة للمنتجات البلاستيكية - ALAANAYA ALMOTAMAYZA FOR PASTIC PRODUCTS
+20580-تموينات هناء عودة - Hanaa aouda grocery
+20581-تموينات نبراس العلاء للمواد الغذائية - NIBRAS ALOLAA GROCERY FOR FOODSTUFF
+20582-تموينات ركن عالم وسام الجوف للواد الغذائية - ROKN ALAM WSAM ALJOUF GROCERY
+20583-محل فاتن عبدالعزيز حياء الرويلي للملابس الجاهزه - FATEN ALRWELY SHOP
+20584-شركة وسيط الامتياز للتجارة والتسويق حاشي باشا سكاكا - WASEET ALEMTYAZ  HASHY BASHA
+20585-شركة روائع طيبة التجارية -  RAWAAE TIBA TRADING COMPANY
+20586-تموينات ثنية مصبح سالم الشراري للمواد الغذاية- THANIEA MSBAH ALSHRARY GROCERYxxxxxxxxxx
+20587-تموينات شيم الجوف للمواد الغذاء - SHEEM ALJOUF GROCERY FOR FOOD STUFF
+20588-مركز نور طبرجل -NOUR CENTER TABARJAL
+20589-شركة مفتاح الاعمال التجارية - MOFTAH ALAAMAL COMMICIAL COMPANY
+20590-تموينات حمده عبدالرحمن سلمان القعيد للمواد الغذائية (ميعاد)-HAMDA ALKAAEED GROCERY
+20591-شركة جوهرة اجاء للتجارة - GAWHART AGAA COMMERCIAL COMPANY
+20592-شركة سوق الغذاء التجارية فرع قارا - FOOD MARKET TRD.CO QARA BRANCH
+20593-مؤسسة رفوف التوفير التجارية - RFOOF ALTAWFEER COMMERCIAL EST
+20594-شركة الصخري العربية التجارية -ALSAKHRY ALARABYA COMMIRICAL COMPANY
+20595-مؤسسة اسطورة للمنتجات البلاستيكية - ALOSTORA EST FOR PLASTIC PRODUCTS
+20597-تموينات غذاء القوت للمواد الغذائية - GEZAA ALKOOT GROCERY FOR FOODSTUFF
+20598-شركة ازهار الشامل للتجارة - AZHAR ALSHAMEL COPMANY FOR TRADING
+20599-تموينات اسواق الخير المركزية -ALKHEER Central Markets Grocery
+20600-شركة زاوية الوسام التجارية 2 سكاكا - ZAWYAT ALWESSAM COMMERCIAL COMPANY 2 SKAKA 
+20601-اسواق وتموينات الراجح للمواد الغذائية - ALRAGEEH FOR GROCERY
+20602-مؤسسة سلة الشامل للتجارة سكاكا - SLAT ALSHAMEL EST FOR TEDING SKAKA
+20603-مؤسسة روائع الجوف التجارية - RWAAE ALJOUF COMMERICAL EST
+20604-شركة رمز البشائر للتجارة - RAMZ ABASHER COMPANY FOR TRADING
+20605-شركة زاوية الوسام التجارية 3 عرعر-  ZAWYAT ALWESAM COMMECIAL COMPANY 3 ARAR
+20606-تموينات وداد الخير - WDAD ALKHEER GROCERY
+20607-تموينات يوسف الهادي - youssef alhady grocery
+20608-مؤسسة مختارة للمنتجات البلاستيكية- MOKHTARA EST FOR PLASTIC PRODUCTS
+20609-مؤسسة عالم لؤلؤة الجوف التجارية - ALAM LOAALOAAT ALJOUF COMMERCIAL EST
+20610-شركة خيال مكس التجارية-الاسواق المركزيهKhial mix central markets
+20611-مؤسسة نوف محمد حسن الزهراني للمواد الغذائية -NOOF EST FOR FOODSTUFF
+20612-تموينات سلطانة الغرب للمواد الغذائية - SULTANT ALGHARB GROCERY FOR FOODSTUFFS
+20613-شركة اسواق لؤلؤة الوالدين للمواد الغذائية - LOAALOAAT ALWALDEEN MARKETS
+20614-مؤسسة جوهرة الباسم التجارية - JAWHRT ALBASEM COMMERCIAL EST
+20615-تموينات ثمار المروج للمواد الغذائية 1 - THEMAR ALMROJ GROCERY 1
+20616-تموينات الهام المتميزة للمواد الغذائية - ALHAM ALMOTAMIZA GROCERY
+20617-مؤسسة مظلة المستهلك التجارية -MZLT ALMOSTHLEK TRADING EST
+20618-تموينات أحمد ماجد عساف السرحاني للمواد الغذائية - AHMED MAGED ASSAF ALSARHANY GROCERYxxxxxxxxxxxxx
+20619-مؤسسة فن الفيصلية للمواد الغذائية المحمدية ن - FN ALFAISLIA EST FOR FOODSTUFF Almuhammadiyah H
+20620-تموينات جوهرة الزاوية للمواد الغذائية - GOWHRT ALZAWIA GROCERY FOR FOODSTUFF
+20621-مؤسسة تنزيلات رياض التجارية - RIYAD DISCOUNTSHOP COMMERCIAL EST
+20622-اسوق جوهرة التوفير للمواد الغذائية- GAWHRT ALTAWFEER MARKETS FOR FOODSTUFF
+20623-اسواق نسمة الشمال اثنين للمواد الغذائية - NESMT ALSHMAL MARKETS
+20624-فرع شركة محامص كيف سلمان للقهوة-BRANCH OF KEEF SALMAN COMPANY FOR COFFEE
+20625-شركة مزايا غير المحدودة - MAZAYA GEER LIMITED COMPANY
+20626-محل لمسات اريج لمستحضرات التجميل - LMSAT AREEJ SHOP
+20627-مؤسسة الدلة والسيف للاواني المنزلية - ALDALA WA ALSEEF EST FOR HOUSEHOLD UTENSILS
+20628-مؤسسة عبدالعزيز محمد علي ربيع للتجارة - ABDELAZIZZ MOHAMED ALI ARABEE EST FOR TRADING
+20629-زهرة المروج للمواد الغذائية - ZAHRT ALMROOJ FOR FOODSTUFF
+20630-مؤسسة جوهرة الباسم التجاريه سكاكا - GAWHRT ALBASSEM COMMERCIAL EST SKAKA
+20631-شركة السامي فود التجارية - AlSami Food Trading Company
+20632-مؤسسة مائدة المنزل التجارية - MAAADAT ALMANZL COMMERCIAL EST
+20634-شركة عالم التوفير المتميز دومة الجندل - ALAM ALTAWFEER AMOTAMIEZ DMT GNDAL CO
+20635-شركة عالم التوفير المتميز طبرجل- ALAM ALTAWFEER AMOTAMIEZ TABRJAL CO
+20636-مؤسسة اصداء الجوف للمقاولات- ASDAA ALJOUF FOR CONSTRUCTIONS
+20637-مؤسسة الوفاء الوفير للتجارة - ALWAFAA ALWAFEER COMMERCIAL EST
+20638-منارات السوق المفتوح للاواني المنزليه-MANARAT ALSOOQ ALMAFTOOH
+20639-مؤسسة درة المحارب للمواد الغذائية - DORT ALMOHAREB EST FOR FOODSTUFF
+20640-تموينات الجنوب الاولى للمواد الغذائية - ALGANOOB ALAAOLA GROCERY FOR FOODSTUFF
+20641-مؤسسة زاوية القصوى لتجارة الأغذية-ZAWYAT ALQOSWAA EST FOR FOOD TRADING
+20642-مؤسسة سالم محمد بن جحلان لتجارة المواد الغذائية الفيصلية الجنوبية - SALEM BN JAHLAN ALFAISLYA 
+20643-محل ركن بلاش للاواني المنزلية - ROKN BALASH SHOP
+20644-شركة محل ريمان الخليج  للتجارة - MAHAL REEMAN ALKHALEEJ CO FOR TRADING
+20645-شركة تسوق السند للمواد الغذائية- TASAWOK ALSANAD COMPANY FOR FOOD STUFF
+20646-تموينات وضوح للمواد الغذائية - WDOOH GROCERY FOR FOODSTUFF
+20647-تموينات تفاحة الاربعين للمواد الغذائية - TOFAHT ALAARBAEEN GROCERY FOR FOODSTUFF
+20648-مؤسسة جواهر خلف قريان العنزي التجارية - GOAWHER KHALAF KRYAN ALOUNAZI COMMIRCIAL EST
+20649-مركز نور - NOUR CENTER
+20650-اسواق محمد شعير حمدان الشراري للمواد الغذائية - MOHAMED SHAAIR HAMDAN ALSHRARY SHOPS FOR FOODSTUFF
+20651-شركة ركن زهرة الشمال التجارية - ROKN ZAHRT ALSHMAL COMMERCIAL COMPANY
+20652-مؤسسة قطاف الثمار التجارية - FRUIT PICKING COMMERCIAL EST
+20653-مبيعات نقدية احمد عيسى - AHMED EISSA CASH 
+20654-مبيعات نقدية سامي سيد - SAMY SAID CASH
+20655-ثلاجة صالح الشايع -SALEH ALSHAYA FRIDGE
+20656-تموينات أجدا للمواد الغذائية - AGDA GROCERY FOR FOODSTUFF
+20657-فرع شركة محامص كيف سلمان للقهوه التسهيلات - Kaif Salman Coffee Roasters Branch
+20658-بقالة رهاف بدر كساب الضبعان للمواد الغذائية - RAHAF BADR KASAB ALDABAAN GROCERY FOR FOODSTUFF
+20659-مؤسسة روائع كيف الشموخ للحلويات والمكسرات - Rawaea Kaif AlShomoukh EST for Sweets and Nuts
+20660-محمصة الواحة - ALWAHA ROASTERY
+20661-شركة زمن التوفير للتجارة-ZAMAN ALTAWFEER COMMERICAL COMPANY
+20662-مؤسسة الزواية الاربعة للتجارة - ALZAWAYA ALAARBA EST FOR TRADING
+20663-شركة قهوة السلطان للتجارة -Al Sultan Coffee Trading Company
+20664-شركة الفخم اللامع التجارية شركة ذات مسؤلية محدوده مختلطة-AlFakhim AlLamea Trading Company is a mixed limited liability company
+20665-اسواق المحمدية للمواد الغذائية - ALMOHAMMDIAH MARKETS FOR FOODSTUFF
+20666-اسوق بوادي الشفاء للتجارة-BAWADY ALSHEFAA MARKETS FOR TRADING
+20667-اسواق كرزه حمراء للمواد الغذائية - KARZA HAMRAA MARKETS FOR FOODSTUFF
+20668-مؤسسة هلا الشمالية التجارية - HALA ALSHALAYA TRADING EST
+20669-مؤسسة القناع الذهبي لمستحضرات التجميل - Golden Mask Cosmetics Foundation
+20670-مؤسسة سلة المروج الخضراء للمواد الغذائية - SALT ALMROOJ ALKHDRAA EST FOR FOODSTUFFS
+20671-تموينات غيث اثنين للمواد الغذائية-GHETH TWO GROCERY FOR FOODSTUFF
+20672-مؤسسة سنابل البمامة التجارية - SANABL ALYAMAMA TRADING EST
+20673-مركز حركات طيبة للتجارة - HARAKT TAYBA CENTER FOR TRADING
+20674-محل غوطة الشمال التجارية - GHWATT ALSHAMAL TRADING SHOP
+20675-تموينات سواء غير للمواد الغير - SAWAA GHEER GROCERY FOR FOODSTUFF
+20676-مؤسسة نعيم الخيرات للتجارة - NAAEEM ALKHAYRAT EST FOR TRADING
+20677-محطة ركن الابراج للمحروفات - ROKN ALABRAJ GAS STATION
+20678-تموينات الفيصلية القديمة للمواد الغذائية - ALFAILSLIA ALKADEEMA GEROCERY FOR FOODSTUFF
+20679-تموينات نصرة صايل ناصر العنزي للمواد الغذائية - NASRA GROCERY
+20680-سوبر ماركت الهايل - ALHAYEEL SUPERMARKET
+20681-محامص ندى - Nada Roasters
+20682-تموينات القمة الوسطى للمود الغذائية - ALQEMMA ALWSTA GROCERY FOR FOODSTUFF
+20683-شركة زاوية شامل الغذاء للتجارة - ZAWIAT SHAMMEL ALGHEZAA COMPANY FOR TRADING
+20684-سوبر ماركت عبود - ABOOD SUPERMARKET
+20685-مؤسسة الشريط الماسي للتجارة الامل للتجارة - ALSHREET ALMASY EST FOR TRADING ALAML FOR TRDING
+20686-تموينات دارنا للمواد الغذائية - DARNA GROCERY FOR FOODSTUFF
+20687-مؤسسة جمعة محمد العنزي التجارية - GOMAA MOHAMED ALENAZI TRADING EST
+20688-تموينات جوهرة حسيان العنزي للمواد الغذائية - GAWHRA HSIAN ALONAZZI GROCERY FOR FOOD STUFF
+20689-اسواق الناشئ المركزية - ALNASHEAA CENTRAL MARKETS
+20690-مطعم لؤلؤ الوادي - LOAALOAA ALWADY RETURANT
+20691-فطائر البرنس القريات ش40 -ALPRINCE PIES ALQURAYAT 40 STREET
+20692-أحلى الاواني - AHLA ALAAWANY
+20693-تموينات ريف الهوا للمواد الغذائية - REEF ALHAWA GROCERY FOR FOODSTUFF
+20694-تموينات هلا الاسماء للمواد الغذائية - HALA ALAASMAA GROCERY FOR FOODSTUFF
+20695-شركة زاد الخير التجارية - ZAD ALKEER TRADING COMPANY
+20696-محل علي محمد عبدالله الحميدان للمواد الغذائية - ALI MOHAMED ABDALLA ALHMAIDAN SHOP FOR FOODSTUFF
+20697-تموينات الفجر - ALFAJR GROCERY
+20698-زاوية الركن الماسي للمنتجات البلاستيكية - ZAWYAT ALROK ALMASY FOR PLASTIC 
+20699-مؤسسة شمال قارا التجارية - SHAMAL KARA EST FOR TRADING
+20700-تموينات متعب سماح العنزي للمواد الغذائية - MTAAEB SAMAH ALONAZI GROCERY FOR FOODSTUFF
+20701-تموينات مزون واحد للمواد الغذائية - MAZOUN ONE GROCERY FOR FOODSTUFF
+20702-تموينات روند للمواد الغذائية - ROND GROCERY FOR FOODSTUFF
+20703-مؤسسة بسكوت تركي التجارية - TURKISH BISCUITS EST FOR TRADING
+20704-تموينات زاد القريات - ZAD ALQURAYAT GROCERY
+20705-تموينات باسم حامد الشراري للمواد الغذائية - BASEM HAMED ALSHRARY GROCERY FOR FOODSTUFF
+20706-مؤسسة المهرة واحد للمواد الغذائية - ALMOHRA WAHED EST FOR FOODSTUFF
+20707-اسواق مبارك علي مبارك النهدي التجارية - MOUBARK ALI MUBARK ALNAHDY MARKETS FOR TRADING
+20708-شركة خط الباسم التجارية-KHAT ALBASM COMPANY FOR TRADING ALQURAYAT
+20709-ماركت الاسرة - ALOSRA MARKET
+20710-تموينات محطة درب الدبيس -GROCERY OF DARB ALBDEES GAS STAION
+20711-تموينات نجمة الثلاثين - THIRTY STAR SUPERMARKET
+20712-شركة نسمة الجوف للمواد الغذائية - NSMT ALJOUF COMPANY FOR FOODSTUFF
+20713-تموينات بركة الناصفة للمواد الغذائية - BARAKT ALNASFA GROCERY FOR FOODSTUFF
+20714-محل عائشة للادوات المنزليه -AAISHA SHOP FOR HOME APPLIANCES
+20715-تموينات الشروق للمواد الغذائية - ALSHROOK GROCERY FOR FOODSTUFF
+20716-اسواق ومخابز السلامه - ALSALAMA MARKETS AND BAKERIES
+20717-تموينات بلال محرج جعيد الشراري للمواد الغذائية  -BLAL MHREG ALSHRARY GROCERY
+20718-سوبر ماركت المنار - ALMANAR SUPERMARKET
+20719-اسواق الدغيشم - ALDAGEESHAM MARKETS
+20720-تموينات بوابة جماجم - BWABT GMAGM GROCERY
+20721-شركة واي سنتر للتجارة بالقريات - Y CENTER COMPANY FOR TRADING QURAYAT
+20722-تموينات فهيده - FAHIDA GROCERY
+20723-شركة ريف الاتحاد المحدوده - REEF ALETIHAD LTD COMPANY
+20724-مؤسسة المنصورية للمواد الغذائية - ALMANSOURIA EST FOR FOODSTUFF
+20725-مؤسسة الرهف والترف للمواد الغذائية - ALRAHAF WALTARAF EST FOR FOODSTUFFS
+20726-شركة اهل الوفاء للمواد الغذائية - AHL ALWAFAA COMPANY FOR FOODSTUDD
+20727-اسواق راف هايبر - RAV HYPER MARKETS
+20728-بقالة ابراهيم ماجد عساف السرحاني - IBRAHIM MAGED ASSAF ALSRAHANY GROCERY
+20729-سوبر ماركت مكه - MECCA SUPERMARKET
+20730-سوبر ماركت المنار -ALMANAR SUPERMARKET
+20731-محامص فنجال الشموخ للقهوة - FENGAL ALSHMOOKH ROASTERS FOR COFFEE
+20732-تموينات رمز الوسام للمواد الغذائية - RAMZ ALWSSAM GROCERY FOR FOODSTUFF
+20733-شركة الجوزاء المميزة-ALJAWZAA ALMOMAYAZA COMPANY
+20734-شركة الغناء للتجارة - ALGHENAA COMPANY FOR TARADING
+20735-مؤسسة قطوف عرعر لتجارة الأغذية - KTOOF ARAR EST FOR FOODS TRADING
+20736-تموينات زود دلتا للمواد الغذائية - ZOD DELTA GROCERY FOR FOODSTUFF
+20737-تموينات ابن دعيجاء - IBN DAAYGAA GORCERY
+20738-يقالة النخيل - ALNAKHEEL GROCERY
+20739-اسواق الخير المركزية طبرجل - ALKHEER CENTRAL MARKETS TABRJAL
+20740-شركة اسد مول التجارية 1 - ASAD MALL TRADING COMPANY 1
+20741-تموينات ياسمين محمد عليان البلوي للمواد الغذائية - YASMEEN MOHAMED ALYAN ALBALAWI GROCERY FOR FOODSTUFF
+20742-محطة عبدالله فنخور الشراري للمحروقات - ABDALLA FANKHOR ALSHRARY GAS STATION
+20743-ثلاجة مكارم الشمال التجارية -MAKAREM ALSGAMAL COMMERCIAL REFRIGERATOR
+20744-سوبرماركت حنين الجوف للمواد الغذائية - HANEEN ALJOUF SUPERMARKET FOR FOODSTUFF
+20745-تموينات يزيد عايش بطين للمواد الغذائية - YAZED AYEESH BTEEN GROCERY FOR FOODSTUFF
+20746-تموينات درة الجاده للمواد الغذائية - DORT ALGADA GROCERY FOR FOODSTUFF
+20747-وكالة المصمم العربي للدعايا والاعلان - ARABIC DESIGNER 
+20748-تموينات اطياب المدينة - ATYAB ALMADINA GROCERY
+20749-سوبر ماركت الورورد - ALWROOD SUPERMARKET
+20750-سوبر ماركت الشام - ALSHAM SUPERMARKET
+20751-شركة نسمة القريات للخدات الغذائية - NESMT ALQURAYAT FOR FOOD SERVICES
+20752-مؤسسة البيت المميز للمنتجات البلاستيكية - ALBEET AMOMAIAZ EST FOR PLASTIC PRODUCTS 
+20753-شركة تسوق السند للمواد الغذائية2 - ALSANAD SHOPPING COPANY FOR FOODSTUFF2
+20754-تموينات سلة الغذاء طريف للمواد الغذائية - SLT ALGHEZAA TOUREEF GROCERY FOR FOODSTUFF
+20755-شركة كيان العليا العربية التجارية - KAYAN ALOLYA ALARABIA TRADING COMAPNY
+20756-محل أجمل نظافة للتجارة - AGMAL NAZAFA SHOP FOR TRADING
+20757-اسواق عبدالهادي للمواد الغذاية - ABDELHADY MARKETS FOR FOODSTUFF
+20758-سوبر ماركت ام ارطي-SUPERMARKET OM ARTY
+20759-سوبر ماركت السعيد - ALSAEED SUPERMARKETS
+20760-اسواق مشارف الشمال التجارية- MASHAREF ALSHAMAL TRADING MARKETS
+20761-مؤسسة متين التميز للتجارة - MATEEN ALTAMAIOZ EST FOR TRADING
+20762-اسواق نخلة الشمال-NAKHLET ALSHAMAL MARKETS
+20763-تموينات ياسمين القريات للمواد الغذائية-YASMEEN ALQURAYAT GROCERY FOR FOODSTUFF
+20764-تموينات سنابل الشمال للمواد الغذائية - SANABL ALSHAMAL GROCERY FOR FOOD STUFF
+20765-تموينات روؤية المنصورية للمواد الغذائية - ROUAAYAT ALMANSOURYA GROCERY FOR FOODSTUFFS
+20766-مؤسسة معين كوم لتجارة الجمله والتجزئة - MOAAEN COM EST FOR TRADING WHOLESALE AND RETAIL
+20767-مؤسسة طيبات العز التجارية - TAYABAT ALEZZ TRADING EST
+20768-تموينات ركان عبدالوهاب مرضي الرويلي للمواد الغذائية -RAKAN ABDELWAHAB MORDY ALRWILY GROCERY
+20769-تموينات حمدة البشير البركة للمواد الغذائية -HAMADA BARKA ALBASHEER BARKA GROCERY
+20770-مؤسسة منيف محمد الهنداوي التجارية - MANEEF MOHAMED ALHENDAWY TRADING EST
+20771-شركة اسواق ركن الصالحيه التجارية سكاكا- ROKN ALSALHYA MARKETS
+20772-شركة اسواق ركن الصالحيه التجارية القريات- ROKN ALSALHYA MARKETS
+20773-تموينات الفهد-ALFAHD GROCERY
+20774-تموينات هلا-HALA GROCERY
+20775-تموينات مذاق الجزيرة - MAZAQ ALJAZEERA GROCERY
+20776-اسواق محمد شعير حمدان الشراري للمواد الغذائية - MOHAMED SHAAIR HAMDAN ALSHRARY SHOPS FOR FOODSTUFF
+20777-شركة نهدي للتجارة - NAHDY TRADING COMPANY
+20778-بابا عشينا-BABA ASHINA
+20779-مجمع فهد سلمان البلوي لطب الاسنان - Fahad Salman AlBalawi Dental Complex
+20780-تموينات التعاون - ALTAAWON GORCERY
+20781-تموينات سيف عبدالرحمن بن ابراهيم الشهيلي للمواد الغذائية - SAIF ABDULRHMAN ALSHEHELY
+20782-اسواق الثلاثين بلص المركزية - ALSLASEEN PLUS CENTRAL MARKETS
+20783-شركة نجمة الوليد للمواد الغذائية - NGMT ALWALEED CO FOR FOODSTUFF
+20784-تموينات نور البسمة - NOOR ALBASMA GROCERY
+20785-شركة سوق الغذاء التجارية فرع سوق خضار المركزي -FOOD MARKETS VEGETABLES MARKT BRANCH
+20786-مؤسسة ملحة على بن مهدي ال منصور للتشغيل والصيانة- Melha Ali Bin Mahdi Al Mansour Corporation for Operation and Maintenance
+20787-شركة الجدي التجارية-ALGDY TRADING COMPANY
+20788-اسواق الضاحية الحديثة المركزية - ALDAHYA ALHADITHA CENTRAL MARKETS
+20789-مخبز سلطان خالد المهيد للخبز -Sultan Khaled Al Muhaid Bakery for Bread
+20790-مؤسسة فهد عايش بطين العنزي التجارية-FAHD AISH BTEN
+20791-مؤسسة خليفه خليف خليفه المعين التجارية سكاكا -Khalifa Khaleef Khalifa Al Maeen Trading Est. Sakaka
+20792-شركة اسواق الندى واحد المركزية - ALNADA ONE MARKETS CENTRAL COMPANY
+20793-تموينات سلة الشامل طبرجل - SALT ALSHAML GROCERY TABARJAL
+20794-مركز سبأ القريات للاواني المنزلية -Qurayyat Spaa Center for household utensils
+20795-اسواق ثمار التسهيلات التجارية - SMAR ALTASHELAT TRADING MARKETS
+20796-شركة الحياة الحديثة التجارية - ALHAYA AHDYTHA TRADING COMPANY
+20797-مؤسسة اصائل التجارية - ASAAL TRADING EST
+20798-تموينات  الجميعان للمواد الغذائية - ALJOMYAAN GROCERY FOR FOODSTUFF
+20799-مؤسسة كنوز المشاهير للتجارة - KNOZ ALMASHAHEER EST FOR TRADING
+20800-شركة كاسر الاسعار المتميز التجارية عرعر - KASER ALALASAR ALMOTAMAEZ TRADING COMPANY
+20801-شركة صالح حسين سالم ال سلامه وشريكه - SALEH HUSSIEN SALEM AL SALAMA COMPANY AND HIS PARTENAR 
+20802-مؤسسة نخبة الزيتون للمواد الغذائية - NOKHBAT ALZAYTOON EST FOR FOODSTUFF
+20803-أوفر التوفير شركة الرخام العتيق التجارية - AWFAR ALTAWFEER ALROKHAM ALAATEEKTRADING COMPANY
+20804-تموينات الامان - ALAMAN GROCERY
+20805-تموينات سيف تاون للمواد الغذائية - SAIF TOWN GROCERY FOR FOODSTUFF
+20806-مؤسسة صح غير للتجارة-SAH GHEER TRADING EST
+20807-شركة سوراي الشمال التجارية - SAWARY ALSHAMAL TRADING COMPANY
+20808-محل يزن للحلويات والمكسرات - YAZAN SHOP FOR SWEET AND NUTS
+20809-تموينات افراح سعود مضحي الشراري - AFRAH SAOUD MODHY ALSHARAY GROCERY
+20810-مؤسسة فوز للمواد الغذائية - FOOZ EST FOR FOODSTUFF
+20811-شركة سوق الغذاء التجارية فرع بسيطا - FOOD MARKET TRADING COMPANY BSETA BRANCH
+20812-اسواق الجبيهة غير للمواد الغذائية-ALJABEHA GHEER MARKETS FOR FOODSTUFF
+20813-اسواق صفراء الغدير - SAFRAA ALGHADEER MARKETS
+20814-اسواق ركن هيف للمواد الغذائية - ROKN HEEF MAREKTS FOR FOODSTUFF
+20815-اسواق جوان للمواد الغذائية - GOWAN MARKETS FOR FOODSTUFF
+20816-مؤسسة امجاد هايل ناصر الشراري للمواد الغذائية - AMGAD HAYEL NASER ALSHRARY EST
+20817-تموينات ومخابز هيا التجارية -HAYA TRADING GROCERY AND BAKERY
+20818-مؤسسة رؤى الخير للبلاستيك -ROWAA ALKHEER EST FOR PLASTIC
+20819-شركة متاجر ابيات التجارية-ABYAT STORES TRADING COMPANY
+20820-رهف للبلاستيك والمنظفات - RAHAF FOR PLASTIC AND CLEANING
+20822-شركة أسواق تميز السلمان للمواد الغذائية - TAMYOZ ALSALMAN MARKETS CO FOR FOODSTUFF
+20823-مؤسسة محمد عودة الحويطي - MOHAMED OUDA ALHWETY EST
+20824-مؤسسة تالا الورد للمواد الغذائية - TALA ALWARD EST FOR FOODSTUFF
+20825-فرع شركة سهل الرمال التجارية(تموينات المبارك)-BARNCH OF SAHL ALREMAL TRADING COMPANY(ALMOBARK GROCERY)
+20826-تموينات باسل خيرالله مسند الشراري للمواد الغذائية - BASEL KAIRALLAH MSND ALSHRARY GROCERY FOR FOODSTUFF
+20827-محل درب التميز للاواني المنزلية - DARB ALTAMAYOUZ SHOP FOR HOUSWARES
+20828-اسواق ذوق الخيال المركزية-ZOOK ALKHYAL CENTRAL MARKETS
+20829-تموينات فهد فيصل محمد الخناني للمواد الغذائية - FAHD FAISAL MOAHMED ALKHANANY GROCERY FOR FOODSTUFF
+20830-فندق رتاج الخليج للشقق الفندقية - Retaj Al Khaleej Hotel Apartments
+20831-محل جواد الشمال للمواد الغذائية - GAWAD ALSHAMAL SHOP FOR FOODSTUFF
+20832-محل بنوتة للحلويات والمكسرات - BANOTA SHOP FOR SWEETS AND NUTS
+20833-شركة سلاسة الأفق للنقل والتخزين-SALASA ALOUFOK COMPANY FOR TRANSPORTATION AND STORAGE
+20834-مؤسسة امجد محمد المدني التجارية - AMJAD MOHAMED MEDANI TRADING EST
+20835-محل مروة محمد ابراهيم عماقة للمواد الغذائية - MARWA MOHAMED IBRAHEM AMAKA SHOP FOR FOODSTUFF
+20836-سوبر ماركت الريان - ALRAYAN SUPERMARKET
+20837-مجمع اسواق الحامد المركزية -ALHAMED CENTRAL MARKETS MALL
+20838-مؤسسة لولوه عايد فرحان الشراري لتجارة الأغذية-LOLOAA AAED FARAHAN ALSHRARY EST
+20839-سوبر ماركت السيف_طبرجل-ALSEEF SUPERMARKET_TABARJAL
+20840-مؤسسة هدير الشمال التجارية - HADEER ALSHAMMAL TRADING EST
+20841-تموينات الباسل - ALBASEL GROCERY
+20842-اسواق هلا المروج - HALA AMROOJ MARKETS
+20843-مؤسسة درة المروج للمواد الغذائية - DORT ALMROOJ EST FOR FOODSTUFF
+20844-مؤسسة بوابة الاسرة التجارية -BAWABT ALOSRA TRADING EST
+20845-محامص الخير - ALKHEER TOASTERS
+20846-اسواق بيت دارك-BEET DARK MARKETS
+20847-تموينات مروج عدن للمواد الغذائية - MROOJ ADAN GROCERY FOR FOODSTUFFS
+20848-شركة تبوك الاقتصادية - TABUK ALAAEQTSADYA COMPANY
+20849-مركز همس الشمال - HAMS ALSHAMAL CENTER
+20850-هدايا النجوم - HADAYA ALNJOOM
+20851-اسواق وسم الشمال المركزية - WASM ALSHAMAL CENTRAL MARKETS
+20852-تخفيضات الدغيشم-ALDEGHESHAM DISCOUNTSHPS
+20853-تموينات سلة تسالي - SALET TASALY GROCERY
+20854-مؤسسة تاج التوفير التجارية - TAJ ALTAWFEER TRADING EST
+20855-تموينات الخصي - ALKHESSI GROCERY
+20856-شركة اسواق درة المدائن للمواد الغذائية - DORT ALMDAAEN MARKETS COMPANY FOR FOODSTUFF
+20857-مؤسسة مير محمد بغيث العنزي للمواد الغذائية - MEER MOHAMED BGHEETH ALENAZI EST FOR FOODSTUFF
+20858-شركة القمة غير التجارية-ALQEMA GHEER COMPANY
+20859-ملك ميني ماركت - MALAK MINIMARKET
+20860-تموينات رواء عافت الزيد للمواد الغذائية - RWOAA AAEFAT ALZAYED GROCERY FOR FOOD STUFF
+20861-شركة نجمة الانوار للتجارة - NEGMT ALANWAR COMPANY FOR TRADING
+20862-مؤسسة عناية الجزيرة التجارية - AANAEET ALJAZEERA TARDING EST
+20863-تموينات الذمار للمواد الغذائية - ALZAMAR GROCERY FOR FOODSTUFF
+20864-تموينات حمدان النور للمواد الغذائية - HEMDAN ALNOUR GROCERY FOR FOOD STUFF
+20865-اسواق سلة غذائي - SALT GHEZAAY MARKETS
+20866-اسواق ركن الوافر - ROKN ALWAFEER MARKETS
+20867-محامص النكهة اليمنية للقهوة-ALNAKHA ALYAMNYA COFFEE ROASTERS
+20868-تموينات اضواء الخليح الاولى-ADWAA ALKHLEEJ ALAOWLA GROCERY
+20869-سوبر ماركت خميس - KHAMEES SUPERMARKET
+20870-تموينات الجزيرة بلص للمواد الغذائية -ALJAZEERA PLUS GROCERY FOR FOODSTUFF
+20871-شركة رمز الاواني التجارية - RAMZ ALAWANY TRADING COMPANY
+20872-جود التوفير  للمواد الغذائية - JOOD ALTAWFEER FOR FOODSTUFF
+20873-شركة محامص كيف سلمان للقهوه طريف-Kaif Salman Coffee Roasters Company, Tarif
+20874-تموينات الفخم اللامع للمواد الغذائية - ALFAKHM ALLAMAA GROCERY FOR FOODSTUFF
+20875-تموينات سهم الواحة للمواد الغذائية - SAHM ALWAHA GROCERY FOR FOODSTUFFS
+20876-تموينات صفوة سلطانه للمواد الغذائية - SAFWT SULTANA GROCERY FOR FOOD STUFF
+20877-تموينات عبير العلياء للمواد الغذائية - ABEER ALAALYIAA GROCERY FOR FOODSTUFF
+20878-تموينات ينابيع الشفاء للمواد الغذائية - YANABEEA ALSHEFAA GROCERY FOR FOOD STUFFS
+20879-تموينات سيماء تبوك - SYMAA TABUK GROCERY
+20880-اسواق ركنة الكيان للمواد الغذائية - ROKNT KAYAN MARKETS FOR FOODSTUFF
+20881-تموينات حاتم الخير للمواد الغذائية - HATEM ELKHEER GROCERY FOR FOODSTUFFS
+20882-شركة نجمة الانوار للتجارة - NAJMT ALAANWAR COMPANY FOR TRADING
+20883-مؤسسة سنبلة الورورد للمواد الغذائية - SONBLT ALWROOD EST FOR FOODSTUFFS
+20884-محل الشرقية طريف للاواني المنزلية - ALSHARAAYA TUREEF SHOP
+20885-تموينات بندر سالم طريق المدينة -BANDR SALEM GROCERY
+20886-شركة سهم التميز للمواد الغذائية - SAHM ALTAMYOZ FOR SOODSTUFFS
+20887-اسواق الماسة المتميزة للمواد الغذائية-ALMASA ALMOTAMYZA MARKETS FOR FOODSTUFFS
+20888-تموينات قمة المروج للمواد الغذائية - Qmt almrooj grocery for foodstuffs
+20889-تموينات حامد مدوح الحازمي للمواد الغذائية-HAMED MDWAH ALHAZMY GROCERY FOR FOODSTUFFS
+20890-شركة بصمة التوفير للتجارة-BASMT ALTAWFEER COMPANY FOR TRADING
+20891-تموينات لؤلؤ النجود- LOAALOAA ALNJOUD GROCERY
+20892-اسواق البحر جمله - ALBAHR GOMLA MARKETS
+20893-تموينات اريج الارجوان للمواد الغذائية - AREEJ ALARJWAN GROCERY FOR FOODSTUFFS
+20894-مؤسسة عربة سماء التجارية -ARBT SAMAA TRADING EST
+20895-تموينات شرياف للمواد الغذائية - SHREAF GROCERY FOR FOODSTUFFS
+20896-تموبنات رجبة الورود للمواد الغذائية - RAJBT ALWROOD GROCERY FOR FOODSTUFFS
+20897-محل محمد شاهي الرويلي - MOHAMED SHAHY ALRWELY SHOP
+20898-تموينات منابع الاخلاص للمواد الغذائية - MANABAA ALEEKHLAS GROCERY FOR  FOODSTUFFS
+20899-شركة سنابل تسوق للتجارة - SANABL TASWOUK COMPAMNY FOR TRADING
+20900-تموينات كيان غير للمواد الغذائية - KAYAN GHEER GROCERY FOR FOOD STUFFS
+20901-مؤسسة عروض زحل بالجملة التجارية - AROOD ZOHAL BLGOMLA TRADING EST
+20902-اسواق اثمار الشمال المركزية - ATHMAR ASHAMAL CENTRAL MARKETS
+20903-تموينات هلا بطبرجل - HALA GROCERY
+20904-تموينات بسمه صياح مريحيل الشراري للمواد الغذائية - BASMA SEYAH MREHEL ALSHRARY GROCERY
+20905-تموينات روعة البوادي للمواد الغذائية - RAWAAT ALBAWADY GROCERY FOR FOODSTUFFS
+20906-تموينات قمة الصفا للمواد الغذائية - QMT ALSAFA GROCERY FOR FOODSTUFFS
+20907-محل كيان النظافة التجارية - KAYAN ALNAZAFA TRADING SHOP
+20908-اسواق ركن مها البوادي للمواد الغذائية-ROKN MAHA ALBAWADY MARKETS FOR FOODSTUFFS
+20909-مؤسسة زعيم التوفير للتجارة - ZAAEEM ALTAWFEER EST FOR TRADING
+20910-تموينات ابراج الشفاء - ABRAJ ALSHEFAA GROCERY
+20911-تموينات مدار اليوم - MADAR ALYOUM GROCERY
+20912-شركة سوق الغذاء التجارية فرع المحمدية د - FOOD MARKETS TRADING CO ALMOHAMADYA D BRANCH
+20913-اسواق شعلة الوافر المركزية - SHOAALAT ALWAFER CENTRAL MARKETS
+20914-تموينات المودة الغربية للمواد الغذائية - ALMAWADA ALGHRBYA GROCERY FOR FOODSTUFFS
+20915-مؤسسة شاورما فرن للوجبات السريعة- SHAWARMA FORN EST FOR FAST FOODS
+20916-شركة حنين تبوك للمواد الغذائية - HANEEN TABUK CO FOR FOOD STUFFS
+20917-تموينات واجهة الواحة للمواد الغذائية - WAJHAT ALWAHA GROCERY FOR FOODSTUFFS
+20918-تموينات ربوع الصفا للمواد الغذائية - ROBOAA ALSAFA GROCERY FOR FOODSTUFFS
+20919-تموينات شادي - SHADY GROCERY
+20920-تموبنات باسم عبدالعزيز البلوي للمواد الغذائية - BASEM ABDELAZZIZ ALBALAWI GROCERY FOR FOODSTUFFS
+20921-شركة فن الفيصلية التجارية بحى السلمانية - FAN ALFAISLIYA TRADING CO SALMANYA
+20922-تموينات منور - MNWR GROCERY
+20923-تموينات سلة المصايف للمواد الغذائية  -SLT ALMASAYEEF GROCERY FOR FOODSTUFFS
+20924-تموينات ايام الربيع للمواد الغذائية - AYAM ARABEEAA GROCERY FOR FOODSTUFFS
+20925-شركة الابريق الراقي للتجارة - ALEBREEQ ALRAQY CO FOR TRADING
+20926-تموينات عين البوادي  للمواد الغذائية - AIN ALBAWADY GROCERY FOR FOODSTUFFS
+20927-تموينات قارا للمواد الغذائية - QARA GROCERY FOR FOOD STUFFS 
+20928-شركة ثمار وازهار الشفاء للمواد الغذائية - THEMAR WA AZHAR ALSHEFAA COMPANY
+20929-كنج التوفير واكثر - KING ALTAWFEER WA AKTHAR
+20930-مؤسسة وسام الشفاء للمنظفات - WSAM ALSHEFAA EST FOR CLEANER
+20931-بقالة العقيل - ALOQEEL GROCERY
+20932-شركة أسواق ومحامص دار الشيوخ التجارية (فنجان الشمال )دومة الجندل - Dar Al Shuyoukh Commercial Markets and Roasteries Company DOMA
+20933-مؤسسة غيث الندى التجارية-GHAEETH ALNADA TRADING EST
+20934-شركة هلا وان التجارية - HALA ONE TRADING CO
+20935-تموينات روابي للمواد الغذائية - RAWABY GROCERY FOR FOODSTUFFS
+20936-تموينات لمار - LAMAR GROCERY TABUK
+20937-محل لمسات المشاغل للتجارة - LAMASAT ALMASHAGHEL SHOP FOR TRADING
+20938-شركة السواق وسط قارا - ALSAWAQ WASAT QARA COMPANY
+20939-محامص المزاج الاصيل للقهوة - ALMAZAJ ALASEEL COFFEE ROASTERS
+20940-تموينات نسمة الاربعين للتجارة 2 - NESMT ALAARBAEEN FOR TRADING 2
+20941-تموبنات مؤسسة اجواد النفط للوقود-GROCERY OF AOUAD ALNAFT EST FOR FEUL
+20942-مؤسسة نايع العتيبي التجارية - NAYAA ALOTIBI TRADING EST
+20943-اسواق بساتين الشرق المركزية - BASATEEN ALSHARQ CENTRAL MARKETS
+20944-تموينات زاد الشفاء للمواد الغذائية - ZAD ALSHEFAA GROCERY FOR FOODSTUFFS
+20945-شركة واي سنتر للتجارة بسكاكا - Y CENTER COMPANY FOR TRADING SKAKA
+20946-تموينات دابوق للمواد الغذائية - DABOUK GROCERY FOR FOODSTUFFS
+20947-تموينات شيخة طلق مثيب العتيبي للمواد الغذائية - SHEEKHA TALQ MAHEEB ALOTIBI GROCERY FOR FOODSTUFFS
+20948-مؤسسة عهد نايع العتيبي التجارية - AHED NAEEAA ALOTIBI TRADING EST
+20949-شركة هندام ريفان التجارية شركة شخص واحد ذات مسؤلية محدودة اجنبية - HNDAM REVAN TRADING COMPANY
+20950-جود اللقائط للكماليات - JOUD ALLQAAT FOR LUXURIES
+20951-اسواق غذاء الشام - GHEZAA ALSHAM MARKETS
+20952-سوبر ماكت ابو ذينه - ABOUZINA SUPERMARKET
+20953-تموينات زاوية اللؤلؤة للمواد الغذائية - ZAWIAT ALOAALOAAH GROCERY FOR FOODSTUFF
+20954-تموينات منابع الشمال للمواد الغذائية - MANABAA ALSHAMMAL GROCERY FOR FOODSTUFFS
+20955-محامص نجوم الشمال للقهوة والمواد الغذائية-NGOOM ALSHAMAL Roasters for Coffee and Food
+20956-مدارس بيت القيم للتعليم الابتدائي - BEET ALQEEM SCHOOLS
+20957-تموينات اسيل العلا للمواد الغذائية - ASEEL ALOLA GROCERY FOR FOODSTUFFS
+20958-مؤسسة نظرة تميز للتجارة - NAZRT TAMIOUZ EST FOR TRADING
+20959-محامص عروش القهوه للقهوه-THRONES COFFEE ROASTERS FOR COFFEE
+20960-تموينات ربوع الصفوه للموا الغذائية - ROBOAA ALSAFWA GROCERY FOR FOODSTUFF
+20961-شركة المثالي غير التجارية - ALMSALY GHEER TRADING COMPANY
+20962-تموينات عهد مشعل سليم الشراري للمواد الغذائية - AHED MASHAAL SLEEM ALSHRARY GROCERY FOR FOODSTUFFS
+20963-مؤسسة زاد الوفاء للمواد الغذائية - ZAD ALWAFAA EST FOR FOODSTUFF
+20964-شركة زهرات لتقديم المشروبات -ZAHRAT COMPANY TO SERVE DRINKS
+20965-مؤسسة عبدالعزيز فرحان جريعب العنزي للمواد الغذائية - ABDUALAZIZ FARHAN GREEAAB ALONAZI EST FOR FOODSTUFFS
+20966-مؤسسة ركن شروق القادسية-ROKN SHROOQ ALQADSEYA EST
+20967-تموينات ازهار البركة للمواد الغذائية - AZHAR ALBARAKA GROCERY FOR FOODSTUFFS
+20968-بقالة وليد هزاع سليمان العنزي للمواد الغذائية - WALEED HAZAA SOLAYMAN ALONAZI GROCERY FOR FOODSTUFFS
+20969-شركة ركن طريف الدولي للمواد الغذائية شركة شخص واحد 2 - ROKN TUREEF ALDAWLI COMPANY FOR FFODSTUFFS 2
+20970-تموينات الاماني اثنين - ALAMNI TWO GROCERY
+20971-مبيعات نقدية احمد عادل - AHMED ADEL CASH
+20972-تموينات قمة الحمراء للمواد الغذائية - QEMAT ALHAMRAA GROCERY FOR FOOD STUFFS
+20973-مؤسسة عبدالعزيز انور غضبان العناد للتجارة - ABDELAZIZ ANWAR GADBAN ALONAD EST FOR TRADING
+20974-شركة النكهة الرائعه للتغذية - GREAT FLAVOR NUTRITION COMPANY
+20975-شركة سلمان المتحدة التجارية - SALMAN ALMOTAHEDA TRADING COMPANY
+20976-شركة الفرصة الاقتصادية للتجارة - ALFORSA ALEQTSADYA COMPANY FOR TRADING
+20977-بقالة السلامة - SALAMA GROCERY
+20978-سوبر ماركت السويري - ALSWERY SUPERMARKET
+20979-تموينات الابراج جملة تجزئة - ALABRAJ GOMA TAGZAAA GROCERY
+20980-مؤسسة حسام طريف للمواد الغذائية - HOSSAM TURIF EST FOR FOOD STUFFS
+20981-تموينات ضيافة الشمال للمواد الغذائية - DIAFAT ALSHAMAL GROCERY FOR FOODSTUFFS
+20982-تموينات نسمة المخطط للمواد الغذائية - NSMAT ALMOKHTATT GROCERY FOR FOODSTUFFS
+20983-تموينات دار الفايز  للمواد الغذائية - DAR ALFAYEZ GROCERY FOR FOODSTUFFS
+20984-افكار ومخازن العناية -AFKAR WA MKHZEN ALAAENAYA
+20985-تموينات شوق الاولي - SHOWK ALAAOLA GROCERY
+20986-مؤسسة منار غير التجارية - MANAR GHEER TRADING EST
+20987-شركة العالمية للتجارة - ALALAMYA COMPANY FOR TRADING
+20988-مؤسسة تنزيلات الذهبية التجارية - TANZILAT ALZHBIYA TRDING EST
+20989-تموينات حقيبة المستهلك للمواد الغذائية - HAQEEBAT ALMOSTAHLEK GROCERY FOR FOODSTUFFS
+20990-اسواق نجمة الشمال المركزية - NAGMT ALSHAMAL CENTRAL MARKETS
+20991-شركة درر العليا للمواد الغذائية - DORAR ALOLYA COMPANY FOR FOODSTUFFS
+20992-تموينات غروب التعاون للمواد الغذائية - GHROOB ALTAAWON GROCERY FOR FOODSTUFFS
+20993-مؤسسة فؤاد حمدان راشد الراشد للمواد الغذائية - FOUAAD HAMDAN RASHD ARRASHED EST FOR FOODATUFFS
+20994-تموينات نخبة الريان للتجارة - NOKHBAT ALRAYAN GROCERY FOR TRADING
+20995-مؤسسة وادي بدنة التجارية - WADI BADNA TRADING EST
+20996-مؤسسة اسوار الجوهرة للكماليات - ASWAR ALJAWHARA EST FOR LUXURIES
+20997-تموينات الشفا بلس للتجارة - ALSHEFAA PLUS GROCERY FOR TRADING
+20998-محل توفير العمران للتجارة - TAWFEER ALOMRAN FOR TRADING
+20999-شركة فن الفيصلية التجارية - FN ALFAISLIYA TRADING COMPANY
+21000-مؤسسة جمال خلف البادي التجارية - GAMAL KHALAF ALBADY EST FOR TRADING
+21001-تموينات الفريح - ALFREEH GROCERY
+21002-تموينات ازها النسيم للمواد الغذائية - AZHA ALNASEEM GROCERY FOR FOODSTUFFS
+21003-تموينات غريب محمد العتيبي - GHAREEB MOHAMED ALOTIBY GROCERY
+21004-عروض نون- NOON OFFERS
+21005-تموينات بندر - BANDAR GROCERY
+21006-تموينات طارق قليل محمد الشهري للمواد الغذائية- TAREK QALEL MOHAMED ALSHEHARY GROCERY FOR FOODSTUFFS
+21007-مؤسسة سلة الديرة التجارية - SALT ALDEERA TRADING EST
+21008-تموينات جوف توفير للمواد الغذائية-JOUF TAWFEER GROCERY FOR FOODSTUFFS
+21009-تموينات جوهرة بدنة للمواد الغذائية - GAWHARAT BADNAH GROCERY FOR FOODSTUFFS
+21010-مطعم شهي الجادة للاكلات الشعبية- SHAHY ALJADAH RESTAURANT
+21011-تموينات ذهبة سالم احمد الشهري - ZAHBA SALEM AHMED ALSHEHRY
+21012-تموينات الخليح - ALKHALEEJ GROCERY
+21013-شركة زهوان للتجارة - ZAHWAN COMPANY FOR TRADING
+21014-مؤسسة غازي جزاع عويند الخمعلي التجارية - GHAZY GAZAA OUIND ALKHMAALY TRADING EST
+21015-بقالة جسور يعقوب للمواد الغذائية - GSOOR YAAQOUB FOR FOODSTUFFS
+21016-اسواق توفير الشمال للمواد الغذائية - TAWFEER ALSHMMAL MARKETS FOR FOODSTUFFS
+21017-تموينات الاخضر الجميل للمواد الغذائية - ALAKHDAR ALJAMEEL GROCERY FOR FOODSTUFFS
+21018-شركة ثمار الشمال للتجارة - THEMAR ALSHAMAL COMPANY FOR TRADING
+21019-تموينات زاوية الباسم للمواد الغذائية - ZAWYAT ALBASEM GROCERY FORFOODSTUFFS
+21020-تموينات ساحل تبوك للمواد الغذائية - SAHEL TABUK GROCERY FOR FOODSTUFFS
+21021-مؤسسة زاوية الرائد للمنتجات البلاستيكية - ZAWYAT ALRAAED EST FOR PLASTIC PRODUCTS
+21022-مؤسسة ثمار السنين للمواد الغذائية - THMAR ALSNEEN EST FOR FOODSTUFFS
+21023-تموينات اصل الحكاية للمواد الغذائية - ASL ALHEKAYA GROCERY FOR FOODSTUFFS
+21024-تموينات اطياب المدينة - ATYAB ALMADINA GROCERY
+21025-تموينات الاتقاء للمواد الغذائية - ALEETQAA GORCERY FOR FOODSTUFFS
+21026-مؤسسة رزمة للتعبئة والتغليف - ROZMA EST FOR PACKING
+21027-شركة الكيان الشمالية للتجارة - ALKAYA ALSHAMALYA TRDING COMPANY
+21028-مؤسسة اركان تازة -ARKAN TAZA EST
+21029-بوفية التابعي لتقديم الوجبات - ALTABAI BUFFET TO PROVIDE MEALS
+21031-بقالة سلسبيل الشمال للمواد الغذائية - SALSABIL ALSHAMAL GROCERY FOR FOODSTUFFS
+21032-مؤسسة اضواء التوفير للتجارة - ADWAA ALTAWFEER FOR TRADING
+21033-تموينات درة جوري للمواد الغذائية - DORT JORY GROCERY FOR FOODSTUFFS
+21034-مؤسسة قمة حدة التجارية - QMT HEDDA TRAFING EST
+21036-شركة سمو الجزيرة للمقاولات شركة شخص واحد - SMO ALJAZEERA
+21037-اسواق زاد ستار المركزية - ZAD STAR CENTRAL MARKETS
+21038-فرع شركة شوق الاولى التجارية -SHOOUQ ALAOWLA TRADING COMPANY BARNCH
+21039-اسواق رحالة الشمالي للمواد الغذائية - RAHALA ASHAMALY MARKETS FOR FOODSTUFFS
+21040-شركة سوق الغذاء التجارية عرعر - FOOD MARKET TRADING COMPANY ARAR
+21041-شركة نجمة الوليد للمواد الغذائية محطة العريعر سابقا - NJMT ALWALEED
+21042-تموينات نبراس المصيف للمواد الغذائية  - NBRAS ALMASEEF GROCERY FOR FOODSTUFF
+21043-اسواق السلمان التجارية - ALSALMAN TRADING MARKETS
+21044-محامص طيبة بلس للمكسرات - TYBA PLUS ROASTERS FOR NUTS
+21045-مؤسسة شرياف للتجارة2 - SHREERIAF EST FOR TRADING 2
+21046-تموينات نبراس الياسمين للمواد الغذائية -  NBRAS ALYASMEEN GROCERY
+21047-تموينات ورود المحبة - WROOD ALMAHABA GROCERY
+21048-تموينات ساحة سلطانه للمواد الغذائية - SAHET SULTANA GROCERY
+21049-شركة خمسة العائلة التجارية - KHAMSA ALAALA TRADING COMPANY
+21050-اركاز - ARKAZ
+21051-تموينات الفارقة للمواد الغذائية - ALFARQA GROCERY FOR FOODSTUFFS
+21052-تموينات زاوية النحل للمواد الغذائية - ZAWYAT ALNAHLGROCERY FOR FOODSTUFFS
+21053-تموينات التوفير الخرافي للمواد الغذائية - ALTAWFEER ALKHORAFY GROCERY FOR FOODSTUFFS
+21054-شركة اسواق ياسمين الشام - COMPANY OF YASMINE ALSHAM MARKETS
+21055-مؤسسة هاني الشمالي للاواني المنزلية - HANY ALSHAMALY EST
+21056-مؤسسة تخفيصات العشرين للتجارة - ALAASHREEN DISCOUNTSHOP EST  FOR TRADING
+21057-تموينات رحمة محمد خضر العطوي للمواد الغذائية - RAHMA MOHAMED KHEDR ALATTAWI GROCERY FOR TRADING
+21058-تموينات قطوف الجندل مواد الغذائية - QTOOF ALJANDAL GROCERY FOR FOODSTUFFS
+21059-تموينات احياء الخالدية للمواد الغذائية - AHYAA ALKHALDYA GROCERY FOR OODSTUFFS
+21060-مؤسسة رغد سليمان سويلم ابوجنيب للمواد الغذائية - RAGHAD SOULIMAN ABOUJNEEB EST
+21061-اسواق توفير النبك المركزية - TAWFEER ALNABQ CENTRAL MARKETS
+21062-تموينات عين المصيف للمواد الغذائية - AIN ALMASEEF GROCERY FOR FOODSTUFFS
+21063-تموينات القصور للمواد الغذائية - ALQSSOUR GROCERY FOR FOODSTUFFS
+21064-سواق زمرد الشام التجارية - ZMROD ALSHA TRADING MARKTS
+21065-تموينات حلا تركي - HLA TURKI GROCERY
+21066-معرض الرسام للملابس الجاهزة - ALRASSAM EXHIBITAION FOR CLOTHING
+21067-مؤسسة كيان خالد للمواد الغذائية - KAYAN KHALED EST FOR FOODSTUFFS
+21068-تموينات شايح صلاح سليم العنزي للمواد الغذائية - SHAYH SALAH SLEEM ALONAZZI GROCERY FOR FOODSTUFFS
+21069-اسواق نقطة غذائي المركزية - NOKTATT GHEZAAI CENTRAL MARKETS
+21070-تموينات يا هلا التوفير التجارية - YA HALA ALTAWFEER TRADING GROCERY
+21071-محل فايز  هلهول الاشجعي - FAYEZ HALHOUL ALAASHGAAY SHOP
+21072-تموينات رفيف الشامخ للمواد الغذائية - RAFEEF ALSHAMKH FOR FOODSTUFFS
+21073-تموينات رحمة جريد طليحان العنزي - RAHMA GREED TOLYHAN AL ONAZZI GROCERY
+21074-تموينات روعة البوادي للمواد الغذائية - RAWAAT ALBAWADY FOR FOODSTUFFS
+21075-شركة باي بال للتجارة - PAYPAL COMPANY FOR TRADING
+21076-مؤسسة كنوز الديرة للتجارة - KNOOZ ALDEERA
+21077-محل جود غير التجارية - GOOD GHEER TRDING SHOP
+21078-شركة خط الباسم التجارية-KHAT ALBASM COMPANY FOR TRADING Skaka
+21079-شركة سهم التوفير للتجارة - SAHM ALTAWFEER COMPANY FOR TRADING
+21080-تموينات ريما حمدان احمد الزهراني للمواد الغذائية -REMA HEMDAN AHMED ALZHRANI GROCERY
+21081-سوبرماركت التوفير - ALTWFEER SUPERMARKET
+21082-محل مشاري سالم فرهود الشراري للمواد الغذائية - MSHARY SALEM FRHOD ASHRARY SHOP
+21083-محل ثروات الشمالية للتجارة - THRWAT ASHMALYA SHOP FOR TRADING
+21084-شركة ترند فايف تن للتجارة -TREND FIVE TEN COMPANY FOR TRADING
+21085-محل اسماء طلال عبدالله الرديني للمواد الغذائية - ASMAA TALAL ABDALLA ALRDENY SHOP
+21086-مؤسسة رمث الشمال للمواد الغذائية - RAMTH ALSHMAL EST FOR FOODSTUFFS
+21087-شركة اديم الجزيرة للاستثمار - ADEM ALJAZEERA COMPANY FOR INVESTMENT
+21088-تموينات نعيم بلس للمواد الغذائية - NAAEEM PLUS GROCERY
+21089-تموينات نجمة الاربعين للمواد الغذائية - NGMT ALAARBAAEN GROCERY FOR FOODSTUFFS
+21090-شركة عربية العائلة للتجارة - ARABYT ALAAILA COMPANY FOR TRADING
+21091-شركة مركز اكثر واقل للتجارة - CENTER AKHTHAR WA AQL COMPANY FOR TRADING
+21092-مطعم تمليحة - TAMLYHA RESTAURANT
+21093-شركة زاوية الوسام التجارية فرع القريات - ZAWIAT ALWESAM TRADING COMPANY
+21094-شركة شوق الاولى التجارية فرع العزيزية - SHOUQ ALAAOLA TRADING COMPANY
+21095-تموينات صقر -  SUPERMARKET SAQR
+21096-شركة النجوم الخمسة - FIVE STARS COMPANY
+21097-مؤسسة رمز باك للمنتجات البلاستيكية - RAMZ PACK EST FOR PLASTIC PRODUCTS
+21098-شركة فصول التوفير التجارية - FSOL ALTWOFEER TRADING COMPANY
+21099-تموينات رعد الوافر للمواد الغذائية - RAAD ALWAFER
+21100-اسوق درة الاندلس للمواد الغذائية - DORT ALANDALUS MARKETS FOR FFODSTUFFS
+21101-اسواق سلة راف التجارية - SALT RAV TRADING MARKETS
+21102-اسواق فخر الغذائي المركزية - FAKHR ALGHEZAAY CENTRAL MARKETS
+21103-مؤسسة يزيد محسن كريم العطيات للمنتجات البلاستيكية - YAZEED MOHSEN KAREEM ALAATYAT EST
+21104-مؤسسة عبدالمجيد دحام بن كريم المجلاد لتقديم المشروبات-ABDULMJED DHM BN KREEM ALMGLAD EST
+21105-شركة دانة الجملة التجارية - DANAT ALJOUMLA TRADING COMPANY
+21106-تموينات مذاق العائلة للمواد الغذائية - MAZAQ ALAAYLA GROCERY FOR FOODSTUFFS
+21107-تموينات النعيم بلس للمواد الغذائية - ALNAAEEM PLUS GROCERY FOR FOODSTUFFS
+21108-تموينات فايز حمود عبدالله الرديني للمواد الغذئية - FAYEZ HOMUD  ABDALLA ALRDINI GROCERY
+21109-مؤسسة ارما فود التجارية - ARMA FOOD TRADING EST
+21110-أسواق درة غذائك المركزية - DORT GHEZZAK CENTRAL MARKETS
+21111-تموينات الحارة -ALHARA GROCERY
+21112-شركة اسواق اسرار الشامل التجارية -ASRAR ASHMEL MARKETS TRADING COMPANY
+21113-شركة مركز اسواق الابراج المركزية للتجارة-ALABRAJ CENTRAL MARKETS CENTER TRADING COMPANY
+21114-تموينات سمو الشمال للمواد الغذائية - SMW ASHMAL GROCERY FOR FOODSTUFFS
+21115-مطعم دخيل الشامل لتقديم الوجبات - DAKHEEL ALSHAM RESTURANT
+21116-تموينات تميم - TAMEM GROCERY
+21117-مطعم مزاج المندي لتقديم الوجبات - MAZAJ ALMANDY RETURENT
+21118-اسواق البنداري للمواد الغذائية - ALBENDARY MARKETS FOR FOODSTUFFS
+21119-شركة سواري الشمال التجارية - SAWARY ALSHAMAL TRADING COMPANY
+21120-مطعم العمدة للواجبات الشعبية - ALOMDA RETURANT
+21121-مطعم طيبة - TEBA RETURANT
+21122-تموينات قمة السلطانة للمواد الغذائية - QMT ALSULTANA GROCERY FOR FOODSTUFFS
+21123-تموينات درر الشعلة للمواد الغذائية - DORR ALSHOAALA GROCERY FOR FOODSTUFFS
+21124-اسواق ريف قارا  - REEF QARA MARKETS
+21125-تموينات ركن الجابية الغذائية - ROKN ALJABIAH GROCERY
+21126-اسواق نوادر التموين للمواد الغذائية - NWADR ALTAMWEEN GROCERY FOR FOODSTUFFS
+21127-شركة لؤلؤ نجد الاولى للمواد الغذائية بالحديثة - LOAALOAA NJD ALOLA COMPANY FOR FOODSTUFFS
+21128-تموينات سناف الشمال للمواد الغذائية - SNAF ALSHMAL GROCERY FOR FOODSTUFFS
+21129-تموينات خميس عقيل بادح الشمري للمواد الغذائية - KHAMEES OUKEEL BADH ALSHEMARY GROCERY
+21130-شركة اسواق ركن مها البوادي للمواد الغذائية حي النظيم - ROKN MAHA ABWADY COMPANY FOR FOOD STUFFS
+21131-اسواق دار سلتي للتجارة - DAR SALTY MARKETS  FOR TRADING
+21132-اسواق درة الشفاء المركزية بحائل - DORAT ALSHEFFAA CENTRAL MARKETS
+21133-تموينات سلطانة الشمال للمواد الغذائية - SULTANAT ASHAMAL GROCERY FOR FOODSTUFFS
+21134-تموينات عهود للمواد الغذائية - AOHOUD GROCERY FOR FOODSTUFFS
+21135-تموينات عين المصيف للمواد الغذائية - AIN ALMASEEF GROCERY FOR FOODSTUFFS
+21136-تموينات منصور فالح البلوي للمواد الغذائية - MANSOUR FALEH ALBALAWY GROCERY FOR FOODSTUFFS
+21137-تموينات خزينة الرحالة للمواد الغذائية - KHAZEENT ALRHALA GROCERY FOR FOODSTUFFS
+21138-تموينات ينتقي للمواد الغذائية - YANTAQY GROCERY FOR FOODSTUFFS
+21139-مقهى الورود كافية - ALWROUD CAFE
+21140-مطعم عائلتي غير لتقديم الوجبات - AALATY GHEER RESURENT
+21141-تموينات عبدالرحمن فواز مطير الشمري للمواد الغذائية - ABDULRHMAN FWAZ MTTER ALSHEMMARY GROCERY
+21142-بقالة اطيب النقرة للمواد الغذائية - ATYAB ALNAQRA GROCERY FOR FOODSTUFFS
+21143-تموينات بيت المصيف للمواد الغذائية - BYT ALMASEEF GROCERY FOR FOODSTUFFS
+21144-تموينات عبير المدينة للمواد الغذائية - ABEER ALMADENA GROCERY FOR FOODSTUFFS
+21145-شركة اسواق باب الازدهار للمواد الغذائية - BAB ALAZDHAR MARKETS COMPANY FOR FOODSTUFFS
+21146-صيدلية ثامر عدنان احمد يوسف للادوية ( نابلسي ) - SAMER ADNAN AHMED YOUSSOF PHARMACY
+21147-مؤسسة غيم الشمال للتجارة - GHEEM ASHAMAL EST FOR TRADING
+21148-صيدلية باب الشفاء الطبية - BAB ALSHEFAA MEDICAL PHARMACY
+21149-تموينات وفقة قرموش بن سعيد ال حمد للمواد الغذائية - WAKFA KRMUSH BN SAEED AL  HAMAD GROCERY
+21150-اسواق زاد وملح المركزية - ZAD WA MALH CENTRAL MARKETS
+21151-مطعم التوت الشامي - ALTOOT ALSHAMI RESTAURANT
+21152-مؤسسة كنافة المختار للتجارة - ALMOUKHTAR KUNAFA FOR TRADING EST
+21153-مجمع الثلج المميز الطبي - ALTHALJ ALMOMAIYAZ MEDICAL COMPLEX
+21154-تموينات خالد تركي الرديعان - KHALED TURKY ALRODYAAN GROCERY
+21155-اسواق روائق هلا المركزية - RAWAAK HALA CENTRAL MARKETS
+21156-تموينات العاصمة المتحدة للمواد الغذائية - ALAASEMA ALMOTAHEDA GROCERY FOR FOODSTUFFS
+21157-تموينات مروج تبوك للمواد الغذائية - MROOJ TABUK GROCERY
+21158-تموينات نبع الشمال للمواد الغذائية - NABAA ALSHAMMAL GROCERY FOR FOODSTUFFS
+21159-شركة اسواق درة المدائن للمواد الغذائية حي غرناطة - DORT ALMDAAN MARKETS COMPANY FOR FOODSTUFFS
+21160-شركة احتياج المواسم التجارية - EHTYAJ ALMWASEM TRADING COMPANY
+21161-مؤسسة سلافا للتجارة - SOLAFA EST FOR TRSDING
+21162-مطعم مائة باوند - HUNDRED POUND RESTAURANT
+21163-اسواق زاد الراقي المركزية - ZAD ALRAQI CENTRAL MARKETS
+21164-تموينات زهر الربيع للمواد الغذائية - ZAHR ARRABIAA GROCERY FOR FOODSTUFFS
+21165-شركة نما موندو للخدمات -NAMA MONDO COMPANY FOR SERVACIES
+21166-تموينات مروج اسيل للتجارة - MROOJ ASEEL GROCERY FOR TRADING
+21167-تموينات فاطمة هزاع محمد العنزي للمواد الغذائية - FATMA HAZAA MOHMAED ALONAZI GROCERY FOR FOODSTUFFS
+21168-تموينات سعود وان للمواد الغذائية - SAUD ONE GROCERY FOR FOODSTUFFS
+21169-روز دوناتس - ROSE DONUTS
+21170-سوبر ماركت الوردة - ALWARDA SUPERMARKET
+21171-تموينات اماني حمد محمد العوفي للمواد الغذائية- AMANY HAMAD MOHAMED ALOUFY GROCERY FOR FOODSTUFFS
+21172-مستودع بن عيد - BN EED WAREHOUSE
+21173-اسواق درة المدائن للمواد الغذائية العلا - DORT ALMDAAEN MARKETS ALULA
+21174-مؤسسة ذاد الخير للتجارة - ZAD ALKHEER EST FOR TRADING
+21175-تموينات لؤلؤ البوادي للمواد الغذائية - LUAA LUAA ALBAWADI GROCERY FOR FOODSTUFFS
+21176-مؤسسة روائع اليسر للتعبئة والتغليف - RAWAA ALYOUSR EST FOR PACKING
+21177-تموينات نسيم الزهور الحمراء - NASEEM ALZHOOR ALHAMRAA FOR FOOD STUFFS
+21178-اسواق ركن التوفير - ROKN ALTAWFEER MARKETS
+21179-شركة محيط السنابل للتجارة - MUHIT ALSNABEL TRADING COMPANY
+21180-صيدلية مواسم للأدوية - MWASEM PHARMACY
+21181-اسواق ثمار طبرجل  التجارية - THEMAR TABARJAL TRADING MARKEYS
+21182-شركة بوابة الشمال العربية التجارية - BAWABT ALSHAMAL ALARABIA TRADING COMPANY
+21183-تموينات كرم التوفير - KARAM ALTWFEER GROCERY
+21184-شركة ادراك الرائدة المحدودة - ADRAK ALRAAEDA LTD COMPANY
+21185-تموينات طيبات الخير للمواد الغذائية - TAYBAT ALKHEER GROCERY FOR FOODSTUFFS
+21186-اسواق الاسرة المتميزة للمواد الغذائية - ALOSRA ALMOTAMIZA MARKETS FOR FOODSTUFFS
+21187-شركة تموينات كنوز السهل للتجارة  - COMPANY TAMWENAT KNOWZ ALSAHL FOR TRADING
+21188-شركة الاسرة المتميزة للتجارة - ALOSRA ALMOTAMIZA COMPANY FOR TRADING
+21189-اسواق اوفر طلعة المركزية - AWFAR TALAA CENTRAL MARKETS
+21190-شركة حنين الورد-SHRKA HNYN ALWRD
+21191-مؤسسة نجمة المناسبات للتجارة - NGMT ALMONASBAT EST FOR TRADING
+21192-تموينات العائلة للمواد الغذائية - ALAALA GROCERY FOR FOODSTUFFS
+21193-مؤسسة سالم جلبان جلبان القحطاني للتجارة - SALEM GLBAN GLBAN ALQAHTANY EST FOR TRADING
+21194-جوف الدانة للتجارة - JOUF ALDANA FOR TRADING
+21195-مؤسسة درة التوفير للتجارة - DORAT ALTWFEER FOR TRADING
+21196-شركة نزار التوفير  - NZAR ALTWAFEER COMPANY
+21197-مؤسسة افنان الورد للتجارة - AFNAN ALWARD EST FOR TRADING
+21198-اسواق ثلاجة البركة للمواد الغذائية - Al Baraka Foodstuffs Fridge Markets
+21199-تموينات جاسم بن محمد بن ابراهيم الشامسي للمواد الغذائية - JASEM BN MOHAMD BN IBRAHIM ALSHAMSI EST FOR FOODSTUFFS
+21200-شركة اسواق الاسرة المميزة للتجارة - ALOSRA ALMOTMIZA MARKETS COMPANY FOR TRADING
+21201-تموينات الخيار الاسمى - ALKHYAR ALASMA GROCERY
+21202-شركة سلة التل للمواد الغذائية - SALET ALTELAL COMPANY
+21203-تموينات اطلالة الديرة للمواد الغذائية - ETLALAT ALDEERA GROCERY FOR FOODSTUFFS
+21204-اسواق عالم الشموخ  - ALAM ALSHMOUKH MARKETS
+21205-شركة سلت الغذاء الشامل للمواد الغذائية - SALT ALGEZAA ALSHAMMEL COMPANY FOR FOODSTUFFS
+21206-تموينات نقة الشامل للمواد الغذائية - NOQTAT ALSHAMMEL GROCERY FOR FOODSTUFFS
+21207-شركة ركن زهرة الشمال التجارية بالتسهيلات - ROKN ZAHRT ALSHAMAL TRADING COMPANY
+21208-شركة الاصيل الدولية المحدودة - ALAASEEL ALDAWLYA LIMITED COMPANY
+21209-شركة خيمة الضيافة للمحامص - KHEEMT ALDEYAFA COMPANY FOR ROASTERS
+21210-تموينات حميد مران الرويلي للتجارة - HMEED MRAN ALRWEELY GROCERY FOR TRADING
+21211-تموينات امل هليل بلهان الحازمي - AML HOLAYEL BLHAN ALHAZMY GROCERY
+21212-اسواق نعيم الطيبات للمواد الغذائية - NAAEEM ALTAYBAT MARKETS
+21213-تموينات سنابل المصيف للمواد الغذائية - SNABEL ALMASEEF
+21214-مؤسسة ايلاف الشمال للمواد الغذائية - ELAF ALSHAMAL EST FOR FOODSTUFFS
+21215-بريق للمنظفات والبلاستيك - BAREEQ FOR PLASTIC
+21216-مطعم ديوان الحاشي - DEWAN ALHASHEE RESTURANT
+21217-شركة أسواق العائلة الشمالية التجارية-AL AAELA ALSHAMALYA  MARKETS TRADING COMPANY
+21218-شركة عروق العلا لتجارة الاغذية شركة شخص واحد - OROOQ ALOULA
+21219-محامص الغوالي  - ALGHAWALY ROASTERS
+21220-سوبر ماركت ريحانه للمواد الغذائية - RAYHANA SUPERMARKT
+21221-مؤسسة محمد ساجر بن عبدالله الحربي للمواد الغذائية - MOHAMED SAJER BN ABDALLA ALHARBI
+21222-اسواق الميل - ALMEEL MARKETS
+21223-اسواق الاسرة المتميزة للتجارة فرع النخيل - ALOSRA ALMOTAMIZA MARKETS FOR TRADING
+21224-مؤسسة فارس هايل الشراري - FARIS HAEL ALSHRARY EST FOR TRADING
+21225-جود اللقاء العائلي - JOOD ALLEQAA ALAALY
+21226-مؤسسة بلال محرج الشراري - BELAL MEHREJ ALSHARARY EST
+21227-تموينات هنادي للمواد الغذائية - HANADY GROCERY FOR FOODSTUFFS
+21228-مؤسسة خمسة الشمال التجارية - KHAMSAT ALSHMAL TRADING EST
+21229-مؤسسة كيان تبوك الثالث للمقاولات العامة - KAYAN TABUK ALTHALTH EST
+21230-تموينات عتق الجود للمواد الغذائية - ETTK ALJOUD GROCERY FOR FOODSTUFFS
+21231-شركة محامص المحيط الاولى للقهوة - ALMOHEET ALAAOULA ROASTERS COMPANY FOR COFFEE
+21232-سوبر ماركت الرميح - ALROMEEH SUPERMARKET
+21233-تموينات طيبات الناصرية - TYBAT ALNASRYA GROCERY
+21234-مؤسسة اشواق طلال علي البلوي للتجارة - ASHWAQ TALAL ALI ALBALAWI EST FOR TRADING
+21235-تموينات وتين غير للمواد الغذائية  - WATEEN GHEER GROCERY FOR FOODTUFFS
+21236-محامص طيبة بلس للمكسرات-TAIBA PLUS NUT ROASTERS
+21237-اسواق لؤلؤ الجوفية -LUOAA LUOAA ALJOUFIYA MAKETS
+21238-شركة زاد الاهل التجارية - ZAD ALAAHL TRADING COMPANY
+21239-مؤسسة البندري علي سالم البلوي-MAASSA ALBNDRY ALI SALM ALBLWY
+21240-مؤسسة خيرات الورود-MAASSAT KHYRAT ALWRWD
+21241-شركة اسواق اسد مول التجارية 2-SHRKAT ASWAQ ASD MWL ALTJARYA 2
+21242-مؤسسة مشاعر الورد للتجارة-MAASSA MSHAAR ALWRD LLTJARA
+21243-مؤسسة طيبات الناصرية-MAASSA TYBAT ALNASRYA
+21244-مؤسسة عنوان التوفير التجارية-MAASSA ANWAN ALTWFYR ALTJARYA
+21245-تموينات دررة السليمانية للمواد الغذائية-TMWYNAT DRRA ALSLYMANYA LLMWAD ALGHDHAAYA
+21246-مؤسسة حمد راشد العبيواني التجارية-MAASSA HMD RASHD ALABYWANY ALTJARYA
+21247-مؤسسة ساعة اناقة للتجارة-MAASSA SAAA ANAQA LLTJARA
+21248-مؤسسة جملة المنازل للمنظفات-MAASSA JMLA ALMNAZL LLMNZFAT
+21249-مركز النورس للكماليات-MRKZ ALNWRS LLKMALYAT
+21250-مؤسسة خيرات الزيتية للمواد الغذائية-MAASSA KHYRAT ALZYTYA LLMWAD ALGHDHAAYA
+21251-شركة العائلة للتوفير-SHRKA ALAAALA LLTWFYR
+21252-شركة اسواق العائلة للتجارة-SHRKA ASWAQ ALAALA LLTJARA
+21253-عربة نون-ARBA NWN
+21254-شركة زاوية الثلاثين للمواد الغذائية-SHRKA ZAWYA ALTHLATHYN LLMWAD ALGHDHAYA
+21255-سوبر ماركت الشريف-SUPER MARKT ALSHRYF
+21256-مؤسسة لحظات التوفير-MAASSA LHZAT ALTWFYR
+21257-مؤسسة حقول التخفيض للتجارة-MAASSA HQWL ALTKHFYD LLTJARA
+21258-تموينات خليح الراقي للمواد الغذائية-TMWYNAT KHLYH ALRAQY LLMWAD ALGHDHAYA
+21259-مطعم مسلم سليم المسعودي-MTAM MSLM SLYM ALMSAWDY
+21260-تموينات ضباء الشمال للمواد الغذائية-TMWYNAT DBA ALSHMAL LLMWAD ALGHDHAYA
+21261-شركة رشاد قايد البحري للمواد الغذائية-SHRKA RSHAD QAYD ALBHRY LLMWAD ALGHDHAYA
+21262-بقالة الشامة الاولي للمواد الغذائية-BQALA ALSHAMA ALAWLY LLMWAD ALGHDHYA
+21263-مؤسسة احمد عايد فلاح-MAASSA AHMD AAYD FLAH
+21264-تموينات روى الشمال-TMWYNAT RWA ALSHMAL
+21265-اسواق نواف بن ختام المركزية-ASWAQ NWAF BN KHTAM ALMRKZYA
+21266-شركة مطعم فروج طريف التجارية-SHRKA MTAM FRWJ TRYF ALTJARYA
+21267-مؤسسة روابي المستهلك للمواد الغذائية-MAASSA RWABY ALMSTHLK LLMWAD ALGHDHAYA
+21268-شركة تداول رئيسي للتجارة-SHRKA TDAWL RAYSY LLTJARA
+21269-قيصر الشمال لتقديم الوجبات-QYSR ALSHMAL LTQDYM ALWJBAT
+21270-شركة ريف السعادة المحدودة-SHRKA RYF ALSAADA ALMHDWDA
+21271-تموينات اوفر سلة للمواد الغذائية-TMWYNAT AWFR SLA LLMWAD ALGHDYA
+21272-مؤسسة بصمة الفخامة الراقي-MAASSA BSMA ALFKHAMA ALRAQY
+21273-مؤسسة ربوع حقل للتجارة-MAASSA RBWA HQL LLTJARA
+21274-مؤسسة أصداف الشمال التجارية-MAASSA ASDAF ALSHMAL ALTJARYA
+21275-شركة سهم التمييز للمواد الغذائية-SHRKA SHM ALTMYYZ LLMWAD ALGHDHAئYA
+21276-مؤسسة رمز الروائع التجارية-MAASSA RMZ ALRWAAAA ALTJARYA
+21277-مؤسسة منتجاك الذهبية التجارية-MAASSA MNTJAK ALDHHBYA ALTJARYA
+21278-اسواق كنوز حقل التجارية-ASWAQ KNWZ HQL ALTJARYA
+21279-شركة سهم التوفير للتجارة-SHRKA SHM ALTWFYR LLTJARA
+21280-شركة خيال مكس التجارية فرع القريات-SHRKA KHYAL MKS ALTJARYA
+21281-مؤسسة ركن تولين الشمال الاولي-MAASSA RKN TWLYN ALSHMAL ALAWLY
+21282-اسواق درر العليا للمواد الغذائية حقل -ASWAQ DRR ALALYA LLMWAD ALGHDHAAAYA
+21283-شركة اسواق اسد مول التجارية 3-SHRKA ASWAQ ASD MWL ALTJARYA 3
+21284-شركة توفير البوادي التجارية- TWFYR ALBWADY ALTJARYA COMPANY
+21285-شركة اومينكس ماكس-SHRKA AWMYNKS MAX
+21286-مؤسسة ناصر عبدالله محمد عيد للتجارة-MAASSA NASR ABDALLH MHMD AYD LLTJARA
+21287-شركة سهيل التوفير التجارية-SHRKA SHYL ALTWFYR ALTJARYA
+21288-مخازن طنا للخدمات التجارية-MKHAZN TNA LLKHDMAT ALTJARYA
+21289-مجمع مزون-MJMA MZWN
+21290-مؤسسة صفوة التوفير للتجارة-MAASSA SFWA ALTWFYR LLTJARA
+
+    `;
+    // يمكنك إضافة الـ 1000 سطر هنا بنفس الطريقة تماماً
+    // ==========================================
+
+    // معالجة البيانات وتحويلها لمصفوفة بحث
+    const customers = rawCustomerData.trim().split('\n').map(line => {
+        const parts = line.split('-');
+        return { 
+            id: parts[0]?.trim() || '', 
+            name: parts[1]?.trim() || '' 
+        };
+    }).filter(c => c.id && c.name);
+
+    // ملء قائمة المقترحات
+    const datalist = document.getElementById('customerNamesList');
+    customers.forEach(c => {
+        const option = document.createElement('option');
+        option.value = c.name;
+        datalist.appendChild(option);
+    });
+
+    // منطق البحث التبادلي
+    function onNameInput() {
+        const val = document.getElementById('customerName').value;
+        const found = customers.find(c => c.name === val);
+        if (found) document.getElementById('customerCode').value = found.id;
+    }
+
+    function onCodeInput() {
+        const val = document.getElementById('customerCode').value;
+        const found = customers.find(c => c.id === val);
+        if (found) document.getElementById('customerName').value = found.name;
+    }
+
+    // منطق الحسابات والأصناف
+    const TAX_RATE = 0.15;
+    let itemCount = 0;
+
+    function addItemRow() {
+        itemCount++;
+        const div = document.createElement('div');
+        div.className = 'item-card';
+        div.id = `itemRow_${itemCount}`;
+        div.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <label>الصنف المخصوم (${itemCount})</label>
+                <button class="btn-remove" onclick="removeItemRow(${itemCount})">حذف 🗑️</button>
+            </div>
+            <select class="item-type" style="margin-bottom:10px" onchange="toggleOther(${itemCount}); calculateAll()">
+                <option value="600">600</option>
+                <option value="فوط نسائية">فوط نسائية</option>
+                <option value="حفائض">حفائض</option>
+                <option value="أخرى">أخرى</option>
+            </select>
+            <input type="text" id="other_${itemCount}" class="other-name hidden" placeholder="حدد نوع الصنف الآخر" style="margin-bottom:10px">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <input type="number" class="item-value" placeholder="القيمة بالضريبة" oninput="calculateAll()">
+                <input type="number" class="item-percent" value="3" placeholder="النسبة %" oninput="calculateAll()">
+            </div>
+        `;
+        document.getElementById('itemsContainer').appendChild(div);
+    }
+
+    function removeItemRow(id) { document.getElementById(`itemRow_${id}`).remove(); calculateAll(); }
+    function toggleOther(id) {
+        const select = document.querySelector(`#itemRow_${id} .item-type`);
+        document.getElementById(`other_${id}`).classList.toggle('hidden', select.value !== 'أخرى');
+    }
+
+    function formatNum(n) { return Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+    function calculateAll() {
+        const totalInvoice = parseFloat(document.getElementById('mainInvoiceAmount').value) || 0;
+        let totalItemsDisc = 0;
+
+        document.querySelectorAll('.item-card').forEach(row => {
+            const val = parseFloat(row.querySelector('.item-value').value) || 0;
+            const per = parseFloat(row.querySelector('.item-percent').value) || 0;
+            totalItemsDisc += val * (per / 100);
         });
+
+        let cashDisc = 0;
+        const remaining = totalInvoice - totalItemsDisc;
+        if (document.getElementById('cashToggle').checked) {
+            const per = parseFloat(document.getElementById('cashPercent').value) || 0;
+            const isWithTax = document.getElementById('cashTaxToggle').checked;
+            const base = isWithTax ? remaining : remaining / (1 + TAX_RATE);
+            cashDisc = base * (per / 100);
+        }
+
+        const final = totalInvoice - totalItemsDisc - cashDisc;
+        document.getElementById('outItemTotal').innerText = formatNum(totalItemsDisc);
+        document.getElementById('outCashTotal').innerText = formatNum(cashDisc);
+        document.getElementById('outFinal').innerText = formatNum(final);
+        return { totalInvoice, totalItemsDisc, cashDisc, final };
     }
 
-    function calculate() {
-        const TAX_RATE = 0.15;
+    function copyToClipboard() {
+        const res = calculateAll();
+        const p1 = document.getElementById('invP1').value;
+        const p2 = document.getElementById('invP2').value;
+        if (!p1 || !p2) { alert("رقم الفاتورة غير مكتمل!"); return; }
+        const fullInv = `wh0${p1}-${p2}`;
 
-        const invoiceAmountWithTax = parseFloat(document.getElementById("invoiceAmountWithTax").value) || 0;
-        const discountedItemWithTax = parseFloat(document.getElementById("discountedItemWithTax").value) || 0;
-        const discountPercentageItem = parseFloat(document.getElementById("discountPercentageItem").value) || 0;
-        const discountPercentageInvoice = parseFloat(document.getElementById("discountPercentageInvoice").value) || 0;
+        let report = `📄 *تقرير خصومات الفاتورة*\n`;
+        report += `━━━━━━━━━━━━━━\n`;
+        report += `👤 العميل: ${document.getElementById('customerName').value || 'غير محدد'}\n`;
+        report += `🆔 الكود: ${document.getElementById('customerCode').value || '-'}\n`;
+        report += `🧾 رقم الفاتورة: ${fullInv}\n`;
+        report += `💰 إجمالي الفاتورة: ${formatNum(res.totalInvoice)} ر.س\n\n`;
 
-        const isItemDiscountWithTax = document.getElementById("itemDiscountWithTaxToggle").checked;
-        const isInvoiceDiscountWithTax = document.getElementById("invoiceDiscountWithTaxToggle").checked;
+        const items = document.querySelectorAll('.item-card');
+        if (items.length > 0) {
+            report += `🏷️ *خصومات الأصناف:*\n`;
+            items.forEach((row, i) => {
+                let type = row.querySelector('.item-type').value;
+                if (type === 'أخرى') type = row.querySelector('.other-name').value || 'صنف مخصص';
+                const per = row.querySelector('.item-percent').value;
+                report += `- ${type}: خصم ${per}%\n`;
+            });
+            report += ` مجموع خصم الأصناف: ${formatNum(res.totalItemsDisc)} ر.س\n\n`;
+        }
 
-        const itemBase = isItemDiscountWithTax ? discountedItemWithTax : discountedItemWithTax / (1 + TAX_RATE);
-        const itemDiscount = itemBase * (discountPercentageItem / 100);
+        if (document.getElementById('cashToggle').checked) {
+            report += `💸 *الخصم النقدي (30 يوم):*\n`;
+            report += `- النسبة: ${document.getElementById('cashPercent').value}%\n`;
+            report += `- القيمة: ${formatNum(res.cashDisc)} ر.س\n\n`;
+        }
 
-        const invoiceAfterItemDiscount = invoiceAmountWithTax - itemDiscount;
+        report += `━━━━━━━━━━━━━━\n`;
+        report += `✅ *الصافي المطلوب سداده: ${formatNum(res.final)} ر.س*\n\n`;
+        report += `${fullInv}`; // رقم الفاتورة في سطر منفرد أخير
 
-        const invoiceBase = isInvoiceDiscountWithTax ? invoiceAfterItemDiscount : invoiceAfterItemDiscount / (1 + TAX_RATE);
-        const invoiceDiscount = invoiceBase * (discountPercentageInvoice / 100);
-
-        const allDiscounts = itemDiscount + invoiceDiscount;
-        const amountMustCollect = invoiceAmountWithTax - allDiscounts;
-
-        document.getElementById("itemDiscountWithTax").value = formatNumber(itemDiscount);
-        document.getElementById("invoiceAfterItemDiscount").value = formatNumber(invoiceAfterItemDiscount);
-        document.getElementById("allInvoiceDiscount").value = formatNumber(invoiceDiscount);
-        document.getElementById("allDiscounts").value = formatNumber(allDiscounts);
-        document.getElementById("amountMustCollect").value = formatNumber(amountMustCollect);
-    }
-
-    function copyResults() {
-        const getVal = id => document.getElementById(id).value;
-
-        const text = `
-📄 *بيانات الفاتورة*
-اسم العميل: ${getVal("customerName")}
-كود العميل: ${getVal("customerCode")}
-رقم الفاتورة: ${getVal("invoiceNumber")}
-
-🔢 *المدخلات:*
-إجمالي الفاتورة شامل الضريبة: ${formatNumber(getVal("invoiceAmountWithTax"))}
-اسم الصنف المشمول بالعرض: ${getVal("discountedItemName")}
-إجمالي الصنف المشمول بالعرض: ${formatNumber(getVal("discountedItemWithTax"))}
-نسبة خصم الصنف: ${getVal("discountPercentageItem")}% (${document.getElementById("itemDiscountWithTaxToggle").checked ? "مع ضريبة" : "بدون ضريبة"})
-نسبة الخصم النقدي: ${getVal("discountPercentageInvoice")}% (${document.getElementById("invoiceDiscountWithTaxToggle").checked ? "مع ضريبة" : "بدون ضريبة"})
-
-📊 *النتائج:*
-خصم الصنف: ${getVal("itemDiscountWithTax")}
-قيمة الفاتورة بعد خصم العرض: ${getVal("invoiceAfterItemDiscount")}
-الخصم النقدي: ${getVal("allInvoiceDiscount")}
-إجمالي الخصومات: ${getVal("allDiscounts")}
-المبلغ الواجب تحصيله: ${getVal("amountMustCollect")}
-        `.trim();
-
-        navigator.clipboard.writeText(text).then(() => {
-            alert("تم النسخ بنجاح");
+        navigator.clipboard.writeText(report).then(() => {
+            alert("تم نسخ التقرير بنجاح");
         });
     }
 </script>
