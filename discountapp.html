@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>حاسبة الخصومات المتقدمة | إصدار الفواتير المحترف</title>
+    <title>حاسبة الخصومات المتقدمة | الإصدار الاحترافي</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root {
@@ -12,6 +12,7 @@
             --bg-color: #f1f5f9;
             --card-bg: #ffffff;
             --border-color: #e2e8f0;
+            --text-muted: #64748b;
         }
 
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -24,6 +25,7 @@
             border-radius: 12px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
+            transition: 0.3s;
         }
 
         h2 { text-align: center; color: var(--primary-color); margin-top: 0; }
@@ -40,7 +42,7 @@
         }
 
         .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-size: 0.9rem; font-weight: 600; color: #475569; }
+        label { display: block; margin-bottom: 5px; font-size: 0.85rem; font-weight: 600; color: #475569; }
 
         input, select {
             width: 100%;
@@ -50,7 +52,7 @@
             font-size: 1rem;
         }
 
-        /* تنسيق رقم الفاتورة الخاص wh0X-XXXXX */
+        /* رقم الفاتورة wh0X-XXXXX */
         .invoice-wrapper {
             display: flex; align-items: center; direction: ltr;
             background: #f8fafc; border: 2px solid var(--border-color);
@@ -58,18 +60,16 @@
         }
         .invoice-prefix { padding: 10px; background: #e2e8f0; font-weight: bold; color: #1e293b; }
         .invoice-wrapper input { border: none; text-align: center; background: transparent; }
-        #invP1 { width: 45px; border-right: 1px solid #cbd5e1 !important; } /* خانة المستودع */
-        #invP2 { flex: 1; } /* خانة الرقم التسلسلي */
+        #invP1 { width: 50px; border-right: 1px solid #cbd5e1 !important; font-weight: bold; color: var(--primary-color); }
+        #invP2 { flex: 1; }
         .invoice-sep { font-weight: bold; padding: 0 5px; color: #1e293b; }
 
-        /* أزرار الأصناف */
+        /* أزرار التحكم */
         .btn-add {
             background: var(--success-color); color: white; border: none;
             padding: 12px; border-radius: 8px; cursor: pointer;
             width: 100%; font-weight: bold; margin-bottom: 20px;
-            transition: 0.3s;
         }
-        .btn-add:hover { background: #16a34a; }
 
         .btn-remove {
             background: var(--danger-color); color: white; border: none;
@@ -79,6 +79,14 @@
         .item-card {
             border: 1px solid #cbd5e1; padding: 15px; border-radius: 10px;
             margin-bottom: 15px; background: #fdfdfd;
+        }
+
+        /* حالة الخمول */
+        .disabled-section {
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(0.8);
+            background-color: #f8fafc;
         }
 
         /* نتائج الحساب */
@@ -91,9 +99,11 @@
             border: none; padding: 16px; border-radius: 8px;
             font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 15px;
         }
-        #copyBtn:hover { background: #1d4ed8; }
 
         .hidden { display: none; }
+        .flex-row { display: flex; gap: 10px; align-items: flex-end; }
+        .flex-item { flex: 1; }
+        .tax-check { width: auto; margin-left: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -103,15 +113,15 @@
 
     <!-- بيانات العميل والفاتورة -->
     <div class="card">
-        <div class="section-title">بيانات العميل والفاتورة</div>
+        <div class="section-title">البيانات الأساسية</div>
         
         <div class="form-group">
-            <label>بحث باسم العميل (عربي أو إنجليزي)</label>
-            <input type="text" id="customerName" list="customerNamesList" placeholder="اكتب للبحث في القائمة..." oninput="onNameInput()">
+            <label>بحث باسم العميل</label>
+            <input type="text" id="customerName" list="customerNamesList" placeholder="اكتب اسم العميل..." oninput="onNameInput()">
             <datalist id="customerNamesList"></datalist>
         </div>
 
-        <div class="row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="row" style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 10px;">
             <div class="form-group">
                 <label>كود العميل</label>
                 <input type="text" id="customerCode" placeholder="20XXX" oninput="onCodeInput()">
@@ -120,9 +130,9 @@
                 <label>رقم الفاتورة (wh0X - XXXXX)</label>
                 <div class="invoice-wrapper">
                     <span class="invoice-prefix">wh0</span>
-                    <input type="number" id="invP1" placeholder="4" title="رقم المستودع (خانة واحدة)">
+                    <input type="number" id="invP1" placeholder="4" oninput="this.value=this.value.slice(0,1)">
                     <span class="invoice-sep">-</span>
-                    <input type="number" id="invP2" placeholder="10251" title="رقم الفاتورة (4 أو 5 أرقام)">
+                    <input type="number" id="invP2" placeholder="10251">
                 </div>
             </div>
         </div>
@@ -133,25 +143,27 @@
         </div>
     </div>
 
-    <!-- قسم الخصومات -->
-    <div class="section-title">خصومات الأصناف المضافة</div>
+    <!-- خصومات الأصناف -->
+    <div class="section-title">خصومات الأصناف المخصصة</div>
     <div id="itemsContainer"></div>
     <button class="btn-add" onclick="addItemRow()">+ إضافة صنف مخصوم جديد</button>
 
-    <!-- الخصم النقدي -->
+    <!-- الخصم النقدي (خامل افتراضياً) -->
     <div class="card">
         <div class="section-title">
-            <span>الخصم النقدي للسداد (30 يوم)</span>
-            <input type="checkbox" id="cashToggle" onchange="calculateAll()">
+            <span>الخصم النقدي (30 يوم)</span>
+            <div style="display: flex; align-items: center; font-size: 0.8rem; font-weight: normal;">
+                تنشيط <input type="checkbox" id="cashToggle" onchange="toggleCashSection(); calculateAll()" style="width: 20px; height: 20px; margin-right: 8px; cursor: pointer;">
+            </div>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div id="cashContent" class="disabled-section" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
             <div class="form-group">
-                <label>النسبة %</label>
+                <label>نسبة الخصم النقدي %</label>
                 <input type="number" id="cashPercent" value="2" oninput="calculateAll()">
             </div>
             <div class="form-group" style="display: flex; align-items: center; padding-top: 25px;">
-                <input type="checkbox" id="cashTaxToggle" checked onchange="calculateAll()" style="width: auto; margin-left: 10px;">
-                <label style="margin-bottom: 0;">يحسب مع الضريبة</label>
+                <input type="checkbox" id="cashTaxToggle" checked onchange="calculateAll()" class="tax-check">
+                <label style="margin-bottom: 0; cursor: pointer;">شامل الضريبة</label>
             </div>
         </div>
     </div>
@@ -160,18 +172,16 @@
     <div class="results-box">
         <div class="res-row"><span>إجمالي خصم الأصناف:</span> <span id="outItemTotal">0.00</span></div>
         <div class="res-row"><span>قيمة خصم السداد:</span> <span id="outCashTotal">0.00</span></div>
-        <div class="res-row res-total"><span>المبلغ الصافي:</span> <span id="outFinal">0.00</span></div>
+        <div class="res-row res-total"><span>الصافي المطلوب سداده:</span> <span id="outFinal">0.00</span></div>
     </div>
 
     <button id="copyBtn" onclick="copyToClipboard()">نسخ التقرير النهائي</button>
 </div>
 
 <script>
-    // ==========================================
-    // منطقة بيانات العملاء
-    // ==========================================
+    // بيانات العملاء
     const rawCustomerData = `
-        2-رواد المنظفات - RWWAD ALMONAZFAT
+       2-رواد المنظفات - RWWAD ALMONAZFAT
 4-حسن البارقي-HASSAN ABARQI
 5-مؤسسة سعد سعيد الشمري - ALSHEMMARY
 6-مؤسسة درة السبوق للتجارة - DORT ALSBOOQ FOR TRADING
@@ -1233,7 +1243,7 @@
 21288-مخازن طنا للخدمات التجارية-MKHAZN TNA LLKHDMAT ALTJARYA
 21289-مجمع مزون-MJMA MZWN
 21290-مؤسسة صفوة التوفير للتجارة-MAASSA SFWA ALTWFYR LLTJARA
- 
+
     `;
 
     const customers = rawCustomerData.trim().split('\n').map(line => {
@@ -1262,9 +1272,7 @@
         if (found) document.getElementById('customerName').value = found.name;
     }
 
-    // ==========================================
-    // منطق الحسابات والأصناف
-    // ==========================================
+    // منطق الأصناف
     const TAX_RATE = 0.15;
     let itemCount = 0;
 
@@ -1274,29 +1282,47 @@
         div.className = 'item-card';
         div.id = `itemRow_${itemCount}`;
         div.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <label>بيانات الصنف المخصوم</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <label style="color: var(--primary-color);">بيانات الصنف (${itemCount})</label>
                 <button class="btn-remove" onclick="removeItemRow(${itemCount})">حذف 🗑️</button>
             </div>
-            <select class="item-type" style="margin-bottom:10px" onchange="toggleOther(${itemCount}); calculateAll()">
+            <select class="item-type" style="margin-bottom:12px" onchange="toggleOther(${itemCount}); calculateAll()">
                 <option value="600">600</option>
                 <option value="فوط نسائية">فوط نسائية</option>
                 <option value="حفائض">حفائض</option>
                 <option value="أخرى">أخرى</option>
             </select>
-            <input type="text" id="other_${itemCount}" class="other-name hidden" placeholder="اكتب اسم الصنف هنا..." style="margin-bottom:10px">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <input type="number" class="item-value" placeholder="قيمة الصنف بالضريبة" oninput="calculateAll()">
-                <input type="number" class="item-percent" value="3" placeholder="النسبة %" oninput="calculateAll()">
+            <input type="text" id="other_${itemCount}" class="other-name hidden" placeholder="حدد اسم الصنف..." style="margin-bottom:12px">
+            
+            <div class="flex-row">
+                <div class="flex-item">
+                    <label>قيمة الصنف</label>
+                    <input type="number" class="item-value" placeholder="0.00" oninput="calculateAll()">
+                </div>
+                <div class="flex-item">
+                    <label>نسبة الخصم %</label>
+                    <input type="number" class="item-percent" value="3" oninput="calculateAll()">
+                </div>
+                <div style="padding-bottom: 10px; display: flex; align-items: center;">
+                    <input type="checkbox" class="item-tax-toggle tax-check" checked onchange="calculateAll()" id="taxItem_${itemCount}">
+                    <label for="taxItem_${itemCount}" style="margin-bottom:0; font-size:0.75rem; cursor:pointer;">بالضريبة</label>
+                </div>
             </div>
         `;
         document.getElementById('itemsContainer').appendChild(div);
+        calculateAll();
     }
 
     function removeItemRow(id) { document.getElementById(`itemRow_${id}`).remove(); calculateAll(); }
+    
     function toggleOther(id) {
         const select = document.querySelector(`#itemRow_${id} .item-type`);
         document.getElementById(`other_${id}`).classList.toggle('hidden', select.value !== 'أخرى');
+    }
+
+    function toggleCashSection() {
+        const isChecked = document.getElementById('cashToggle').checked;
+        document.getElementById('cashContent').classList.toggle('disabled-section', !isChecked);
     }
 
     function formatNum(n) { return Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
@@ -1308,7 +1334,10 @@
         document.querySelectorAll('.item-card').forEach(row => {
             const val = parseFloat(row.querySelector('.item-value').value) || 0;
             const per = parseFloat(row.querySelector('.item-percent').value) || 0;
-            totalItemsDisc += val * (per / 100);
+            const isTaxed = row.querySelector('.item-tax-toggle').checked;
+            
+            const base = isTaxed ? val : val / (1 + TAX_RATE);
+            totalItemsDisc += base * (per / 100);
         });
 
         let cashDisc = 0;
@@ -1327,24 +1356,16 @@
         return { totalInvoice, totalItemsDisc, cashDisc, final };
     }
 
-    // ==========================================
-    // التحقق من رقم الفاتورة والنسخ
-    // ==========================================
     function copyToClipboard() {
         const p1 = document.getElementById('invP1').value.trim();
         const p2 = document.getElementById('invP2').value.trim();
 
-        // التحقق من الجزء الأول (المستودع) - خانة واحدة فقط
         if (p1.length !== 1) {
-            alert("⚠️ خطأ في رقم المستودع:\nيجب أن يكون رقماً واحداً فقط (مثال: 4)\n\nWarehouse Error:\nMust be exactly 1 digit (e.g., 4)");
-            document.getElementById('invP1').focus();
+            alert("⚠️ خطأ: رقم المستودع يجب أن يكون خانة واحدة فقط\nWarehouse Error: Exactly 1 digit required.");
             return;
         }
-
-        // التحقق من الجزء الثاني (الفاتورة) - 4 أو 5 أرقام
         if (p2.length < 4 || p2.length > 5) {
-            alert("⚠️ خطأ في رقم الفاتورة:\nيجب أن يتكون من 4 أو 5 أرقام (مثال: 10251)\n\nInvoice Serial Error:\nMust be 4 or 5 digits long (e.g., 10251)");
-            document.getElementById('invP2').focus();
+            alert("⚠️ خطأ: رقم الفاتورة يجب أن يكون 4 أو 5 أرقام\nInvoice Error: 4 or 5 digits required.");
             return;
         }
 
@@ -1360,14 +1381,14 @@
 
         const items = document.querySelectorAll('.item-card');
         if (items.length > 0) {
-            report += `🏷️ *تفاصيل خصم الأصناف:*\n`;
+            report += `🏷️ *خصومات الأصناف:*\n`;
             items.forEach((row, i) => {
                 let type = row.querySelector('.item-type').value;
                 if (type === 'أخرى') type = row.querySelector('.other-name').value || 'صنف مخصص';
                 const per = row.querySelector('.item-percent').value;
                 report += `- ${type}: خصم ${per}%\n`;
             });
-            report += ` مجموع الخصم: ${formatNum(res.totalItemsDisc)} ر.س\n\n`;
+            report += ` مجموع خصم الأصناف: ${formatNum(res.totalItemsDisc)} ر.س\n\n`;
         }
 
         if (document.getElementById('cashToggle').checked) {
@@ -1377,7 +1398,6 @@
         }
 
         report += `━━━━━━━━━━━━━━\n`;
-        report += `📉 إجمالي الخصم: ${formatNum(res.totalItemsDisc + res.cashDisc)} ر.س\n`;
         report += `✅ *الصافي المطلوب: ${formatNum(res.final)} ر.س*\n\n`;
         report += `${fullInv}`;
 
