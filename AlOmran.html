@@ -1,1959 +1,294 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>العمران للمقاولات - دبي</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --gold: #C9A84C;
-    --gold-light: #E8C97A;
-    --gold-dark: #9A7A2E;
-    --dark: #0A0A0F;
-    --dark2: #111118;
-    --dark3: #1A1A25;
-    --glass: rgba(255,255,255,0.04);
-    --glass-border: rgba(201,168,76,0.2);
-    --text: #F0EDE6;
-    --text-muted: rgba(240,237,230,0.55);
-  }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AL-OMRAN Construction | شركة العمران للمقاولات</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Cairo:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <!-- Libraries -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
+    
+    <style>
+        :root {
+            --gold: #c5a059;
+            --dark: #1a1a1a;
+            --light-bg: #f9f9f9;
+            --white: #ffffff;
+        }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { color: #333; line-height: 1.6; background: var(--white); }
+        
+        [dir="rtl"] { font-family: 'Cairo', sans-serif; }
+        [dir="ltr"] { font-family: 'Poppins', sans-serif; }
+        h1, h2, h3 { font-family: 'Montserrat', sans-serif; font-weight: 700; }
 
-  html { scroll-behavior: smooth; }
+        /* --- Navigation --- */
+        nav {
+            position: fixed; top: 0; width: 100%; z-index: 1000;
+            background: rgba(255, 255, 255, 0.95); padding: 15px 8%;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+        .logo { font-size: 22px; color: var(--dark); text-decoration: none; letter-spacing: 1px; }
+        .logo span { color: var(--gold); }
+        
+        .nav-links { display: flex; list-style: none; gap: 25px; }
+        .nav-links a { text-decoration: none; color: var(--dark); font-size: 14px; font-weight: 600; text-transform: uppercase; transition: 0.3s; }
+        .nav-links a:hover { color: var(--gold); }
 
-  body {
-    font-family: 'Cairo', sans-serif;
-    background: var(--dark);
-    color: var(--text);
-    overflow-x: hidden;
-    cursor: none;
-  }
+        .lang-btn {
+            background: var(--gold); color: white; border: none; padding: 8px 16px;
+            border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s;
+        }
+        .lang-btn:hover { background: var(--dark); }
 
-  /* CUSTOM CURSOR */
-  .cursor {
-    width: 12px; height: 12px;
-    background: var(--gold);
-    border-radius: 50%;
-    position: fixed;
-    pointer-events: none;
-    z-index: 9999;
-    transition: transform 0.15s ease, opacity 0.15s ease;
-    mix-blend-mode: screen;
-  }
-  .cursor-ring {
-    width: 40px; height: 40px;
-    border: 1px solid rgba(201,168,76,0.5);
-    border-radius: 50%;
-    position: fixed;
-    pointer-events: none;
-    z-index: 9998;
-    transition: all 0.12s ease;
-    transform: translate(-50%, -50%);
-  }
+        /* --- Slider (Hero) --- */
+        .hero-section { height: 85vh; width: 100%; margin-top: 60px; }
+        .swiper { width: 100%; height: 100%; }
+        .swiper-slide { 
+            background-size: cover; background-position: center; 
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+        .swiper-slide::after {
+            content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.4);
+        }
+        .hero-content { 
+            position: relative; z-index: 10; text-align: center; color: white; 
+            max-width: 800px; padding: 0 20px; 
+        }
+        .hero-content h1 { font-size: clamp(2rem, 5vw, 4rem); margin-bottom: 20px; }
+        .hero-content p { font-size: 1.2rem; margin-bottom: 30px; color: #eee; }
 
-  /* NOISE OVERLAY */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 1000;
-    opacity: 0.4;
-  }
+        .btn-main {
+            display: inline-block; background: var(--gold); color: white;
+            padding: 14px 35px; text-decoration: none; font-weight: bold;
+            border-radius: 4px; transition: 0.3s;
+        }
+        .btn-main:hover { background: var(--white); color: var(--dark); transform: translateY(-3px); }
 
-  /* SCROLLBAR */
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: var(--dark); }
-  ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+        /* --- Sections Shared --- */
+        section { padding: 80px 8%; }
+        .section-title { text-align: center; margin-bottom: 50px; }
+        .section-title h2 { font-size: 32px; color: var(--dark); margin-bottom: 10px; text-transform: uppercase; }
+        .section-title .line { width: 60px; height: 3px; background: var(--gold); margin: 0 auto; }
 
-  /* ====== NAVBAR ====== */
-  nav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 500;
-    padding: 20px 60px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    transition: all 0.4s ease;
-  }
-  nav.scrolled {
-    background: rgba(10,10,15,0.85);
-    backdrop-filter: blur(20px) saturate(1.5);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--glass-border);
-    padding: 14px 60px;
-  }
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    text-decoration: none;
-  }
-  .logo-icon {
-    width: 46px; height: 46px;
-    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    font-weight: 900;
-    color: var(--dark);
-    font-family: 'Tajawal', sans-serif;
-    box-shadow: 0 0 30px rgba(201,168,76,0.3);
-    position: relative;
-    overflow: hidden;
-  }
-  .logo-icon::after {
-    content: '';
-    position: absolute;
-    top: -50%; left: -50%;
-    width: 200%; height: 200%;
-    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
-    animation: shimmer 3s infinite;
-  }
-  @keyframes shimmer {
-    0% { transform: translateX(-100%) translateY(-100%) rotate(0deg); }
-    100% { transform: translateX(100%) translateY(100%) rotate(0deg); }
-  }
-  .logo-text {
-    display: flex; flex-direction: column;
-    line-height: 1.1;
-  }
-  .logo-text .main { font-size: 18px; font-weight: 800; color: var(--text); font-family: 'Tajawal', sans-serif; }
-  .logo-text .sub { font-size: 11px; color: var(--gold); letter-spacing: 2px; font-weight: 400; }
+        /* --- Services --- */
+        .services { background: var(--light-bg); }
+        .grid-services { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; }
+        .s-card { 
+            background: white; padding: 40px 30px; text-align: center; 
+            border-radius: 8px; transition: 0.3s; box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+        .s-card:hover { transform: translateY(-10px); }
+        .s-card i { font-size: 45px; color: var(--gold); margin-bottom: 20px; }
+        .s-card h3 { margin-bottom: 15px; font-size: 18px; }
+        .s-card p { font-size: 14px; color: #777; }
 
-  .nav-links {
-    display: flex;
-    gap: 36px;
-    list-style: none;
-  }
-  .nav-links a {
-    color: var(--text-muted);
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 500;
-    transition: color 0.3s;
-    position: relative;
-    padding-bottom: 4px;
-  }
-  .nav-links a::after {
-    content: '';
-    position: absolute;
-    bottom: 0; right: 0;
-    width: 0; height: 1px;
-    background: var(--gold);
-    transition: width 0.3s ease;
-  }
-  .nav-links a:hover { color: var(--gold); }
-  .nav-links a:hover::after { width: 100%; left: 0; right: auto; }
+        /* --- Projects --- */
+        .grid-projects { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .p-item { position: relative; height: 300px; border-radius: 8px; overflow: hidden; }
+        .p-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
+        .p-item:hover img { transform: scale(1.1); }
+        .p-info { 
+            position: absolute; bottom: 0; width: 100%; background: rgba(255,255,255,0.95);
+            padding: 15px; text-align: center; font-weight: bold;
+        }
 
-  .nav-cta {
-    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
-    color: var(--dark) !important;
-    padding: 10px 28px;
-    border-radius: 6px;
-    font-weight: 700 !important;
-    font-size: 13px !important;
-    transition: all 0.3s ease !important;
-    box-shadow: 0 4px 20px rgba(201,168,76,0.25);
-  }
-  .nav-cta:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(201,168,76,0.4) !important;
-  }
-  .nav-cta::after { display: none !important; }
+        /* --- Footer --- */
+        footer { background: var(--dark); color: #ccc; padding: 60px 8% 20px; }
+        .f-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px; margin-bottom: 40px; }
+        .f-col h4 { color: var(--white); margin-bottom: 20px; text-transform: uppercase; }
+        .f-col p { font-size: 14px; }
+        .f-links { list-style: none; }
+        .f-links li { margin-bottom: 10px; }
+        .f-links a { color: #ccc; text-decoration: none; font-size: 14px; transition: 0.3s; }
+        .f-links a:hover { color: var(--gold); }
+        
+        .copy { border-top: 1px solid #333; padding-top: 20px; text-align: center; font-size: 13px; }
 
-  /* ====== HERO ====== */
-  #hero {
-    height: 100vh;
-    position: relative;
-    display: flex;
-    align-items: center;
-    overflow: hidden;
-  }
+        /* RTL tweaks */
+        [dir="rtl"] .nav-links { gap: 30px; }
+        [dir="rtl"] .hero-content { text-align: center; }
 
-  .hero-bg {
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(ellipse 80% 60% at 70% 50%, rgba(201,168,76,0.06) 0%, transparent 60%),
-      radial-gradient(ellipse 50% 80% at 20% 80%, rgba(201,168,76,0.04) 0%, transparent 50%),
-      linear-gradient(180deg, var(--dark) 0%, var(--dark2) 100%);
-  }
-
-  .hero-grid {
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px);
-    background-size: 80px 80px;
-    mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black 30%, transparent 80%);
-  }
-
-  .hero-building {
-    position: absolute;
-    right: 0; bottom: 0;
-    width: 55%;
-    height: 100%;
-    background: linear-gradient(135deg, rgba(201,168,76,0.03) 0%, transparent 50%);
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-  }
-
-  /* Animated building silhouette */
-  .building-svg {
-    width: 100%;
-    height: 90%;
-    opacity: 0.15;
-  }
-
-  .hero-content {
-    position: relative;
-    z-index: 10;
-    padding: 0 60px;
-    max-width: 700px;
-  }
-
-  .hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(201,168,76,0.08);
-    border: 1px solid rgba(201,168,76,0.25);
-    padding: 8px 18px;
-    border-radius: 100px;
-    font-size: 12px;
-    color: var(--gold);
-    letter-spacing: 2px;
-    margin-bottom: 30px;
-    backdrop-filter: blur(10px);
-    animation: fadeInDown 0.8s ease both;
-  }
-  .hero-badge::before {
-    content: '';
-    width: 6px; height: 6px;
-    background: var(--gold);
-    border-radius: 50%;
-    animation: pulse-dot 2s infinite;
-  }
-  @keyframes pulse-dot {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(0.7); }
-  }
-
-  .hero-title {
-    font-family: 'Tajawal', sans-serif;
-    font-size: clamp(48px, 7vw, 88px);
-    font-weight: 900;
-    line-height: 1.05;
-    margin-bottom: 24px;
-    animation: fadeInUp 0.9s 0.2s ease both;
-  }
-  .hero-title .line1 { display: block; color: var(--text); }
-  .hero-title .line2 {
-    display: block;
-    background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    background-size: 200% auto;
-    animation: textShine 3s linear infinite, fadeInUp 0.9s 0.3s ease both;
-  }
-  @keyframes textShine {
-    to { background-position: 200% center; }
-  }
-
-  .hero-desc {
-    font-size: 16px;
-    color: var(--text-muted);
-    line-height: 1.9;
-    margin-bottom: 44px;
-    max-width: 520px;
-    animation: fadeInUp 0.9s 0.4s ease both;
-  }
-
-  .hero-buttons {
-    display: flex;
-    gap: 16px;
-    animation: fadeInUp 0.9s 0.5s ease both;
-    flex-wrap: wrap;
-  }
-  .btn-primary {
-    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
-    color: var(--dark);
-    padding: 14px 36px;
-    border-radius: 8px;
-    font-weight: 700;
-    font-size: 15px;
-    font-family: 'Cairo', sans-serif;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    transition: all 0.3s;
-    box-shadow: 0 8px 30px rgba(201,168,76,0.3);
-    cursor: none;
-  }
-  .btn-primary:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 40px rgba(201,168,76,0.45);
-  }
-  .btn-outline {
-    border: 1px solid var(--glass-border);
-    color: var(--text);
-    padding: 14px 36px;
-    border-radius: 8px;
-    font-weight: 500;
-    font-size: 15px;
-    font-family: 'Cairo', sans-serif;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    transition: all 0.3s;
-    backdrop-filter: blur(10px);
-    background: var(--glass);
-    cursor: none;
-  }
-  .btn-outline:hover {
-    border-color: var(--gold);
-    color: var(--gold);
-    background: rgba(201,168,76,0.06);
-  }
-
-  .hero-stats {
-    position: absolute;
-    bottom: 60px;
-    left: 60px;
-    right: 60px;
-    display: flex;
-    gap: 0;
-    z-index: 10;
-    animation: fadeInUp 1s 0.7s ease both;
-  }
-  .stat-item {
-    flex: 1;
-    padding: 28px 32px;
-    background: rgba(255,255,255,0.03);
-    backdrop-filter: blur(20px) saturate(1.5);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
-    border-left: none;
-    transition: background 0.3s;
-  }
-  .stat-item:first-child { border-right: none; border-radius: 12px 0 0 12px; border-left: 1px solid var(--glass-border); }
-  .stat-item:last-child { border-radius: 0 12px 12px 0; }
-  .stat-item:hover { background: rgba(201,168,76,0.06); }
-  .stat-num {
-    font-family: 'Tajawal', sans-serif;
-    font-size: 36px;
-    font-weight: 900;
-    color: var(--gold);
-    line-height: 1;
-    margin-bottom: 6px;
-  }
-  .stat-label { font-size: 13px; color: var(--text-muted); }
-
-  /* scroll line */
-  .scroll-line {
-    position: absolute;
-    right: 60px; top: 50%;
-    transform: translateY(-50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    z-index: 10;
-    animation: fadeIn 1s 1s ease both;
-  }
-  .scroll-line span { font-size: 10px; color: var(--text-muted); letter-spacing: 3px; writing-mode: vertical-rl; }
-  .scroll-line::after {
-    content: '';
-    width: 1px; height: 60px;
-    background: linear-gradient(to bottom, var(--gold), transparent);
-    animation: scrollAnim 2s infinite;
-  }
-  @keyframes scrollAnim {
-    0% { opacity: 0; transform: scaleY(0); transform-origin: top; }
-    50% { opacity: 1; transform: scaleY(1); }
-    100% { opacity: 0; transform: scaleY(0); transform-origin: bottom; }
-  }
-
-  /* FLOATING PARTICLES */
-  .particles {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    pointer-events: none;
-  }
-  .particle {
-    position: absolute;
-    width: 2px; height: 2px;
-    background: var(--gold);
-    border-radius: 50%;
-    animation: floatParticle linear infinite;
-    opacity: 0;
-  }
-  @keyframes floatParticle {
-    0% { transform: translateY(100vh) translateX(0); opacity: 0; }
-    10% { opacity: 0.6; }
-    90% { opacity: 0.2; }
-    100% { transform: translateY(-100px) translateX(50px); opacity: 0; }
-  }
-
-  /* ====== ANIMATIONS ====== */
-  @keyframes fadeInDown {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  /* scroll reveal */
-  .reveal {
-    opacity: 0;
-    transform: translateY(40px);
-    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .reveal.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  .reveal-left {
-    opacity: 0;
-    transform: translateX(-40px);
-    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .reveal-left.visible { opacity: 1; transform: translateX(0); }
-  .reveal-right {
-    opacity: 0;
-    transform: translateX(40px);
-    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .reveal-right.visible { opacity: 1; transform: translateX(0); }
-
-  /* ====== SECTIONS ====== */
-  section { padding: 120px 60px; }
-  .section-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    color: var(--gold);
-    font-size: 12px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    margin-bottom: 20px;
-  }
-  .section-label::before {
-    content: '';
-    width: 30px; height: 1px;
-    background: var(--gold);
-  }
-  .section-title {
-    font-family: 'Tajawal', sans-serif;
-    font-size: clamp(32px, 4vw, 52px);
-    font-weight: 900;
-    line-height: 1.2;
-    margin-bottom: 20px;
-  }
-  .section-title span {
-    background: linear-gradient(90deg, var(--gold), var(--gold-light));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  .section-desc {
-    color: var(--text-muted);
-    font-size: 16px;
-    line-height: 1.9;
-    max-width: 580px;
-  }
-
-  /* ====== ABOUT ====== */
-  #about {
-    background: var(--dark2);
-    position: relative;
-    overflow: hidden;
-  }
-  #about::before {
-    content: '';
-    position: absolute;
-    top: -200px; left: -200px;
-    width: 600px; height: 600px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(201,168,76,0.05) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .about-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 80px;
-    align-items: center;
-    max-width: 1400px;
-    margin: 0 auto;
-  }
-  .about-visual {
-    position: relative;
-    height: 500px;
-  }
-  .about-card-main {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, var(--dark3) 0%, rgba(201,168,76,0.05) 100%);
-    border: 1px solid var(--glass-border);
-    border-radius: 20px;
-    overflow: hidden;
-    backdrop-filter: blur(10px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .about-card-main::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--gold), transparent);
-  }
-  .about-arch-graphic {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px;
-  }
-
-  /* Geometric building */
-  .geo-build {
-    width: 280px;
-    height: 380px;
-    position: relative;
-  }
-  .geo-build .tower {
-    position: absolute;
-    bottom: 0;
-    background: linear-gradient(180deg, rgba(201,168,76,0.15) 0%, rgba(201,168,76,0.05) 100%);
-    border: 1px solid rgba(201,168,76,0.2);
-  }
-  .geo-build .t1 { width: 60px; height: 320px; left: 50%; transform: translateX(-50%); border-radius: 4px 4px 0 0; }
-  .geo-build .t2 { width: 100px; height: 220px; left: calc(50% - 80px); transform: translateX(-50%); border-radius: 4px 4px 0 0; }
-  .geo-build .t3 { width: 80px; height: 180px; left: calc(50% + 50px); transform: translateX(-50%); border-radius: 4px 4px 0 0; }
-  .geo-build .t4 { width: 140px; height: 100px; left: 50%; transform: translateX(-50%); border-radius: 4px 4px 0 0; }
-  .geo-build .base { position: absolute; bottom: 0; left: 0; right: 0; height: 10px; background: rgba(201,168,76,0.3); border-radius: 4px; }
-  .geo-build .window {
-    position: absolute;
-    width: 6px; height: 8px;
-    background: rgba(201,168,76,0.5);
-    border-radius: 1px;
-    animation: windowBlink 3s infinite;
-  }
-  @keyframes windowBlink {
-    0%, 80%, 100% { opacity: 0.5; }
-    40% { opacity: 1; }
-  }
-  .geo-build .star {
-    position: absolute;
-    top: 0; left: 50%; transform: translateX(-50%);
-    width: 2px; height: 2px;
-    background: var(--gold);
-    border-radius: 50%;
-    box-shadow: 0 0 10px var(--gold);
-    animation: starPulse 2s infinite;
-  }
-  @keyframes starPulse {
-    0%, 100% { transform: translateX(-50%) scale(1); box-shadow: 0 0 10px var(--gold); }
-    50% { transform: translateX(-50%) scale(2); box-shadow: 0 0 20px var(--gold-light); }
-  }
-
-  .about-float-card {
-    position: absolute;
-    bottom: 30px;
-    right: -30px;
-    background: rgba(10,10,15,0.9);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
-    border-radius: 14px;
-    padding: 20px 24px;
-    width: 200px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    animation: float 4s ease-in-out infinite;
-  }
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
-  }
-  .float-num {
-    font-family: 'Tajawal', sans-serif;
-    font-size: 32px;
-    font-weight: 900;
-    color: var(--gold);
-    line-height: 1;
-  }
-  .float-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
-
-  .about-float-card2 {
-    position: absolute;
-    top: 30px;
-    left: -30px;
-    background: rgba(10,10,15,0.9);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
-    border-radius: 14px;
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    animation: float 4s 2s ease-in-out infinite;
-  }
-  .fc2-icon {
-    width: 40px; height: 40px;
-    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px;
-  }
-  .fc2-text .n { font-size: 18px; font-weight: 700; color: var(--text); font-family: 'Tajawal', sans-serif; }
-  .fc2-text .l { font-size: 11px; color: var(--text-muted); }
-
-  .about-features {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-top: 40px;
-  }
-  .feature-item {
-    padding: 20px;
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    border-radius: 12px;
-    transition: all 0.3s;
-    cursor: default;
-  }
-  .feature-item:hover {
-    background: rgba(201,168,76,0.05);
-    border-color: rgba(201,168,76,0.4);
-    transform: translateY(-3px);
-  }
-  .fi-icon { font-size: 24px; margin-bottom: 10px; }
-  .fi-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
-  .fi-desc { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
-
-  /* ====== SERVICES ====== */
-  #services {
-    position: relative;
-    overflow: hidden;
-  }
-  .services-header { max-width: 1400px; margin: 0 auto 60px; }
-  .services-grid {
-    max-width: 1400px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
-  }
-  .service-card {
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    border-radius: 20px;
-    padding: 36px 32px;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    cursor: default;
-    group: true;
-  }
-  .service-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--gold), transparent);
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  .service-card::after {
-    content: '';
-    position: absolute;
-    bottom: -100px; right: -100px;
-    width: 200px; height: 200px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%);
-    transition: all 0.5s;
-    pointer-events: none;
-  }
-  .service-card:hover {
-    border-color: rgba(201,168,76,0.4);
-    background: rgba(201,168,76,0.04);
-    transform: translateY(-8px);
-    box-shadow: 0 30px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(201,168,76,0.1);
-  }
-  .service-card:hover::before { opacity: 1; }
-  .service-card:hover::after { bottom: -50px; right: -50px; width: 250px; height: 250px; }
-
-  .service-card.featured {
-    background: linear-gradient(135deg, rgba(201,168,76,0.1) 0%, rgba(201,168,76,0.03) 100%);
-    border-color: rgba(201,168,76,0.3);
-  }
-  .sc-icon {
-    width: 56px; height: 56px;
-    background: linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.05));
-    border: 1px solid rgba(201,168,76,0.2);
-    border-radius: 14px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 26px;
-    margin-bottom: 24px;
-    transition: all 0.3s;
-  }
-  .service-card:hover .sc-icon {
-    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
-    border-color: transparent;
-  }
-  .sc-title { font-size: 20px; font-weight: 700; margin-bottom: 12px; font-family: 'Tajawal', sans-serif; }
-  .sc-desc { font-size: 14px; color: var(--text-muted); line-height: 1.8; margin-bottom: 24px; }
-  .sc-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--gold);
-    font-size: 13px;
-    font-weight: 600;
-    text-decoration: none;
-    transition: gap 0.2s;
-  }
-  .sc-link:hover { gap: 14px; }
-
-  /* ====== PROJECTS ====== */
-  #projects {
-    background: var(--dark2);
-    overflow: hidden;
-  }
-  .projects-header {
-    max-width: 1400px;
-    margin: 0 auto 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-  }
-  .project-filters {
-    display: flex;
-    gap: 8px;
-    margin: 0 auto 50px;
-    max-width: 1400px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-  }
-  .pf-btn {
-    padding: 8px 20px;
-    border-radius: 100px;
-    border: 1px solid var(--glass-border);
-    background: var(--glass);
-    color: var(--text-muted);
-    font-size: 13px;
-    font-family: 'Cairo', sans-serif;
-    cursor: none;
-    transition: all 0.3s;
-    white-space: nowrap;
-    backdrop-filter: blur(10px);
-  }
-  .pf-btn.active, .pf-btn:hover {
-    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
-    border-color: transparent;
-    color: var(--dark);
-    font-weight: 700;
-  }
-  .projects-grid {
-    max-width: 1400px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
-  }
-  .project-card {
-    border-radius: 20px;
-    overflow: hidden;
-    position: relative;
-    aspect-ratio: 4/3;
-    background: var(--dark3);
-    border: 1px solid var(--glass-border);
-    cursor: none;
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .project-card:hover {
-    transform: scale(1.02);
-    border-color: rgba(201,168,76,0.4);
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-  }
-  .project-card.large { grid-column: span 2; }
-  .project-img {
-    width: 100%; height: 100%;
-    object-fit: cover;
-    transition: transform 0.6s ease;
-  }
-  .project-card:hover .project-img { transform: scale(1.08); }
-  .project-bg {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 80px;
-    opacity: 0.06;
-    pointer-events: none;
-  }
-  .project-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, transparent 30%, rgba(10,10,15,0.95) 100%);
-    display: flex;
-    align-items: flex-end;
-    padding: 28px;
-    transition: all 0.4s;
-  }
-  .project-card:hover .project-overlay {
-    background: linear-gradient(180deg, rgba(10,10,15,0.3) 0%, rgba(10,10,15,0.95) 100%);
-  }
-  .project-info { width: 100%; }
-  .project-tag {
-    display: inline-block;
-    background: rgba(201,168,76,0.15);
-    border: 1px solid rgba(201,168,76,0.3);
-    color: var(--gold);
-    font-size: 10px;
-    letter-spacing: 2px;
-    padding: 4px 10px;
-    border-radius: 100px;
-    margin-bottom: 10px;
-    backdrop-filter: blur(10px);
-  }
-  .project-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; font-family: 'Tajawal', sans-serif; }
-  .project-location { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
-  .project-hover-info {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    display: flex;
-    gap: 8px;
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  .project-card:hover .project-hover-info { opacity: 1; }
-  .phi-btn {
-    width: 36px; height: 36px;
-    background: rgba(201,168,76,0.15);
-    border: 1px solid rgba(201,168,76,0.3);
-    border-radius: 50%;
-    backdrop-filter: blur(10px);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px;
-    cursor: none;
-    transition: all 0.3s;
-  }
-  .phi-btn:hover { background: var(--gold); }
-
-  /* ====== PROCESS ====== */
-  #process { overflow: hidden; }
-  .process-header { max-width: 1400px; margin: 0 auto 60px; text-align: center; }
-  .process-header .section-label { justify-content: center; }
-  .process-header .section-desc { margin: 0 auto; text-align: center; }
-  .process-timeline {
-    max-width: 1000px;
-    margin: 0 auto;
-    position: relative;
-  }
-  .process-timeline::before {
-    content: '';
-    position: absolute;
-    top: 30px; left: 50%;
-    width: 1px; bottom: 30px;
-    background: linear-gradient(180deg, transparent, var(--gold), transparent);
-    transform: translateX(-50%);
-  }
-  .process-step {
-    display: flex;
-    gap: 40px;
-    margin-bottom: 60px;
-    align-items: flex-start;
-    position: relative;
-  }
-  .process-step:nth-child(even) {
-    flex-direction: row-reverse;
-  }
-  .ps-content {
-    flex: 1;
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    border-radius: 16px;
-    padding: 28px;
-    backdrop-filter: blur(10px);
-    transition: all 0.3s;
-  }
-  .ps-content:hover {
-    border-color: rgba(201,168,76,0.3);
-    background: rgba(201,168,76,0.04);
-  }
-  .ps-num {
-    font-family: 'Tajawal', sans-serif;
-    font-size: 48px;
-    font-weight: 900;
-    color: rgba(201,168,76,0.1);
-    line-height: 1;
-    margin-bottom: 8px;
-  }
-  .ps-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
-  .ps-desc { font-size: 14px; color: var(--text-muted); line-height: 1.8; }
-  .ps-dot {
-    width: 60px;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding-top: 10px;
-    flex-shrink: 0;
-  }
-  .ps-dot-inner {
-    width: 16px; height: 16px;
-    background: var(--gold);
-    border-radius: 50%;
-    box-shadow: 0 0 20px rgba(201,168,76,0.5);
-    position: relative;
-    z-index: 2;
-  }
-  .ps-dot-inner::after {
-    content: '';
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 30px; height: 30px;
-    border: 1px solid rgba(201,168,76,0.3);
-    border-radius: 50%;
-  }
-  .ps-spacer { flex: 1; }
-
-  /* ====== TESTIMONIALS ====== */
-  #testimonials { background: var(--dark2); overflow: hidden; }
-  .testimonials-header { max-width: 1400px; margin: 0 auto 60px; }
-  .testimonials-track {
-    max-width: 100%;
-    overflow: hidden;
-    position: relative;
-  }
-  .testimonials-track::before,
-  .testimonials-track::after {
-    content: '';
-    position: absolute;
-    top: 0; bottom: 0;
-    width: 100px;
-    z-index: 10;
-    pointer-events: none;
-  }
-  .testimonials-track::before { left: 0; background: linear-gradient(90deg, var(--dark2), transparent); }
-  .testimonials-track::after { right: 0; background: linear-gradient(-90deg, var(--dark2), transparent); }
-  .testimonials-scroll {
-    display: flex;
-    gap: 24px;
-    animation: scrollTestimonials 40s linear infinite;
-    width: max-content;
-  }
-  .testimonials-scroll:hover { animation-play-state: paused; }
-  @keyframes scrollTestimonials {
-    to { transform: translateX(-50%); }
-  }
-  .testi-card {
-    width: 380px;
-    flex-shrink: 0;
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    border-radius: 20px;
-    padding: 32px;
-    backdrop-filter: blur(20px);
-    transition: all 0.3s;
-  }
-  .testi-card:hover {
-    border-color: rgba(201,168,76,0.3);
-    background: rgba(201,168,76,0.04);
-  }
-  .testi-stars { color: var(--gold); font-size: 16px; margin-bottom: 16px; letter-spacing: 3px; }
-  .testi-text { font-size: 14px; line-height: 1.9; color: var(--text-muted); margin-bottom: 24px; font-style: italic; }
-  .testi-author { display: flex; align-items: center; gap: 14px; }
-  .ta-avatar {
-    width: 44px; height: 44px;
-    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 900;
-    font-size: 16px;
-    color: var(--dark);
-    font-family: 'Tajawal', sans-serif;
-    flex-shrink: 0;
-  }
-  .ta-name { font-size: 15px; font-weight: 700; }
-  .ta-role { font-size: 12px; color: var(--text-muted); }
-
-  /* ====== CONTACT ====== */
-  #contact { overflow: hidden; }
-  .contact-grid {
-    max-width: 1400px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 80px;
-    align-items: center;
-  }
-  .contact-info { }
-  .ci-items { margin-top: 40px; display: flex; flex-direction: column; gap: 24px; }
-  .ci-item {
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
-    padding: 20px;
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    border-radius: 14px;
-    transition: all 0.3s;
-  }
-  .ci-item:hover { border-color: rgba(201,168,76,0.3); background: rgba(201,168,76,0.04); }
-  .ci-icon {
-    width: 44px; height: 44px;
-    background: linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.05));
-    border: 1px solid rgba(201,168,76,0.2);
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px;
-    flex-shrink: 0;
-  }
-  .ci-text .label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
-  .ci-text .value { font-size: 15px; font-weight: 600; }
-
-  .contact-form {
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    border-radius: 24px;
-    padding: 44px;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    position: relative;
-    overflow: hidden;
-  }
-  .contact-form::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--gold), transparent);
-  }
-  .form-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; font-family: 'Tajawal', sans-serif; }
-  .form-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 30px; }
-  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .form-group { margin-bottom: 16px; }
-  .form-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
-  .form-group input,
-  .form-group textarea,
-  .form-group select {
-    width: 100%;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid var(--glass-border);
-    border-radius: 10px;
-    padding: 14px 16px;
-    color: var(--text);
-    font-family: 'Cairo', sans-serif;
-    font-size: 14px;
-    outline: none;
-    transition: all 0.3s;
-    cursor: none;
-  }
-  .form-group input:focus,
-  .form-group textarea:focus,
-  .form-group select:focus {
-    border-color: var(--gold);
-    background: rgba(201,168,76,0.04);
-    box-shadow: 0 0 0 3px rgba(201,168,76,0.1);
-  }
-  .form-group textarea { resize: none; height: 120px; }
-  .form-group select option { background: var(--dark2); }
-  .btn-submit {
-    width: 100%;
-    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
-    color: var(--dark);
-    padding: 16px;
-    border: none;
-    border-radius: 10px;
-    font-size: 16px;
-    font-weight: 700;
-    font-family: 'Cairo', sans-serif;
-    cursor: none;
-    transition: all 0.3s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 8px;
-    box-shadow: 0 8px 30px rgba(201,168,76,0.3);
-  }
-  .btn-submit:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 15px 40px rgba(201,168,76,0.4);
-  }
-
-  /* ====== FOOTER ====== */
-  footer {
-    background: var(--dark2);
-    border-top: 1px solid var(--glass-border);
-    padding: 60px 60px 30px;
-  }
-  .footer-grid {
-    max-width: 1400px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
-    gap: 60px;
-    padding-bottom: 50px;
-    border-bottom: 1px solid var(--glass-border);
-  }
-  .footer-brand p { font-size: 14px; color: var(--text-muted); line-height: 1.8; margin: 20px 0 28px; max-width: 300px; }
-  .social-links { display: flex; gap: 12px; }
-  .social-link {
-    width: 40px; height: 40px;
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-    text-decoration: none;
-    transition: all 0.3s;
-    cursor: none;
-  }
-  .social-link:hover {
-    background: rgba(201,168,76,0.1);
-    border-color: var(--gold);
-  }
-  .footer-col h4 { font-size: 14px; font-weight: 700; color: var(--gold); margin-bottom: 20px; letter-spacing: 1px; }
-  .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 12px; }
-  .footer-col ul a { color: var(--text-muted); text-decoration: none; font-size: 14px; transition: color 0.3s; }
-  .footer-col ul a:hover { color: var(--gold); padding-right: 4px; }
-  .footer-bottom {
-    max-width: 1400px;
-    margin: 30px auto 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 13px;
-    color: var(--text-muted);
-  }
-  .footer-bottom a { color: var(--gold); text-decoration: none; }
-
-  /* ====== LIGHTBOX ====== */
-  .lightbox {
-    position: fixed;
-    inset: 0;
-    z-index: 2000;
-    background: rgba(0,0,0,0.95);
-    backdrop-filter: blur(20px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s;
-  }
-  .lightbox.open { opacity: 1; pointer-events: all; }
-  .lb-close {
-    position: absolute;
-    top: 30px; right: 30px;
-    width: 50px; height: 50px;
-    background: rgba(201,168,76,0.15);
-    border: 1px solid rgba(201,168,76,0.3);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 24px;
-    cursor: none;
-    transition: all 0.3s;
-    color: var(--text);
-  }
-  .lb-close:hover { background: var(--gold); color: var(--dark); }
-  .lb-content {
-    max-width: 900px;
-    width: 90%;
-    background: var(--dark2);
-    border: 1px solid var(--glass-border);
-    border-radius: 24px;
-    overflow: hidden;
-    padding: 40px;
-    text-align: center;
-  }
-  .lb-title { font-size: 28px; font-weight: 900; font-family: 'Tajawal', sans-serif; color: var(--gold); margin-bottom: 12px; }
-  .lb-subtitle { color: var(--text-muted); font-size: 15px; }
-
-  /* RESPONSIVE MINIMAL */
-  @media (max-width: 900px) {
-    section { padding: 80px 24px; }
-    nav { padding: 16px 24px; }
-    nav.scrolled { padding: 12px 24px; }
-    .nav-links { display: none; }
-    .hero-content { padding: 0 24px; }
-    .hero-stats { left: 24px; right: 24px; flex-wrap: wrap; }
-    .stat-item { min-width: 160px; border: 1px solid var(--glass-border) !important; border-radius: 10px !important; }
-    .about-grid, .contact-grid, .footer-grid { grid-template-columns: 1fr; gap: 40px; }
-    .services-grid { grid-template-columns: 1fr; }
-    .projects-grid { grid-template-columns: 1fr; }
-    .project-card.large { grid-column: span 1; }
-    .about-float-card, .about-float-card2 { display: none; }
-    .form-row { grid-template-columns: 1fr; }
-    .footer-grid { grid-template-columns: 1fr 1fr; gap: 40px; }
-    .scroll-line { display: none; }
-    .process-timeline::before { display: none; }
-    .process-step { flex-direction: column !important; }
-    .ps-spacer { display: none; }
-  }
-</style>
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            section { padding: 60px 20px; }
+        }
+    </style>
 </head>
 <body>
 
-<!-- CURSOR -->
-<div class="cursor" id="cursor"></div>
-<div class="cursor-ring" id="cursorRing"></div>
+    <!-- Navigation -->
+    <nav>
+        <a href="#" class="logo" id="l-name">AL-<span>OMRAN</span></a>
+        <ul class="nav-links">
+            <li><a href="#" id="m1">Home</a></li>
+            <li><a href="#services" id="m2">Services</a></li>
+            <li><a href="#projects" id="m3">Projects</a></li>
+            <li><a href="#contact" id="m4">Contact</a></li>
+        </ul>
+        <button class="lang-btn" onclick="toggleLanguage()" id="langBtn">العربية</button>
+    </nav>
 
-<!-- PARTICLES -->
-<div class="particles" id="particles"></div>
-
-<!-- NAVBAR -->
-<nav id="navbar">
-  <a class="logo" href="#">
-    <div class="logo-icon">ع</div>
-    <div class="logo-text">
-      <span class="main">العمران للمقاولات</span>
-      <span class="sub">DUBAI · UAE</span>
-    </div>
-  </a>
-  <ul class="nav-links">
-    <li><a href="#about">من نحن</a></li>
-    <li><a href="#services">خدماتنا</a></li>
-    <li><a href="#projects">مشاريعنا</a></li>
-    <li><a href="#process">منهجيتنا</a></li>
-    <li><a href="#contact" class="nav-cta">تواصل معنا</a></li>
-  </ul>
-</nav>
-
-<!-- HERO -->
-<section id="hero">
-  <div class="hero-bg"></div>
-  <div class="hero-grid"></div>
-  <div class="hero-building">
-    <svg class="building-svg" viewBox="0 0 600 700" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- Tower 1 -->
-      <rect x="250" y="80" width="100" height="620" fill="#C9A84C" opacity="0.4"/>
-      <rect x="258" y="88" width="10" height="14" fill="#C9A84C"/>
-      <rect x="274" y="88" width="10" height="14" fill="#C9A84C"/>
-      <rect x="290" y="88" width="10" height="14" fill="#C9A84C"/>
-      <rect x="306" y="88" width="10" height="14" fill="#C9A84C"/>
-      <rect x="322" y="88" width="10" height="14" fill="#C9A84C"/>
-      <rect x="258" y="110" width="10" height="14" fill="#C9A84C"/>
-      <rect x="274" y="110" width="10" height="14" fill="#C9A84C"/>
-      <rect x="290" y="110" width="10" height="14" fill="#C9A84C"/>
-      <rect x="306" y="110" width="10" height="14" fill="#C9A84C"/>
-      <rect x="322" y="110" width="10" height="14" fill="#C9A84C"/>
-      <!-- Tower 2 -->
-      <rect x="100" y="200" width="120" height="500" fill="#C9A84C" opacity="0.25"/>
-      <!-- Tower 3 -->
-      <rect x="380" y="280" width="100" height="420" fill="#C9A84C" opacity="0.2"/>
-      <!-- Ground -->
-      <rect x="0" y="690" width="600" height="10" fill="#C9A84C" opacity="0.3"/>
-    </svg>
-  </div>
-
-  <div class="hero-content">
-    <div class="hero-badge">🏗 نبني مستقبل دبي</div>
-    <h1 class="hero-title">
-      <span class="line1">شركة رائدة في</span>
-      <span class="line2">عالم المقاولات</span>
-    </h1>
-    <p class="hero-desc">نبني الأحلام بدقة لا تضاهى. العمران للمقاولات — خبرة تمتد لأكثر من 20 عاماً في تشييد المباني السكنية والتجارية والبنية التحتية بأعلى معايير الجودة في دبي والإمارات.</p>
-    <div class="hero-buttons">
-      <a href="#projects" class="btn-primary">استعرض مشاريعنا ◀</a>
-      <a href="#contact" class="btn-outline">تواصل معنا</a>
-    </div>
-  </div>
-
-  <div class="hero-stats">
-    <div class="stat-item">
-      <div class="stat-num" data-count="250">0</div>
-      <div class="stat-label">مشروع منجز</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-num" data-count="20">0</div>
-      <div class="stat-label">سنة خبرة</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-num" data-count="150">0</div>
-      <div class="stat-label">موظف متخصص</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-num" data-count="98">0</div>
-      <div class="stat-label">% رضا العملاء</div>
-    </div>
-  </div>
-
-  <div class="scroll-line"><span>اسكرول للأسفل</span></div>
-</section>
-
-<!-- ABOUT -->
-<section id="about">
-  <div class="about-grid">
-    <div class="about-visual reveal-right">
-      <div class="about-card-main">
-        <div class="about-arch-graphic">
-          <div class="geo-build">
-            <div class="tower t1">
-              <div class="star"></div>
-              <div class="window" style="top:30px;right:15px;animation-delay:0s"></div>
-              <div class="window" style="top:30px;right:30px;animation-delay:0.5s"></div>
-              <div class="window" style="top:50px;right:15px;animation-delay:1s"></div>
-              <div class="window" style="top:50px;right:30px;animation-delay:1.5s"></div>
-              <div class="window" style="top:70px;right:15px;animation-delay:0.3s"></div>
-              <div class="window" style="top:70px;right:30px;animation-delay:0.8s"></div>
+    <!-- Slider -->
+    <div class="hero-section">
+        <div class="swiper mySwiper">
+            <div class="swiper-wrapper">
+                <!-- Slide 1 -->
+                <div class="swiper-slide" style="background-image: url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1600&auto=format');">
+                    <div class="hero-content" data-aos="fade-up">
+                        <h1 id="h-t1">Building the Future of Dubai</h1>
+                        <p id="h-p1">Excellence and Integrity in every project we deliver.</p>
+                        <a href="#contact" class="btn-main q-btn">Get a Quote</a>
+                    </div>
+                </div>
+                <!-- Slide 2 -->
+                <div class="swiper-slide" style="background-image: url('https://images.unsplash.com/photo-1541888946425-d81bb19480c5?q=80&w=1600&auto=format');">
+                    <div class="hero-content">
+                        <h1 id="h-t2">Modern Architecture Solutions</h1>
+                        <p id="h-p2">We turn ambitious visions into solid realities.</p>
+                        <a href="#projects" class="btn-main q-btn">Our Work</a>
+                    </div>
+                </div>
             </div>
-            <div class="tower t2">
-              <div class="window" style="top:20px;right:20px;animation-delay:0.2s"></div>
-              <div class="window" style="top:20px;right:38px;animation-delay:0.7s"></div>
-              <div class="window" style="top:40px;right:20px;animation-delay:1.2s"></div>
-              <div class="window" style="top:40px;right:38px;animation-delay:0.4s"></div>
+            <div class="swiper-pagination"></div>
+        </div>
+    </div>
+
+    <!-- Services -->
+    <section id="services" class="services">
+        <div class="section-title" data-aos="fade-up">
+            <h2 id="s-title">Our Services</h2>
+            <div class="line"></div>
+        </div>
+        <div class="grid-services">
+            <div class="s-card" data-aos="fade-up" data-aos-delay="100">
+                <i class="fa-solid fa-city"></i>
+                <h3 id="s1-t">General Contracting</h3>
+                <p id="s1-p">Full construction management from design to final handover.</p>
             </div>
-            <div class="tower t3">
-              <div class="window" style="top:20px;right:20px;animation-delay:0.6s"></div>
-              <div class="window" style="top:40px;right:20px;animation-delay:1.1s"></div>
+            <div class="s-card" data-aos="fade-up" data-aos-delay="200">
+                <i class="fa-solid fa-building-user"></i>
+                <h3 id="s2-t">Project Management</h3>
+                <p id="s2-p">Ensuring projects are on time, within budget, and high quality.</p>
             </div>
-            <div class="tower t4">
-              <div class="window" style="top:20px;right:30px;animation-delay:0.9s"></div>
-              <div class="window" style="top:20px;right:52px;animation-delay:0.15s"></div>
-              <div class="window" style="top:20px;right:74px;animation-delay:0.65s"></div>
+            <div class="s-card" data-aos="fade-up" data-aos-delay="300">
+                <i class="fa-solid fa-compass-drafting"></i>
+                <h3 id="s3-t">Interior Design</h3>
+                <p id="s3-p">Creating luxurious and functional spaces for modern living.</p>
             </div>
-            <div class="base"></div>
-          </div>
+            <div class="s-card" data-aos="fade-up" data-aos-delay="400">
+                <i class="fa-solid fa-shield-check"></i>
+                <h3 id="s4-t">Safety Consulting</h3>
+                <p id="s4-p">Top-tier safety standards for all construction sites.</p>
+            </div>
         </div>
-      </div>
-      <div class="about-float-card">
-        <div class="float-num">+250</div>
-        <div class="float-label">مشروع مكتمل بنجاح</div>
-      </div>
-      <div class="about-float-card2">
-        <div class="fc2-icon">🏆</div>
-        <div class="fc2-text">
-          <div class="n">الأفضل 2024</div>
-          <div class="l">جائزة التميز العقاري</div>
-        </div>
-      </div>
-    </div>
-    <div class="reveal-left">
-      <div class="section-label">من نحن</div>
-      <h2 class="section-title">نحن نبني <span>ما يدوم</span><br>لأجيال قادمة</h2>
-      <p class="section-desc">تأسست العمران للمقاولات عام 2004 في دبي، لتصبح اليوم واحدة من أبرز شركات المقاولات في الإمارات. نجمع بين خبرة العقود الماضية وتقنيات البناء الحديثة لنقدم مشاريع استثنائية تلبي أعلى معايير الجودة والسلامة.</p>
-      <div class="about-features">
-        <div class="feature-item">
-          <div class="fi-icon">🏗</div>
-          <div class="fi-title">مقاولات عامة</div>
-          <div class="fi-desc">بناء المشاريع السكنية والتجارية والصناعية بجميع أنواعها</div>
-        </div>
-        <div class="feature-item">
-          <div class="fi-icon">🔧</div>
-          <div class="fi-title">تشطيبات فاخرة</div>
-          <div class="fi-desc">أعمال تشطيب داخلي وخارجي بأعلى درجات الجودة</div>
-        </div>
-        <div class="feature-item">
-          <div class="fi-icon">📐</div>
-          <div class="fi-title">تصميم وإشراف</div>
-          <div class="fi-desc">خدمات التصميم المعماري والإشراف الهندسي المتكامل</div>
-        </div>
-        <div class="feature-item">
-          <div class="fi-icon">♻️</div>
-          <div class="fi-title">بناء مستدام</div>
-          <div class="fi-desc">التزامنا بمعايير البيئة والاستدامة في جميع مشاريعنا</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+    </section>
 
-<!-- SERVICES -->
-<section id="services">
-  <div class="services-header reveal">
-    <div class="section-label">خدماتنا</div>
-    <h2 class="section-title">حلول بناء <span>شاملة ومتكاملة</span></h2>
-  </div>
-  <div class="services-grid">
-    <div class="service-card featured reveal" style="transition-delay:0.1s">
-      <div class="sc-icon">🏢</div>
-      <div class="sc-title">المباني السكنية</div>
-      <div class="sc-desc">تصميم وتنفيذ الفلل والشقق والمجمعات السكنية بأعلى معايير الجودة والرفاهية، مع الالتزام بالمواصفات الإماراتية.</div>
-      <a href="#contact" class="sc-link">اعرف أكثر ←</a>
-    </div>
-    <div class="service-card reveal" style="transition-delay:0.2s">
-      <div class="sc-icon">🏬</div>
-      <div class="sc-title">المباني التجارية</div>
-      <div class="sc-desc">إنشاء المكاتب والمراكز التجارية والمحلات بتصاميم عصرية تناسب بيئة الأعمال في دبي.</div>
-      <a href="#contact" class="sc-link">اعرف أكثر ←</a>
-    </div>
-    <div class="service-card reveal" style="transition-delay:0.3s">
-      <div class="sc-icon">🏭</div>
-      <div class="sc-title">المنشآت الصناعية</div>
-      <div class="sc-desc">بناء المصانع والمستودعات والمرافق الصناعية وفق أحدث المعايير التقنية والسلامة.</div>
-      <a href="#contact" class="sc-link">اعرف أكثر ←</a>
-    </div>
-    <div class="service-card reveal" style="transition-delay:0.4s">
-      <div class="sc-icon">🛣</div>
-      <div class="sc-title">البنية التحتية</div>
-      <div class="sc-desc">تنفيذ مشاريع الطرق والجسور والأنفاق وشبكات المياه والصرف الصحي بكفاءة عالية.</div>
-      <a href="#contact" class="sc-link">اعرف أكثر ←</a>
-    </div>
-    <div class="service-card reveal" style="transition-delay:0.5s">
-      <div class="sc-icon">🎨</div>
-      <div class="sc-title">التشطيبات الداخلية</div>
-      <div class="sc-desc">أعمال الديكور الداخلي والتشطيبات الفاخرة للمشاريع السكنية والتجارية والفندقية.</div>
-      <a href="#contact" class="sc-link">اعرف أكثر ←</a>
-    </div>
-    <div class="service-card reveal" style="transition-delay:0.6s">
-      <div class="sc-icon">🔌</div>
-      <div class="sc-title">الأعمال الكهروميكانيكية</div>
-      <div class="sc-desc">تركيب وصيانة الأنظمة الكهربائية والميكانيكية وأنظمة التكييف والإطفاء والذكاء الاصطناعي.</div>
-      <a href="#contact" class="sc-link">اعرف أكثر ←</a>
-    </div>
-  </div>
-</section>
-
-<!-- PROJECTS -->
-<section id="projects">
-  <div class="projects-header reveal">
-    <div>
-      <div class="section-label">معرض الأعمال</div>
-      <h2 class="section-title">مشاريعنا <span>المميزة</span></h2>
-    </div>
-  </div>
-  <div class="project-filters reveal">
-    <button class="pf-btn active" onclick="filterProjects('all', this)">الكل</button>
-    <button class="pf-btn" onclick="filterProjects('سكني', this)">سكني</button>
-    <button class="pf-btn" onclick="filterProjects('تجاري', this)">تجاري</button>
-    <button class="pf-btn" onclick="filterProjects('صناعي', this)">صناعي</button>
-    <button class="pf-btn" onclick="filterProjects('بنية تحتية', this)">بنية تحتية</button>
-  </div>
-  <div class="projects-grid" id="projectsGrid">
-    <div class="project-card large" data-cat="سكني">
-      <div class="project-bg">🏙</div>
-      <div style="position:absolute;inset:0;background:linear-gradient(135deg,#1A1A25 0%,#0A2A3A 100%);"></div>
-      <div class="project-hover-info"><div class="phi-btn">🔍</div><div class="phi-btn">💾</div></div>
-      <div class="project-overlay">
-        <div class="project-info">
-          <div class="project-tag">سكني</div>
-          <div class="project-title">أبراج الواحة — دبي هيلز</div>
-          <div class="project-location">📍 دبي هيلز استيت · 2023</div>
+    <!-- Projects -->
+    <section id="projects">
+        <div class="section-title" data-aos="fade-up">
+            <h2 id="p-title">Recent Projects</h2>
+            <div class="line"></div>
         </div>
-      </div>
-    </div>
-    <div class="project-card" data-cat="تجاري">
-      <div class="project-bg">🏢</div>
-      <div style="position:absolute;inset:0;background:linear-gradient(135deg,#0A1A2A 0%,#1A2A1A 100%);"></div>
-      <div class="project-hover-info"><div class="phi-btn">🔍</div><div class="phi-btn">💾</div></div>
-      <div class="project-overlay">
-        <div class="project-info">
-          <div class="project-tag">تجاري</div>
-          <div class="project-title">برج الأعمال الذهبي</div>
-          <div class="project-location">📍 مركز دبي المالي · 2022</div>
+        <div class="grid-projects">
+            <div class="p-item" data-aos="zoom-in">
+                <img src="https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=600&auto=format">
+                <div class="p-info" id="p1">Dubai Marina Tower</div>
+            </div>
+            <div class="p-item" data-aos="zoom-in" data-aos-delay="200">
+                <img src="https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600&auto=format">
+                <div class="p-info" id="p2">Palm Jumeirah Villa</div>
+            </div>
+            <div class="p-item" data-aos="zoom-in" data-aos-delay="400">
+                <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&auto=format">
+                <div class="p-info" id="p3">Business Bay Complex</div>
+            </div>
         </div>
-      </div>
-    </div>
-    <div class="project-card" data-cat="سكني">
-      <div class="project-bg">🏡</div>
-      <div style="position:absolute;inset:0;background:linear-gradient(135deg,#1A0A2A 0%,#2A1A0A 100%);"></div>
-      <div class="project-hover-info"><div class="phi-btn">🔍</div><div class="phi-btn">💾</div></div>
-      <div class="project-overlay">
-        <div class="project-info">
-          <div class="project-tag">سكني</div>
-          <div class="project-title">فلل النخيل الملكية</div>
-          <div class="project-location">📍 نخلة جميرا · 2023</div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <div class="f-grid">
+            <div class="f-col">
+                <h4 id="f-h1">AL-OMRAN</h4>
+                <p id="f-p1">Your trusted partner in construction excellence across the UAE since 2005.</p>
+            </div>
+            <div class="f-col">
+                <h4 id="f-h2">Quick Links</h4>
+                <ul class="f-links">
+                    <li><a href="#" id="fl1">Home</a></li>
+                    <li><a href="#services" id="fl2">Services</a></li>
+                    <li><a href="#projects" id="fl3">Portfolio</a></li>
+                </ul>
+            </div>
+            <div class="f-col">
+                <h4 id="f-h3">Contact</h4>
+                <p>Dubai, UAE</p>
+                <p>info@al-omran.ae</p>
+                <p>+971 4 123 4567</p>
+            </div>
         </div>
-      </div>
-    </div>
-    <div class="project-card" data-cat="بنية تحتية">
-      <div class="project-bg">🛣</div>
-      <div style="position:absolute;inset:0;background:linear-gradient(135deg,#0A1A0A 0%,#1A1A0A 100%);"></div>
-      <div class="project-hover-info"><div class="phi-btn">🔍</div><div class="phi-btn">💾</div></div>
-      <div class="project-overlay">
-        <div class="project-info">
-          <div class="project-tag">بنية تحتية</div>
-          <div class="project-title">تطوير شبكة الطرق</div>
-          <div class="project-location">📍 مدينة دبي الصناعية · 2021</div>
-        </div>
-      </div>
-    </div>
-    <div class="project-card" data-cat="تجاري">
-      <div class="project-bg">🏪</div>
-      <div style="position:absolute;inset:0;background:linear-gradient(135deg,#2A0A0A 0%,#0A0A2A 100%);"></div>
-      <div class="project-hover-info"><div class="phi-btn">🔍</div><div class="phi-btn">💾</div></div>
-      <div class="project-overlay">
-        <div class="project-info">
-          <div class="project-tag">تجاري</div>
-          <div class="project-title">مركز التسوق العمراني</div>
-          <div class="project-location">📍 قرية جميرا الدائرية · 2022</div>
-        </div>
-      </div>
-    </div>
-    <div class="project-card large" data-cat="صناعي">
-      <div class="project-bg">🏭</div>
-      <div style="position:absolute;inset:0;background:linear-gradient(135deg,#0A2A2A 0%,#1A1A0A 100%);"></div>
-      <div class="project-hover-info"><div class="phi-btn">🔍</div><div class="phi-btn">💾</div></div>
-      <div class="project-overlay">
-        <div class="project-info">
-          <div class="project-tag">صناعي</div>
-          <div class="project-title">مجمع المستودعات الذكية</div>
-          <div class="project-location">📍 مجمع دبي للاستثمار · 2024</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+        <div class="copy">&copy; 2023 AL-OMRAN CONSTRUCTION. All Rights Reserved.</div>
+    </footer>
 
-<!-- PROCESS -->
-<section id="process">
-  <div class="process-header">
-    <div class="section-label reveal">منهجيتنا</div>
-    <h2 class="section-title reveal">كيف <span>نعمل؟</span></h2>
-    <p class="section-desc reveal">منهجية عمل محكمة تضمن تسليم مشروعك في الوقت المحدد وبأعلى جودة ممكنة</p>
-  </div>
-  <div class="process-timeline">
-    <div class="process-step">
-      <div class="ps-content reveal-right">
-        <div class="ps-num">01</div>
-        <div class="ps-title">الاستشارة والتخطيط</div>
-        <div class="ps-desc">نجتمع بك لفهم رؤيتك ومتطلباتك بدقة، ونضع دراسة جدوى شاملة وخطة عمل واضحة المعالم.</div>
-      </div>
-      <div class="ps-dot"><div class="ps-dot-inner"></div></div>
-      <div class="ps-spacer"></div>
-    </div>
-    <div class="process-step">
-      <div class="ps-spacer"></div>
-      <div class="ps-dot"><div class="ps-dot-inner"></div></div>
-      <div class="ps-content reveal-left">
-        <div class="ps-num">02</div>
-        <div class="ps-title">التصميم والهندسة</div>
-        <div class="ps-desc">يقوم فريقنا الهندسي بإعداد التصاميم المعمارية والمخططات التنفيذية وفق أحدث المعايير الدولية.</div>
-      </div>
-    </div>
-    <div class="process-step">
-      <div class="ps-content reveal-right">
-        <div class="ps-num">03</div>
-        <div class="ps-title">التنفيذ والبناء</div>
-        <div class="ps-desc">نبدأ التنفيذ الفعلي بإشراف مهندسين متخصصين مع ضمان أعلى معايير الجودة والسلامة في كل مرحلة.</div>
-      </div>
-      <div class="ps-dot"><div class="ps-dot-inner"></div></div>
-      <div class="ps-spacer"></div>
-    </div>
-    <div class="process-step">
-      <div class="ps-spacer"></div>
-      <div class="ps-dot"><div class="ps-dot-inner"></div></div>
-      <div class="ps-content reveal-left">
-        <div class="ps-num">04</div>
-        <div class="ps-title">التسليم والضمان</div>
-        <div class="ps-desc">نسلمك مشروعك في الموعد المحدد مع تقديم ضمان شامل وخدمات صيانة متكاملة لضمان رضاك التام.</div>
-      </div>
-    </div>
-  </div>
-</section>
+    <!-- Scripts -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+    <script>
+        AOS.init({ duration: 1000, once: true });
+        new Swiper(".mySwiper", { 
+            loop: true, autoplay: { delay: 4000 }, 
+            pagination: { el: ".swiper-pagination", clickable: true } 
+        });
 
-<!-- TESTIMONIALS -->
-<section id="testimonials">
-  <div class="testimonials-header">
-    <div class="section-label reveal">آراء عملائنا</div>
-    <h2 class="section-title reveal">ماذا يقول <span>عملاؤنا؟</span></h2>
-  </div>
-  <div class="testimonials-track">
-    <div class="testimonials-scroll" id="testiScroll">
-      <!-- Set 1 -->
-      <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-text">"تعاملت مع العمران لبناء فيلتي في دبي هيلز، والنتيجة فاقت توقعاتي بكثير. الجودة استثنائية والالتزام بالمواعيد كان دقيقاً جداً."</p>
-        <div class="testi-author">
-          <div class="ta-avatar">م</div>
-          <div><div class="ta-name">محمد العلي</div><div class="ta-role">مستثمر عقاري · دبي</div></div>
-        </div>
-      </div>
-      <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-text">"أنجزنا معهم مشروع مكاتبنا التجارية في DIFC وكانت تجربة رائعة. فريق محترف يفهم احتياجات الأعمال ويقدم حلولاً مبتكرة."</p>
-        <div class="testi-author">
-          <div class="ta-avatar">ف</div>
-          <div><div class="ta-name">فيصل الحمدان</div><div class="ta-role">مدير تنفيذي · مجموعة الفيصل</div></div>
-        </div>
-      </div>
-      <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-text">"شركة تستحق الثقة بامتياز. سلمونا المشروع في الموعد المحدد وبأقل من التكلفة المتوقعة. سأتعاون معهم حتماً في مشاريع قادمة."</p>
-        <div class="testi-author">
-          <div class="ta-avatar">س</div>
-          <div><div class="ta-name">سارة المنصوري</div><div class="ta-role">مطورة عقارية · عجمان</div></div>
-        </div>
-      </div>
-      <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-text">"تعاملت مع شركات مقاولات كثيرة لكن العمران لها طابع مميز في الدقة والاحترافية. الفريق الهندسي لديهم متميز جداً."</p>
-        <div class="testi-author">
-          <div class="ta-avatar">ع</div>
-          <div><div class="ta-name">عبدالله الراشد</div><div class="ta-role">رجل أعمال · أبوظبي</div></div>
-        </div>
-      </div>
-      <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-text">"استأجرنا خدماتهم لبناء مجمعنا الصناعي ولا يمكنني إلا أن أثني على جودة العمل والكفاءة العالية في الإنجاز."</p>
-        <div class="testi-author">
-          <div class="ta-avatar">ن</div>
-          <div><div class="ta-name">نورا الكعبي</div><div class="ta-role">مديرة مشاريع · شركة الكعبي</div></div>
-        </div>
-      </div>
-      <!-- Duplicate for infinite scroll -->
-      <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-text">"تعاملت مع العمران لبناء فيلتي في دبي هيلز، والنتيجة فاقت توقعاتي بكثير. الجودة استثنائية والالتزام بالمواعيد كان دقيقاً جداً."</p>
-        <div class="testi-author">
-          <div class="ta-avatar">م</div>
-          <div><div class="ta-name">محمد العلي</div><div class="ta-role">مستثمر عقاري · دبي</div></div>
-        </div>
-      </div>
-      <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-text">"أنجزنا معهم مشروع مكاتبنا التجارية في DIFC وكانت تجربة رائعة. فريق محترف يفهم احتياجات الأعمال ويقدم حلولاً مبتكرة."</p>
-        <div class="testi-author">
-          <div class="ta-avatar">ف</div>
-          <div><div class="ta-name">فيصل الحمدان</div><div class="ta-role">مدير تنفيذي · مجموعة الفيصل</div></div>
-        </div>
-      </div>
-      <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-text">"شركة تستحق الثقة بامتياز. سلمونا المشروع في الموعد المحدد وبأقل من التكلفة المتوقعة. سأتعاول معهم حتماً في مشاريع قادمة."</p>
-        <div class="testi-author">
-          <div class="ta-avatar">س</div>
-          <div><div class="ta-name">سارة المنصوري</div><div class="ta-role">مطورة عقارية · عجمان</div></div>
-        </div>
-      </div>
-      <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-text">"تعاملت مع شركات مقاولات كثيرة لكن العمران لها طابع مميز في الدقة والاحترافية. الفريق الهندسي لديهم متميز جداً."</p>
-        <div class="testi-author">
-          <div class="ta-avatar">ع</div>
-          <div><div class="ta-name">عبدالله الراشد</div><div class="ta-role">رجل أعمال · أبوظبي</div></div>
-        </div>
-      </div>
-      <div class="testi-card">
-        <div class="testi-stars">★★★★★</div>
-        <p class="testi-text">"استأجرنا خدماتهم لبناء مجمعنا الصناعي ولا يمكنني إلا أن أثني على جودة العمل والكفاءة العالية في الإنجاز."</p>
-        <div class="testi-author">
-          <div class="ta-avatar">ن</div>
-          <div><div class="ta-name">نورا الكعبي</div><div class="ta-role">مديرة مشاريع · شركة الكعبي</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+        const data = {
+            en: {
+                logo: "AL-OMRAN", btn: "العربية", m1: "Home", m2: "Services", m3: "Projects", m4: "Contact",
+                ht1: "Building the Future of Dubai", hp1: "Excellence and Integrity in every project.",
+                ht2: "Modern Architecture Solutions", hp2: "Turning visions into solid realities.",
+                st: "Our Services", s1t: "General Contracting", s2t: "Project Management", s3t: "Interior Design", s4t: "Safety Consulting",
+                pt: "Recent Projects", p1: "Dubai Marina Tower", p2: "Palm Jumeirah Villa", p3: "Business Bay Complex",
+                fh1: "AL-OMRAN", fh2: "Quick Links", fh3: "Contact", qbtn: "Get a Quote"
+            },
+            ar: {
+                logo: "العمران", btn: "English", m1: "الرئيسية", m2: "خدماتنا", m3: "مشاريعنا", m4: "اتصل بنا",
+                ht1: "نبني مستقبل دبي", hp1: "التميز والنزاهة في كل مشروع نقوم بتسليمه.",
+                ht2: "حلول معمارية حديثة", hp2: "نحول الرؤى الطموحة إلى واقع ملموس.",
+                st: "خدماتنا", s1t: "المقاولات العامة", s2t: "إدارة المشاريع", s3t: "التصميم الداخلي", s4t: "استشارات السلامة",
+                pt: "أحدث مشاريعنا", p1: "برج مرسى دبي", p2: "فيلا نخلة الجميرا", p3: "مجمع خليج الأعمال",
+                fh1: "العمران", fh2: "روابط سريعة", fh3: "اتصل بنا", qbtn: "احصل على تسعيرة"
+            }
+        };
 
-<!-- CONTACT -->
-<section id="contact">
-  <div class="contact-grid">
-    <div class="reveal-right">
-      <div class="section-label">تواصل معنا</div>
-      <h2 class="section-title">هل لديك <span>مشروع</span><br>تريد تنفيذه؟</h2>
-      <p class="section-desc">تواصل معنا الآن ودعنا نحول رؤيتك إلى واقع ملموس بأعلى معايير الجودة والاحترافية.</p>
-      <div class="ci-items">
-        <div class="ci-item">
-          <div class="ci-icon">📍</div>
-          <div class="ci-text">
-            <div class="label">العنوان</div>
-            <div class="value">شارع الشيخ زايد، برج العمران، الطابق 12، دبي</div>
-          </div>
-        </div>
-        <div class="ci-item">
-          <div class="ci-icon">📞</div>
-          <div class="ci-text">
-            <div class="label">الهاتف</div>
-            <div class="value">+971 4 XXX XXXX</div>
-          </div>
-        </div>
-        <div class="ci-item">
-          <div class="ci-icon">✉️</div>
-          <div class="ci-text">
-            <div class="label">البريد الإلكتروني</div>
-            <div class="value">info@alamran-contracting.ae</div>
-          </div>
-        </div>
-        <div class="ci-item">
-          <div class="ci-icon">🕐</div>
-          <div class="ci-text">
-            <div class="label">ساعات العمل</div>
-            <div class="value">الأحد — الخميس: 8:00 صباحاً — 6:00 مساءً</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="contact-form reveal-left">
-      <div class="form-title">أرسل لنا رسالة</div>
-      <div class="form-sub">سنتواصل معك في أقرب وقت ممكن</div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>الاسم الكامل</label>
-          <input type="text" placeholder="محمد أحمد">
-        </div>
-        <div class="form-group">
-          <label>رقم الجوال</label>
-          <input type="tel" placeholder="+971 5X XXX XXXX">
-        </div>
-      </div>
-      <div class="form-group">
-        <label>البريد الإلكتروني</label>
-        <input type="email" placeholder="example@email.com">
-      </div>
-      <div class="form-group">
-        <label>نوع المشروع</label>
-        <select>
-          <option value="">اختر نوع المشروع</option>
-          <option>مبنى سكني</option>
-          <option>مبنى تجاري</option>
-          <option>منشأة صناعية</option>
-          <option>بنية تحتية</option>
-          <option>تشطيبات داخلية</option>
-          <option>أعمال كهروميكانيكية</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>تفاصيل المشروع</label>
-        <textarea placeholder="اكتب لنا عن مشروعك..."></textarea>
-      </div>
-      <button class="btn-submit" onclick="submitForm()">
-        <span>إرسال الطلب</span>
-        <span>◀</span>
-      </button>
-    </div>
-  </div>
-</section>
-
-<!-- FOOTER -->
-<footer>
-  <div class="footer-grid">
-    <div class="footer-brand">
-      <div class="logo">
-        <div class="logo-icon">ع</div>
-        <div class="logo-text">
-          <span class="main">العمران للمقاولات</span>
-          <span class="sub">DUBAI · UAE</span>
-        </div>
-      </div>
-      <p>شركة مقاولات رائدة في دبي والإمارات العربية المتحدة، نبني المستقبل بخبرة تتجاوز 20 عاماً وفق أعلى معايير الجودة والابتكار.</p>
-      <div class="social-links">
-        <a href="#" class="social-link">𝕏</a>
-        <a href="#" class="social-link">in</a>
-        <a href="#" class="social-link">📷</a>
-        <a href="#" class="social-link">▶</a>
-      </div>
-    </div>
-    <div class="footer-col">
-      <h4>خدماتنا</h4>
-      <ul>
-        <li><a href="#">المباني السكنية</a></li>
-        <li><a href="#">المباني التجارية</a></li>
-        <li><a href="#">المنشآت الصناعية</a></li>
-        <li><a href="#">البنية التحتية</a></li>
-        <li><a href="#">التشطيبات الفاخرة</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h4>الشركة</h4>
-      <ul>
-        <li><a href="#">من نحن</a></li>
-        <li><a href="#">مشاريعنا</a></li>
-        <li><a href="#">فريق العمل</a></li>
-        <li><a href="#">الأخبار</a></li>
-        <li><a href="#">وظائف</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h4>تواصل معنا</h4>
-      <ul>
-        <li><a href="#">دبي، الإمارات</a></li>
-        <li><a href="#">+971 4 XXX XXXX</a></li>
-        <li><a href="#">info@alamran.ae</a></li>
-        <li><a href="#">سياسة الخصوصية</a></li>
-        <li><a href="#">الشروط والأحكام</a></li>
-      </ul>
-    </div>
-  </div>
-  <div class="footer-bottom">
-    <span>© 2024 العمران للمقاولات. جميع الحقوق محفوظة.</span>
-    <span>صُنع بـ ❤️ في <a href="#">دبي، الإمارات</a></span>
-  </div>
-</footer>
-
-<!-- LIGHTBOX -->
-<div class="lightbox" id="lightbox">
-  <div class="lb-close" onclick="closeLightbox()">✕</div>
-  <div class="lb-content">
-    <div class="lb-title" id="lbTitle">مشروع</div>
-    <div class="lb-subtitle" id="lbSubtitle">تفاصيل المشروع</div>
-  </div>
-</div>
-
-<script>
-// CURSOR
-const cursor = document.getElementById('cursor');
-const ring = document.getElementById('cursorRing');
-let mx = 0, my = 0, rx = 0, ry = 0;
-
-document.addEventListener('mousemove', e => {
-  mx = e.clientX; my = e.clientY;
-  cursor.style.left = mx - 6 + 'px';
-  cursor.style.top = my - 6 + 'px';
-});
-
-function animRing() {
-  rx += (mx - rx) * 0.12;
-  ry += (my - ry) * 0.12;
-  ring.style.left = rx + 'px';
-  ring.style.top = ry + 'px';
-  requestAnimationFrame(animRing);
-}
-animRing();
-
-document.querySelectorAll('a, button, .service-card, .project-card, .testi-card').forEach(el => {
-  el.addEventListener('mouseenter', () => {
-    cursor.style.transform = 'scale(2.5)';
-    ring.style.transform = 'translate(-50%,-50%) scale(1.5)';
-    ring.style.borderColor = 'rgba(201,168,76,0.8)';
-  });
-  el.addEventListener('mouseleave', () => {
-    cursor.style.transform = 'scale(1)';
-    ring.style.transform = 'translate(-50%,-50%) scale(1)';
-    ring.style.borderColor = 'rgba(201,168,76,0.5)';
-  });
-});
-
-// NAVBAR SCROLL
-const nav = document.getElementById('navbar');
-window.addEventListener('scroll', () => {
-  nav.classList.toggle('scrolled', window.scrollY > 80);
-});
-
-// PARTICLES
-const pCont = document.getElementById('particles');
-for(let i = 0; i < 25; i++) {
-  const p = document.createElement('div');
-  p.className = 'particle';
-  p.style.cssText = `
-    left: ${Math.random()*100}%;
-    width: ${Math.random()*3+1}px;
-    height: ${Math.random()*3+1}px;
-    animation-duration: ${Math.random()*15+10}s;
-    animation-delay: ${Math.random()*10}s;
-    opacity: ${Math.random()*0.5+0.1};
-  `;
-  pCont.appendChild(p);
-}
-
-// COUNTER ANIMATION
-function animateCounter(el, target) {
-  let current = 0;
-  const step = target / 60;
-  const interval = setInterval(() => {
-    current = Math.min(current + step, target);
-    el.textContent = Math.floor(current) + (el.dataset.count == '98' ? '%' : '+');
-    if(current >= target) clearInterval(interval);
-  }, 25);
-}
-
-// SCROLL REVEAL
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if(entry.isIntersecting) {
-      entry.target.classList.add('visible');
-      // Counter
-      if(entry.target.classList.contains('stat-num')) {
-        animateCounter(entry.target, parseInt(entry.target.dataset.count));
-      }
-    }
-  });
-}, { threshold: 0.15 });
-
-document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .stat-num').forEach(el => {
-  observer.observe(el);
-});
-
-// STAGGERED REVEAL for children
-document.querySelectorAll('.services-grid .service-card, .projects-grid .project-card').forEach((el, i) => {
-  el.style.transitionDelay = (i * 0.1) + 's';
-});
-
-// PROJECT FILTER
-function filterProjects(cat, btn) {
-  document.querySelectorAll('.pf-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('.project-card').forEach(card => {
-    const show = cat === 'all' || card.dataset.cat === cat;
-    card.style.opacity = show ? '1' : '0.2';
-    card.style.transform = show ? '' : 'scale(0.95)';
-  });
-}
-
-// LIGHTBOX
-document.querySelectorAll('.project-card').forEach(card => {
-  card.addEventListener('click', () => {
-    const title = card.querySelector('.project-title')?.textContent || 'مشروع';
-    const loc = card.querySelector('.project-location')?.textContent || '';
-    document.getElementById('lbTitle').textContent = title;
-    document.getElementById('lbSubtitle').textContent = loc;
-    document.getElementById('lightbox').classList.add('open');
-  });
-});
-
-function closeLightbox() {
-  document.getElementById('lightbox').classList.remove('open');
-}
-
-document.getElementById('lightbox').addEventListener('click', function(e) {
-  if(e.target === this) closeLightbox();
-});
-
-// FORM SUBMIT
-function submitForm() {
-  const btn = document.querySelector('.btn-submit');
-  btn.innerHTML = '✓ تم الإرسال بنجاح!';
-  btn.style.background = 'linear-gradient(135deg, #4CAF50, #388E3C)';
-  setTimeout(() => {
-    btn.innerHTML = '<span>إرسال الطلب</span><span>◀</span>';
-    btn.style.background = '';
-  }, 3000);
-}
-
-// PARALLAX on scroll
-window.addEventListener('scroll', () => {
-  const y = window.scrollY;
-  const heroBg = document.querySelector('.hero-bg');
-  if(heroBg) heroBg.style.transform = `translateY(${y * 0.3}px)`;
-  const heroBuilding = document.querySelector('.hero-building');
-  if(heroBuilding) heroBuilding.style.transform = `translateY(${y * 0.15}px)`;
-});
-
-// Smooth appearance on load
-document.body.style.opacity = '0';
-window.addEventListener('load', () => {
-  document.body.style.transition = 'opacity 0.6s ease';
-  document.body.style.opacity = '1';
-});
-</script>
+        let lang = 'en';
+        function toggleLanguage() {
+            lang = lang === 'en' ? 'ar' : 'en';
+            const d = data[lang];
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+            
+            document.getElementById('l-name').innerHTML = lang === 'ar' ? 'العمران' : 'AL-<span>OMRAN</span>';
+            document.getElementById('langBtn').innerText = d.btn;
+            document.getElementById('m1').innerText = d.m1; document.getElementById('m2').innerText = d.m2;
+            document.getElementById('m3').innerText = d.m3; document.getElementById('m4').innerText = d.m4;
+            document.getElementById('h-t1').innerText = d.ht1; document.getElementById('h-p1').innerText = d.hp1;
+            document.getElementById('h-t2').innerText = d.ht2; document.getElementById('h-p2').innerText = d.hp2;
+            document.getElementById('s-title').innerText = d.st;
+            document.getElementById('s1-t').innerText = d.s1t; document.getElementById('s2-t').innerText = d.s2t;
+            document.getElementById('s3-t').innerText = d.s3t; document.getElementById('s4-t').innerText = d.s4t;
+            document.getElementById('p-title').innerText = d.pt;
+            document.getElementById('p1').innerText = d.p1; document.getElementById('p2').innerText = d.p2; document.getElementById('p3').innerText = d.p3;
+            document.getElementById('f-h1').innerText = d.fh1; document.getElementById('f-h2').innerText = d.fh2; document.getElementById('f-h3').innerText = d.fh3;
+            document.querySelectorAll('.q-btn').forEach(b => b.innerText = d.qbtn);
+        }
+    </script>
 </body>
 </html>
