@@ -9,41 +9,49 @@
     <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
-        body { font-family: 'Cairo', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
-        .clip-container { background: white; border-radius: 1.5rem; padding: 1.2rem; margin-bottom: 1rem; border: 2px solid #e2e8f0; transition: all 0.3s ease; }
-        .is-playing { border-color: #10b981; background-color: #f0fdf4; transform: scale(1.02); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        body { font-family: 'Cairo', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
+        .clip-container { background: white; border-radius: 1rem; padding: 0.6rem; margin-bottom: 0.5rem; border: 1px solid #e2e8f0; transition: all 0.2s; }
+        .is-playing { border-color: #10b981; background-color: #f0fdf4; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         .is-waiting { border-color: #3b82f6; background-color: #eff6ff; }
-        #recordBtn.recording { background-color: #1e293b; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
-        .wave-wrapper { background: #fdfdfd; border-radius: 0.75rem; border: 1px solid #f1f5f9; }
+        #recordBtn.recording { animation: pulse 1.5s infinite; background-color: #1e293b; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        .compact-input { width: 35px; height: 24px; font-size: 12px; text-align: center; border-radius: 4px; border: 1px solid #cbd5e1; }
     </style>
 </head>
 <body class="pb-44">
 
-    <div class="max-w-md mx-auto p-4">
-        <header class="text-center py-6">
-            <h1 class="text-2xl font-bold text-indigo-900">مُحفظ القرآن 📖</h1>
-            <p class="text-gray-500 text-sm font-medium">نظام التكرار الذكي للطفل</p>
+    <div class="max-w-md mx-auto p-2">
+        <!-- هيدر مضغوط -->
+        <header class="flex justify-between items-center py-2 px-1">
+            <h1 class="text-lg font-bold text-indigo-900">مُحفظ القرآن 📖</h1>
+            <button id="recordBtn" class="w-12 h-12 bg-red-500 text-white rounded-full shadow-lg flex items-center justify-center transition-all">
+                <span id="recordIcon" class="text-xl">🎤</span>
+            </button>
         </header>
 
-        <!-- زر التسجيل الرئيسي -->
-        <div class="flex flex-col items-center mb-8">
-            <button id="recordBtn" class="w-20 h-20 bg-red-500 text-white rounded-full shadow-2xl flex items-center justify-center transition-all">
-                <span id="recordIcon" class="text-3xl">🎤</span>
-            </button>
-            <p id="recordLabel" class="mt-3 font-bold text-gray-700">اضغط للتسجيل</p>
+        <!-- خيارات تكرار الكل -->
+        <div class="bg-indigo-900 text-white rounded-xl p-2 mb-3 flex items-center justify-between text-xs shadow-md">
+            <div class="flex items-center gap-2">
+                <span>تكرار القائمة:</span>
+                <input type="number" id="allRepeats" value="1" min="1" class="compact-input text-black font-bold">
+                <label class="flex items-center gap-1 cursor-pointer">
+                    <input type="checkbox" id="infiniteRepeat" class="w-4 h-4">
+                    <span>مستمر ♾️</span>
+                </label>
+            </div>
+            <div id="cycleStatus" class="font-bold text-indigo-200"></div>
         </div>
 
-        <div id="clipsList" class="space-y-4"></div>
+        <div id="clipsList"></div>
     </div>
 
     <!-- التحكم السفلي -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white shadow-[0_-10px_20px_rgba(0,0,0,0.05)] p-4 flex flex-col gap-3 border-t z-50">
+    <div class="fixed bottom-0 left-0 right-0 bg-white p-3 flex flex-col gap-2 border-t z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
         <div class="flex gap-2">
-            <button id="playAllBtn" class="bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl font-bold flex-1 shadow-lg active:scale-95 transition-all text-lg">تشغيل الكل</button>
-            <button id="stopBtn" class="bg-gray-100 text-gray-700 px-6 rounded-2xl font-bold">إيقاف</button>
+            <button id="playAllBtn" class="bg-green-600 text-white py-3 rounded-xl font-bold flex-1 shadow-lg active:scale-95 text-base">تشغيل السلسلة</button>
+            <button id="stopBtn" class="bg-gray-100 text-gray-700 px-5 rounded-xl font-bold">إيقاف</button>
         </div>
-        <button id="exportBtn" class="bg-indigo-50 text-indigo-700 py-2 rounded-xl text-xs font-bold border border-indigo-100">تحميل المشروع كاملاً (WAV)</button>
+        <button id="exportBtn" class="text-gray-400 py-1 text-[10px] font-bold uppercase tracking-wider">حفظ المشروع (WAV)</button>
     </div>
 
     <script>
@@ -55,8 +63,8 @@
         const recordBtn = document.getElementById('recordBtn');
         const clipsList = document.getElementById('clipsList');
         const playAllBtn = document.getElementById('playAllBtn');
+        const cycleStatus = document.getElementById('cycleStatus');
 
-        // 1. معالجة التسجيل
         recordBtn.onclick = async () => {
             if (!isRecording) {
                 try {
@@ -64,47 +72,33 @@
                     const mimeType = MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : 'audio/webm';
                     mediaRecorder = new MediaRecorder(stream, { mimeType });
                     const chunks = [];
-                    
                     mediaRecorder.ondataavailable = e => chunks.push(e.data);
-                    mediaRecorder.onstop = () => {
-                        const blob = new Blob(chunks, { type: mimeType });
-                        addClip(blob);
-                    };
-
+                    mediaRecorder.onstop = () => addClip(new Blob(chunks, { type: mimeType }));
                     mediaRecorder.start();
                     isRecording = true;
                     recordBtn.classList.add('recording');
                     document.getElementById('recordIcon').innerText = "⏹️";
-                    document.getElementById('recordLabel').innerText = "جاري التسجيل حالياً...";
-                } catch (err) {
-                    alert("يرجى تفعيل صلاحية الميكروفون.");
-                }
+                } catch (err) { alert("فشل الوصول للميكروفون"); }
             } else {
                 mediaRecorder.stop();
                 mediaRecorder.stream.getTracks().forEach(t => t.stop());
                 isRecording = false;
                 recordBtn.classList.remove('recording');
                 document.getElementById('recordIcon').innerText = "🎤";
-                document.getElementById('recordLabel').innerText = "اضغط للتسجيل";
             }
         };
 
-        // 2. إضافة مقطع جديد
         function addClip(blob) {
             const id = Date.now();
-            const url = URL.createObjectURL(blob);
-            
             const clipObj = {
                 id: id,
-                url: url,
-                blob: blob,
+                url: URL.createObjectURL(blob),
                 repeats: 1,
                 hasGap: false,
                 start: 0,
                 end: 0,
                 ws: null
             };
-            
             clips.push(clipObj);
             renderClipItem(clipObj);
         }
@@ -112,37 +106,36 @@
         function renderClipItem(clip) {
             const container = document.createElement('div');
             container.id = `clip-${clip.id}`;
-            container.className = "clip-container shadow-sm transition-all";
+            container.className = "clip-container";
             container.innerHTML = `
-                <div class="flex justify-between items-center mb-3">
-                    <span class="text-xs font-bold bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full border border-indigo-100 font-mono">مقطع #${clips.length}</span>
-                    <button onclick="deleteClip(${clip.id})" class="text-red-400 hover:text-red-600 text-xs font-bold">حذف</button>
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase">آية ${clips.length}</span>
+                    <button onclick="deleteClip(${clip.id})" class="text-red-300 hover:text-red-500 text-[10px]">حذف</button>
                 </div>
                 
-                <div class="wave-wrapper p-2">
-                    <div id="wave-${clip.id}"></div>
-                </div>
+                <div id="wave-${clip.id}" class="h-[35px] overflow-hidden opacity-80"></div>
 
-                <div class="flex items-center justify-between gap-2 bg-gray-50 p-3 rounded-2xl mt-4">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs font-bold text-gray-600">تكرار:</span>
-                        <input type="number" value="1" min="1" onchange="updateClip(${clip.id}, 'repeats', this.value)" class="w-12 h-8 rounded-lg border-none text-center bg-white shadow-sm font-bold text-indigo-600">
+                <div class="flex items-center justify-between mt-2">
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-1">
+                            <span class="text-[10px] font-bold">تكرار:</span>
+                            <input type="number" value="1" min="1" onchange="updateClip(${clip.id}, 'repeats', this.value)" class="compact-input">
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <span class="text-[10px] font-bold">فراغ:</span>
+                            <input type="checkbox" onchange="updateClip(${clip.id}, 'hasGap', this.checked)" class="w-3 h-3">
+                        </div>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs font-bold text-gray-600">فراغ:</span>
-                        <input type="checkbox" onchange="updateClip(${clip.id}, 'hasGap', this.checked)" class="w-5 h-5 rounded border-gray-300 text-indigo-600">
-                    </div>
-                    <button onclick="playSingle(${clip.id})" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md">تجربة</button>
+                    <button onclick="playSingle(${clip.id})" class="text-indigo-600 text-[10px] font-bold bg-indigo-50 px-2 py-1 rounded">تجربة 🔊</button>
                 </div>
-                <div id="status-${clip.id}" class="text-[11px] text-center mt-3 h-4 font-bold text-indigo-500"></div>
             `;
             clipsList.appendChild(container);
 
             const ws = WaveSurfer.create({
                 container: `#wave-${clip.id}`,
-                waveColor: '#d1d5db',
+                waveColor: '#cbd5e1',
                 progressColor: '#6366f1',
-                height: 50,
+                height: 35,
                 barWidth: 2,
                 url: clip.url,
             });
@@ -150,12 +143,9 @@
             const wsRegions = ws.registerPlugin(WaveSurfer.Regions.create());
             ws.on('ready', () => {
                 clip.end = ws.getDuration();
-                wsRegions.addRegion({ start: 0, end: ws.getDuration(), color: 'rgba(99, 102, 241, 0.15)', drag: true, resize: true });
+                wsRegions.addRegion({ id: 'r', start: 0, end: ws.getDuration(), color: 'rgba(99, 102, 241, 0.1)', drag: true, resize: true });
             });
-            wsRegions.on('region-updated', (region) => {
-                clip.start = region.start;
-                clip.end = region.end;
-            });
+            wsRegions.on('region-updated', (region) => { clip.start = region.start; clip.end = region.end; });
             clip.ws = ws;
         }
 
@@ -169,70 +159,61 @@
             document.getElementById(`clip-${id}`).remove();
         }
 
-        // 3. محرك التشغيل المصحح لمنع تخطي التكرارات
+        async function playClipLogic(clip) {
+            const el = document.getElementById(`clip-${clip.id}`);
+            const duration = clip.end - clip.start;
+
+            for (let r = 0; r < clip.repeats; r++) {
+                if (stopPlayback) break;
+                clip.ws.setTime(clip.start);
+                el.className = "clip-container is-playing";
+                
+                await new Promise(resolve => {
+                    clip.ws.play(clip.start, clip.end);
+                    const op = () => { clip.ws.un('pause', op); resolve(); };
+                    clip.ws.on('pause', op);
+                });
+
+                if (stopPlayback) break;
+                await new Promise(r => setTimeout(r, 100)); // راحة تقنية
+
+                if (clip.hasGap) {
+                    el.className = "clip-container is-waiting";
+                    await new Promise(resolve => {
+                        const t = setTimeout(resolve, duration * 1000);
+                        if (stopPlayback) clearTimeout(t);
+                    });
+                }
+                el.className = "clip-container";
+            }
+        }
+
         async function playSingle(id) {
             stopPlayback = false;
             const clip = clips.find(c => c.id === id);
             if (clip) await playClipLogic(clip);
         }
 
-        async function playClipLogic(clip) {
-            const el = document.getElementById(`clip-${clip.id}`);
-            const status = document.getElementById(`status-${clip.id}`);
-            const duration = clip.end - clip.start;
-
-            for (let r = 0; r < clip.repeats; r++) {
-                if (stopPlayback) break;
-
-                // أ- التأكد من ضبط الوقت للبداية
-                clip.ws.setTime(clip.start);
-
-                // ب- مرحلة الصوت
-                el.className = "clip-container shadow-md is-playing";
-                status.innerText = `تكرار: ${r + 1} من ${clip.repeats}`;
-                
-                await new Promise(resolve => {
-                    clip.ws.play(clip.start, clip.end);
-                    
-                    const onPause = () => {
-                        clip.ws.un('pause', onPause);
-                        resolve();
-                    };
-                    clip.ws.on('pause', onPause);
-                });
-
-                if (stopPlayback) break;
-
-                // ج- فترة راحة تقنية صغيرة جداً لمنع التخطي (ثانية تقريباً 0.15)
-                await new Promise(resolve => setTimeout(resolve, 150));
-
-                // د- مرحلة الفراغ
-                if (clip.hasGap) {
-                    el.className = "clip-container shadow-md is-waiting";
-                    status.innerText = `انتظار ترديد الطفل...`;
-                    await new Promise(resolve => {
-                        const timer = setTimeout(resolve, duration * 1000);
-                        if (stopPlayback) clearTimeout(timer);
-                    });
-                }
-                
-                el.className = "clip-container shadow-sm";
-            }
-            status.innerText = "";
-        }
-
         playAllBtn.onclick = async () => {
             stopPlayback = false;
             playAllBtn.disabled = true;
-            playAllBtn.classList.replace('bg-green-600', 'bg-gray-400');
+            const infinite = document.getElementById('infiniteRepeat').checked;
+            const totalCycles = parseInt(document.getElementById('allRepeats').value);
             
-            for (let i = 0; i < clips.length; i++) {
+            let currentCycle = 0;
+            while (infinite || currentCycle < totalCycles) {
                 if (stopPlayback) break;
-                await playClipLogic(clips[i]);
+                currentCycle++;
+                cycleStatus.innerText = infinite ? `دورة: ${currentCycle}` : `دورة: ${currentCycle} / ${totalCycles}`;
+                
+                for (const clip of clips) {
+                    if (stopPlayback) break;
+                    await playClipLogic(clip);
+                }
             }
-
+            
+            cycleStatus.innerText = "";
             playAllBtn.disabled = false;
-            playAllBtn.classList.replace('bg-gray-400', 'bg-green-600');
         };
 
         document.getElementById('stopBtn').onclick = () => {
@@ -240,48 +221,39 @@
             clips.forEach(c => {
                 c.ws.pause();
                 const el = document.getElementById(`clip-${c.id}`);
-                if (el) el.className = "clip-container shadow-sm";
+                if (el) el.className = "clip-container";
             });
             playAllBtn.disabled = false;
-            playAllBtn.classList.replace('bg-gray-400', 'bg-green-600');
         };
 
-        // 4. تصدير المشروع
+        // دالة التصدير البسيطة (WAV)
         document.getElementById('exportBtn').onclick = async () => {
             if (clips.length === 0) return;
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const audioCtx = new AudioContext();
             let totalDur = 0;
-            const dataBuffers = [];
-            
+            const buffers = [];
             for (const clip of clips) {
-                const response = await fetch(clip.url);
-                const arrayBuf = await response.arrayBuffer();
-                const audioBuf = await audioCtx.decodeAudioData(arrayBuf);
-                const partDur = clip.end - clip.start;
-                totalDur += (clip.hasGap ? partDur * 2 : partDur) * clip.repeats;
-                dataBuffers.push({ audioBuf, clip, partDur });
+                const res = await fetch(clip.url);
+                const ab = await audioCtx.decodeAudioData(await res.arrayBuffer());
+                const d = clip.end - clip.start;
+                totalDur += (clip.hasGap ? d * 2 : d) * clip.repeats;
+                buffers.push({ ab, clip, d });
             }
-
-            const offlineCtx = new OfflineAudioContext(1, 44100 * totalDur, 44100);
+            const offCtx = new OfflineAudioContext(1, 44100 * totalDur, 44100);
             let offset = 0;
-
-            for (const item of dataBuffers) {
-                for (let r = 0; r < item.clip.repeats; r++) {
-                    const source = offlineCtx.createBufferSource();
-                    source.buffer = item.audioBuf;
-                    source.connect(offlineCtx.destination);
-                    source.start(offset, item.clip.start, item.partDur);
-                    offset += item.partDur;
-                    if (item.clip.hasGap) offset += item.partDur; 
+            for (const b of buffers) {
+                for (let r = 0; r < b.clip.repeats; r++) {
+                    const s = offCtx.createBufferSource();
+                    s.buffer = b.ab; s.connect(offCtx.destination);
+                    s.start(offset, b.clip.start, b.d);
+                    offset += b.d;
+                    if (b.clip.hasGap) offset += b.d;
                 }
             }
-
-            const renderedBuffer = await offlineCtx.startRendering();
-            const wavBlob = bufferToWav(renderedBuffer);
+            const rendered = await offCtx.startRendering();
             const a = document.createElement('a');
-            a.href = URL.createObjectURL(wavBlob);
-            a.download = `quran_session.wav`;
-            a.click();
+            a.href = URL.createObjectURL(bufferToWav(rendered));
+            a.download = "quran_session.wav"; a.click();
         };
 
         function bufferToWav(abuffer) {
