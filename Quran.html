@@ -10,12 +10,12 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
         body { font-family: 'Cairo', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
-        .clip-container { background: white; border-radius: 1.5rem; padding: 1rem; margin-bottom: 1rem; border: 2px solid #e2e8f0; transition: all 0.3s ease; }
-        .is-playing { border-color: #10b981; background-color: #f0fdf4; transform: scale(1.02); shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .clip-container { background: white; border-radius: 1.5rem; padding: 1.2rem; margin-bottom: 1rem; border: 2px solid #e2e8f0; transition: all 0.3s ease; }
+        .is-playing { border-color: #10b981; background-color: #f0fdf4; transform: scale(1.02); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         .is-waiting { border-color: #3b82f6; background-color: #eff6ff; }
         #recordBtn.recording { background-color: #1e293b; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
-        .wave-wrapper { background: #fdfdfd; border-radius: 0.75rem; border: 1px solid #f1f5f9; overflow: hidden; }
+        .wave-wrapper { background: #fdfdfd; border-radius: 0.75rem; border: 1px solid #f1f5f9; }
     </style>
 </head>
 <body class="pb-44">
@@ -23,7 +23,7 @@
     <div class="max-w-md mx-auto p-4">
         <header class="text-center py-6">
             <h1 class="text-2xl font-bold text-indigo-900">مُحفظ القرآن 📖</h1>
-            <p class="text-gray-500 text-sm font-medium">أداة تسجيل وتحفيظ ذكية</p>
+            <p class="text-gray-500 text-sm font-medium">نظام التكرار الذكي للطفل</p>
         </header>
 
         <!-- زر التسجيل الرئيسي -->
@@ -40,10 +40,10 @@
     <!-- التحكم السفلي -->
     <div class="fixed bottom-0 left-0 right-0 bg-white shadow-[0_-10px_20px_rgba(0,0,0,0.05)] p-4 flex flex-col gap-3 border-t z-50">
         <div class="flex gap-2">
-            <button id="playAllBtn" class="bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl font-bold flex-1 shadow-lg active:scale-95 transition-all text-lg">تشغيل الكل بالتتالي</button>
-            <button id="stopBtn" class="bg-gray-100 text-gray-700 px-6 rounded-2xl font-bold hover:bg-gray-200">إيقاف</button>
+            <button id="playAllBtn" class="bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl font-bold flex-1 shadow-lg active:scale-95 transition-all text-lg">تشغيل الكل</button>
+            <button id="stopBtn" class="bg-gray-100 text-gray-700 px-6 rounded-2xl font-bold">إيقاف</button>
         </div>
-        <button id="exportBtn" class="bg-indigo-50 text-indigo-700 py-2 rounded-xl text-xs font-bold border border-indigo-100">تحميل المشروع كاملاً (ملف واحد)</button>
+        <button id="exportBtn" class="bg-indigo-50 text-indigo-700 py-2 rounded-xl text-xs font-bold border border-indigo-100">تحميل المشروع كاملاً (WAV)</button>
     </div>
 
     <script>
@@ -99,7 +99,7 @@
                 url: url,
                 blob: blob,
                 repeats: 1,
-                hasGap: false, // تم التغيير إلى false بشكل افتراضي
+                hasGap: false,
                 start: 0,
                 end: 0,
                 ws: null
@@ -115,7 +115,7 @@
             container.className = "clip-container shadow-sm transition-all";
             container.innerHTML = `
                 <div class="flex justify-between items-center mb-3">
-                    <span class="text-xs font-bold bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full border border-indigo-100">مقطع ${clips.indexOf(clip)+1}</span>
+                    <span class="text-xs font-bold bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full border border-indigo-100 font-mono">مقطع #${clips.length}</span>
                     <button onclick="deleteClip(${clip.id})" class="text-red-400 hover:text-red-600 text-xs font-bold">حذف</button>
                 </div>
                 
@@ -129,7 +129,7 @@
                         <input type="number" value="1" min="1" onchange="updateClip(${clip.id}, 'repeats', this.value)" class="w-12 h-8 rounded-lg border-none text-center bg-white shadow-sm font-bold text-indigo-600">
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="text-xs font-bold text-gray-600">فراغ ترديد:</span>
+                        <span class="text-xs font-bold text-gray-600">فراغ:</span>
                         <input type="checkbox" onchange="updateClip(${clip.id}, 'hasGap', this.checked)" class="w-5 h-5 rounded border-gray-300 text-indigo-600">
                     </div>
                     <button onclick="playSingle(${clip.id})" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md">تجربة</button>
@@ -144,30 +144,18 @@
                 progressColor: '#6366f1',
                 height: 50,
                 barWidth: 2,
-                barGap: 3,
-                barRadius: 4,
                 url: clip.url,
             });
 
             const wsRegions = ws.registerPlugin(WaveSurfer.Regions.create());
-            
             ws.on('ready', () => {
                 clip.end = ws.getDuration();
-                wsRegions.addRegion({
-                    id: 'trim-region',
-                    start: 0,
-                    end: ws.getDuration(),
-                    color: 'rgba(99, 102, 241, 0.15)',
-                    drag: true,
-                    resize: true
-                });
+                wsRegions.addRegion({ start: 0, end: ws.getDuration(), color: 'rgba(99, 102, 241, 0.15)', drag: true, resize: true });
             });
-
             wsRegions.on('region-updated', (region) => {
                 clip.start = region.start;
                 clip.end = region.end;
             });
-
             clip.ws = ws;
         }
 
@@ -181,7 +169,7 @@
             document.getElementById(`clip-${id}`).remove();
         }
 
-        // 3. محرك التشغيل المطور (يمنع التداخل)
+        // 3. محرك التشغيل المصحح لمنع تخطي التكرارات
         async function playSingle(id) {
             stopPlayback = false;
             const clip = clips.find(c => c.id === id);
@@ -196,14 +184,16 @@
             for (let r = 0; r < clip.repeats; r++) {
                 if (stopPlayback) break;
 
-                // أ- مرحلة الصوت
+                // أ- التأكد من ضبط الوقت للبداية
+                clip.ws.setTime(clip.start);
+
+                // ب- مرحلة الصوت
                 el.className = "clip-container shadow-md is-playing";
-                status.innerText = `جاري القراءة... (مرة ${r+1})`;
+                status.innerText = `تكرار: ${r + 1} من ${clip.repeats}`;
                 
                 await new Promise(resolve => {
                     clip.ws.play(clip.start, clip.end);
                     
-                    // نستخدم حدث التوقف للتأكد من انتهاء المقطع تماماً
                     const onPause = () => {
                         clip.ws.un('pause', onPause);
                         resolve();
@@ -213,13 +203,15 @@
 
                 if (stopPlayback) break;
 
-                // ب- مرحلة الفراغ (فقط إذا كان الخيار مفعلاً)
+                // ج- فترة راحة تقنية صغيرة جداً لمنع التخطي (ثانية تقريباً 0.15)
+                await new Promise(resolve => setTimeout(resolve, 150));
+
+                // د- مرحلة الفراغ
                 if (clip.hasGap) {
                     el.className = "clip-container shadow-md is-waiting";
-                    status.innerText = `الآن دور الطفل للترديد...`;
+                    status.innerText = `انتظار ترديد الطفل...`;
                     await new Promise(resolve => {
                         const timer = setTimeout(resolve, duration * 1000);
-                        // إذا ضغط إيقاف أثناء الصمت
                         if (stopPlayback) clearTimeout(timer);
                     });
                 }
@@ -232,15 +224,15 @@
         playAllBtn.onclick = async () => {
             stopPlayback = false;
             playAllBtn.disabled = true;
-            playAllBtn.innerText = "جاري تشغيل السلسلة...";
-
+            playAllBtn.classList.replace('bg-green-600', 'bg-gray-400');
+            
             for (let i = 0; i < clips.length; i++) {
                 if (stopPlayback) break;
                 await playClipLogic(clips[i]);
             }
 
             playAllBtn.disabled = false;
-            playAllBtn.innerText = "تشغيل الكل بالتتالي";
+            playAllBtn.classList.replace('bg-gray-400', 'bg-green-600');
         };
 
         document.getElementById('stopBtn').onclick = () => {
@@ -251,26 +243,22 @@
                 if (el) el.className = "clip-container shadow-sm";
             });
             playAllBtn.disabled = false;
-            playAllBtn.innerText = "تشغيل الكل بالتتالي";
+            playAllBtn.classList.replace('bg-gray-400', 'bg-green-600');
         };
 
-        // 4. تصدير المشروع مدمجاً
+        // 4. تصدير المشروع
         document.getElementById('exportBtn').onclick = async () => {
-            if (clips.length === 0) return alert("سجل بعض المقاطع أولاً");
-            
+            if (clips.length === 0) return;
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             let totalDur = 0;
-            
-            // حساب المدة الدقيقة للملف النهائي
             const dataBuffers = [];
+            
             for (const clip of clips) {
                 const response = await fetch(clip.url);
                 const arrayBuf = await response.arrayBuffer();
                 const audioBuf = await audioCtx.decodeAudioData(arrayBuf);
-                
                 const partDur = clip.end - clip.start;
-                const iterationDur = clip.hasGap ? partDur * 2 : partDur;
-                totalDur += iterationDur * clip.repeats;
+                totalDur += (clip.hasGap ? partDur * 2 : partDur) * clip.repeats;
                 dataBuffers.push({ audioBuf, clip, partDur });
             }
 
@@ -292,7 +280,7 @@
             const wavBlob = bufferToWav(renderedBuffer);
             const a = document.createElement('a');
             a.href = URL.createObjectURL(wavBlob);
-            a.download = `quran_lesson_${Date.now()}.wav`;
+            a.download = `quran_session.wav`;
             a.click();
         };
 
