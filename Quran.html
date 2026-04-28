@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>مُحفظ القرآن</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+        body { font-family: 'Cairo', sans-serif; background-color: #f8fafc; touch-action: manipulation; }
+        .clip-card { transition: all 0.2s ease; border: 2px solid transparent; }
+        .playing { border-color: #10b981; background-color: #f0fdf4; transform: scale(1.02); }
+        .waiting { border-color: #3b82f6; background-color: #eff6ff; }
+        .custom-shadow { box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1); }
+    </style>
+</head>
+<body class="pb-32">
+
+    <div class="max-w-md mx-auto p-4">
+        <header class="text-center my-6">
+            <h1 class="text-2xl font-bold text-indigo-900">مُحفظ القرآن الصغير 📖</h1>
+            <p class="text-gray-500 text-sm">سجل، كرر، واحفظ بكل سهولة</p>
+        </header>
+
+        <!-- منطقة التسجيل -->
+        <div class="flex flex-col items-center bg-white p-6 rounded-3xl shadow-sm mb-8">
+            <button id="recordBtn" class="w-20 h-20 bg-red-500 text-white rounded-full shadow-lg flex items-center justify-center transition-all active:scale-90 mb-3">
+                <span id="recordIcon" class="text-3xl">🎤</span>
+            </button>
+            <p id="recordStatus" class="text-sm font-bold text-gray-700">اضغط للتسجيل</p>
+            <p id="timer" class="text-xs text-red-500 mt-1 hidden">00:00</p>
+        </div>
+
+        <!-- قائمة المقاطع -->
+        <div id="clipsList" class="space-y-4">
+            <!-- سيتم إضافة المقاطع هنا برمجياً -->
+        </div>
+    </div>
+
+    <!-- التحكم السفلي -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white p-4 custom-shadow flex gap-3 justify-center z-50">
+        <button onclick="playAll()" class="bg-green-600 text-white px-8 py-3 rounded-2xl font-bold flex-1 shadow-md active:bg-green-700">تشغيل الكل</button>
+        <button onclick="stopAll()" class="bg-gray-100 text-gray-700 px-8 py-3 rounded-2xl font-bold flex-1 shadow-sm active:bg-gray-200">إيقاف</button>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let clips = [];
+        let isRecording = false;
+        let stopPlayback = false;
+        let startTime;
+        let timerInterval;
+
+        // تهيئة قاعدة البيانات لحفظ المقاطع بشكل دائم
+        const dbName = "QuranAppDB";
+        let db;
+        const request = indexedDB.open(dbName, 1);
+        request.onupgradeneeded = e => {
+            db = e.target.result;
+            db.createObjectStore("clips", { keyPath: "id", autoIncrement: true });
+        };
+        request.onsuccess = e => {
+            db = e.target.result;
+            loadClipsFromDB();
+        };
+
+        const recordBtn = document.getElementById('recordBtn');
+        const recordStatus = document.getElementById('recordStatus');
+        const timerDisplay = document.getElementById('timer');
+
+        recordBtn.onclick = async () => {
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    startRecording(stream);
+                } catch (err) {
+                    alert("تعذر الوصول للميكروفون. تأكد من إعطاء الصلاحية ومن أن الرابط يبدأ بـ https أو استخدم متصفحاً آخر.");
+                    console.error(err);
+                }
+            } else {
+                stopRecording();
+            }
+        };
+
+        function startRecording(stream) {
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            mediaRecorder.onstop = saveClip;
+            
+            mediaRecorder.start();
+            isRecording = true;
+            recordBtn.classList.replace('bg-red-500', 'bg-gray-800');
+            recordStatus.innerText = "جاري التسجيل... اضغط للإيقاف";
+            recordIcon.innerText = "⏹️";
+            
+            // مؤقت بسيط
+            timerDisplay.classList.remove('hidden');
+            startTime = Date.now();
+            timerInterval = setInterval(() => {
+                const sec = Math.floor((Date.now() - startTime) / 1000);
+                timerDisplay.innerText = `00:${sec < 10 ? '0' + sec : sec}`;
+            }, 1000);
+        }
+
+        function stopRecording() {
+            mediaRecorder.stop();
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            isRecording = false;
+            recordBtn.classList.replace('bg-gray-800', 'bg-red-500');
+            recordStatus.innerText = "اضغط للتسجيل";
+            recordIcon.innerText = "🎤";
+            clearInterval(timerInterval);
+            timerDisplay.classList.add('hidden');
+        }
+
+        function saveClip() {
+            const blob = new Blob(audioChunks, { type: 'audio/mp3' });
+            const clipData = {
+                blob: blob,
+                repeats: 1,
+                hasGap: true,
+                start: 0,
+                end: 100,
+                createdAt: new Date().getTime()
+            };
+
+            const transaction = db.transaction(["clips"], "readwrite");
+            transaction.objectStore("clips").add(clipData).onsuccess = () => {
+                loadClipsFromDB();
+            };
+        }
+
+        function loadClipsFromDB() {
+            const transaction = db.transaction(["clips"], "readonly");
+            const store = transaction.objectStore("clips");
+            const request = store.getAll();
+            request.onsuccess = () => {
+                clips = request.result;
+                renderClips();
+            };
+        }
+
+        function renderClips() {
+            const list = document.getElementById('clipsList');
+            list.innerHTML = '';
+            clips.forEach((clip, index) => {
+                const url = URL.createObjectURL(clip.blob);
+                const div = document.createElement('div');
+                div.id = `card-${index}`;
+                div.className = `clip-card bg-white p-5 rounded-3xl shadow-sm relative border-2`;
+                div.innerHTML = `
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold">آية ${index + 1}</span>
+                        <div class="flex gap-3">
+                             <a href="${url}" download="quran_clip_${index+1}.mp3" class="text-blue-500 text-xs underline">حفظ للجهاز</a>
+                             <button onclick="deleteClip(${clip.id})" class="text-red-400 text-xs font-bold">حذف</button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-[10px] text-gray-400 block mb-1 font-bold">تحديد البداية والنهاية (قص):</label>
+                            <div class="flex items-center gap-2">
+                                <input type="range" min="0" max="100" value="${clip.start}" onchange="updateClip(${clip.id}, 'start', this.value)" class="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                <input type="range" min="0" max="100" value="${clip.end}" onchange="updateClip(${clip.id}, 'end', this.value)" class="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm">تكرار:</span>
+                                <input type="number" min="1" value="${clip.repeats}" onchange="updateClip(${clip.id}, 'repeats', this.value)" class="w-12 border-b-2 border-indigo-200 text-center focus:outline-none">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm">فراغ:</span>
+                                <input type="checkbox" ${clip.hasGap ? 'checked' : ''} onchange="updateClip(${clip.id}, 'hasGap', this.checked)" class="w-5 h-5 rounded-full text-indigo-600">
+                            </div>
+                            <button onclick="playClipLogic(${index})" class="bg-indigo-600 text-white w-10 h-10 rounded-full shadow-md flex items-center justify-center">▶️</button>
+                        </div>
+                    </div>
+                    <div id="status-${index}" class="text-[10px] mt-2 text-center text-indigo-500 font-bold h-4"></div>
+                    <audio id="audio-${index}" src="${url}" class="hidden"></audio>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function updateClip(id, field, value) {
+            const transaction = db.transaction(["clips"], "readwrite");
+            const store = transaction.objectStore("clips");
+            store.get(id).onsuccess = (e) => {
+                const data = e.target.result;
+                data[field] = field === 'hasGap' ? value : parseInt(value);
+                store.put(data).onsuccess = () => loadClipsFromDB();
+            };
+        }
+
+        function deleteClip(id) {
+            if(confirm('هل تريد حذف هذا المقطع؟')) {
+                db.transaction(["clips"], "readwrite").objectStore("clips").delete(id).onsuccess = () => loadClipsFromDB();
+            }
+        }
+
+        async function playClipLogic(index) {
+            if (index >= clips.length || stopPlayback) return;
+
+            const clip = clips[index];
+            const audio = document.getElementById(`audio-${index}`);
+            const card = document.getElementById(`card-${index}`);
+            const status = document.getElementById(`status-${index}`);
+
+            for (let r = 0; r < clip.repeats; r++) {
+                if (stopPlayback) break;
+
+                // التشغيل
+                card.classList.add('playing');
+                status.innerText = `جاري التشغيل (${r + 1} من ${clip.repeats})...`;
+                
+                const duration = audio.duration || 0;
+                const startTime = (clip.start / 100) * duration;
+                const endTime = (clip.end / 100) * duration;
+                const playDuration = endTime - startTime;
+
+                audio.currentTime = startTime;
+                audio.play();
+
+                await new Promise(resolve => {
+                    const check = setInterval(() => {
+                        if (audio.currentTime >= endTime || audio.ended || stopPlayback) {
+                            audio.pause();
+                            clearInterval(check);
+                            resolve();
+                        }
+                    }, 100);
+                });
+
+                if (stopPlayback) break;
+
+                // الفراغ (الانتظار)
+                if (clip.hasGap && playDuration > 0) {
+                    card.classList.remove('playing');
+                    card.classList.add('waiting');
+                    status.innerText = `انتظر وردد...`;
+                    await new Promise(resolve => setTimeout(resolve, playDuration * 1000));
+                    card.classList.remove('waiting');
+                }
+            }
+            card.classList.remove('playing', 'waiting');
+            status.innerText = '';
+        }
+
+        async function playAll() {
+            stopPlayback = false;
+            for (let i = 0; i < clips.length; i++) {
+                if (stopPlayback) break;
+                await playClipLogic(i);
+            }
+        }
+
+        function stopAll() {
+            stopPlayback = true;
+            document.querySelectorAll('audio').forEach(a => a.pause());
+            renderClips();
+        }
+    </script>
+</body>
+</html>
