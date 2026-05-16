@@ -1,3 +1,5 @@
+--- START OF FILE new_customer.html ---
+
 <!DOCTYPE html>
 <html lang="en" dir="rtl">
 <head>
@@ -30,14 +32,14 @@
         #viewer-container {
             flex: 1;
             height: 100%;
-            overflow: auto; /* Changed to auto to handle both X and Y */
+            overflow: auto;
             position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 20px;
             background-color: #525659;
-            min-width: 0; /* Important flex fix for desktop mode */
+            min-width: 0;
         }
 
         .pdf-page-container {
@@ -46,13 +48,10 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             background: white;
             user-select: none;
-            line-height: 0; /* Removes extra spacing under canvas */
+            line-height: 0;
         }
 
-        canvas { 
-            max-width: none; /* Allow canvas to be larger than container if zoomed */
-            display: block; 
-        }
+        canvas { max-width: none; display: block; }
 
         .marker {
             position: absolute;
@@ -83,8 +82,8 @@
 
         /* --- Sidebar (Form Area) --- */
         #sidebar {
-            width: 350px;
-            min-width: 350px;
+            width: 380px;
+            min-width: 380px;
             background: white;
             display: flex;
             flex-direction: column;
@@ -127,22 +126,6 @@
             border-radius: 4px;
             font-size: 16px;
         }
-        .zoom-btn:active { background: #e2e8f0; }
-
-        .fit-btn {
-            font-size: 11px;
-            padding: 4px 8px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .lang-btn {
-            background: #334155;
-            color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;
-        }
 
         .action-btn { 
             width: 100%; padding: 12px; cursor: pointer; 
@@ -154,13 +137,13 @@
 
         .form-row {
             display: grid;
-            grid-template-columns: 110px 1fr 30px; 
+            grid-template-columns: 100px 1fr 35px 30px;
             border-bottom: 1px solid #eee;
             min-height: 44px;
         }
 
         .form-label {
-            background: #f8fafc; padding: 8px; font-size: 12px; font-weight: bold;
+            background: #f8fafc; padding: 8px; font-size: 11px; font-weight: bold;
             color: #475569; display: flex; align-items: center; border-inline-end: 1px solid #eee;
         }
 
@@ -168,17 +151,60 @@
             width: 100%; border: none; padding: 10px; font-family: monospace; font-size: 14px; outline: none;
         }
 
+        .preview-col { display: flex; align-items: center; justify-content: center; border-inline-start: 1px solid #eee; }
         .form-controls { display: flex; flex-direction: column; border-inline-start: 1px solid #eee; }
+        
         .mini-btn { border: none; background: transparent; font-size: 12px; color: #94a3b8; cursor: pointer; flex: 1; }
         .btn-clear { color: #ef4444; font-weight: bold; }
+        
+        .btn-preview { 
+            background: none; border: none; font-size: 18px; color: var(--primary); 
+            cursor: pointer; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-preview:hover { background: #f0f7ff; }
 
         .form-row.filled { background: #f0f9ff; }
-        .form-row.filled .form-label { color: var(--primary); }
+
+        /* --- Floating Image Modal --- */
+        #image-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 3000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-content {
+            position: relative;
+            max-width: 95%;
+            max-height: 95%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #modal-img {
+            max-width: 100%;
+            max-height: 90vh;
+            border: 4px solid white;
+            border-radius: 8px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            background: white;
+        }
+        .close-modal {
+            position: absolute;
+            top: -45px;
+            right: 0;
+            color: white;
+            font-size: 35px;
+            font-weight: bold;
+            cursor: pointer;
+        }
 
         @media (max-width: 768px) {
             body { flex-direction: column; }
-            #sidebar { width: 100%; height: 45vh; min-width: 100%; border-top: 2px solid #ccc; }
-            #viewer-container { flex: 1; }
+            #sidebar { width: 100%; height: 45vh; min-width: 100%; }
         }
 
         #upload-overlay {
@@ -201,12 +227,20 @@
         <div class="loader" id="loader"></div>
     </div>
 
+    <!-- النافذة العائمة للصور -->
+    <div id="image-modal" onclick="closeImageModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="close-modal" onclick="closeImageModal()">&times;</span>
+            <img id="modal-img" src="" alt="Preview">
+        </div>
+    </div>
+
     <div id="viewer-container"></div>
 
     <div id="sidebar">
         <div class="sidebar-header">
             <div class="header-top">
-                <button class="lang-btn" onclick="toggleLanguage()">عربي / EN</button>
+                <button class="lang-btn" onclick="toggleLanguage()" style="background: #334155; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">عربي / EN</button>
                 <div style="font-size:12px; color:#555;">Filled: <span id="filled-count">0</span>/12</div>
             </div>
 
@@ -214,7 +248,7 @@
                 <button class="zoom-btn" onclick="changeZoom(-0.2)">−</button>
                 <span id="zoom-level" style="font-size:13px; font-weight:bold;">100%</span>
                 <button class="zoom-btn" onclick="changeZoom(0.2)">+</button>
-                <button class="fit-btn" onclick="fitToWidth()">Fit Width</button>
+                <button onclick="fitToWidth()" style="font-size: 11px; padding: 4px 8px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer;">Fit Width</button>
             </div>
 
             <button class="action-btn" id="copy-btn" onclick="copyAll()">Copy Data (-)</button>
@@ -228,23 +262,22 @@
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
         const fieldsConfig = [
-            { key: 'store', ar: 'اسم المحل', en: 'Store Name' },
-            { key: 'cr', ar: 'رقم السجل', en: 'CR Number' },
-            { key: 'license', ar: 'رقم الرخصة', en: 'License Num' },
-            { key: 'tax', ar: 'الرقم الضريبي', en: 'Tax Number' },
-            { key: 'mobile', ar: 'رقم الجوال', en: 'Mobile Num' },
-            { key: 'zip', ar: 'الرمز البريدي', en: 'Zip Code' },
-            { key: 'building', ar: 'رقم المبني', en: 'Building Num' },
-            { key: 'additional', ar: 'الرقم الاضافي', en: 'Additional Num' },
-            { key: 'district', ar: 'اسم الحي', en: 'District' },
-            { key: 'street', ar: 'اسم الشارع', en: 'Street' },
-            { key: 'short', ar: 'الموقع المختصر', en: 'Short Address' },
-            { key: 'coords', ar: 'احداثيات الموقع', en: 'Coordinates' }
+            { key: 'store', ar: 'اسم المحل', en: 'Store Name', img: 'https://i.ibb.co/QS64sQv/name.png' },
+            { key: 'cr', ar: 'رقم السجل', en: 'CR Number', img: 'https://i.ibb.co/tMFfW4rS/cr-number.png' },
+            { key: 'license', ar: 'رقم الرخصة', en: 'License Num', img: 'https://i.ibb.co/Rps00MVc/licen-number.png' },
+            { key: 'tax', ar: 'الرقم الضريبي', en: 'Tax Number', img: 'https://i.ibb.co/S4tS0SfK/vat-number.png' },
+            { key: 'mobile', ar: 'رقم الجوال', en: 'Mobile Num', img: '' },
+            { key: 'zip', ar: 'الرمز البريدي', en: 'Zip Code', img: 'https://i.ibb.co/jPYLs91S/postal.png' },
+            { key: 'building', ar: 'رقم المبني', en: 'Building Num', img: 'https://i.ibb.co/nszKXs03/bulding.png' },
+            { key: 'additional', ar: 'الرقم الاضافي', en: 'Additional Num', img: 'https://i.ibb.co/TMQCHS1Q/add.png' },
+            { key: 'district', ar: 'اسم الحي', en: 'District', img: 'https://i.ibb.co/QSdK6yz/distract.png' },
+            { key: 'street', ar: 'اسم الشارع', en: 'Street', img: 'https://i.ibb.co/ycKffvyW/street.png' }, // تم تحديث الرابط هنا
+            { key: 'short', ar: 'الموقع المختصر', en: 'Short Address', img: 'https://i.ibb.co/JRN93Tjg/shortcode.png' },
+            { key: 'coords', ar: 'احداثيات الموقع', en: 'Coordinates', img: 'https://i.ibb.co/Qv0zM7s6/cordinate.png' }
         ];
 
         let formData = new Array(12).fill(null).map(() => ({ value: '', markerData: null }));
         let currentLang = 'ar';
-        let activeFloatingInput = null;
         let pdfDoc = null;
         let currentScale = 1.2;
 
@@ -262,9 +295,15 @@
                 const row = document.createElement('div');
                 row.className = 'form-row';
                 row.id = `row-${index}`;
+                
+                const previewBtn = field.img ? 
+                    `<div class="preview-col"><button class="btn-preview" onclick="openImageModal('${field.img}')" title="Preview Area">👁️</button></div>` : 
+                    `<div class="preview-col"></div>`;
+
                 row.innerHTML = `
                     <div class="form-label">${currentLang === 'ar' ? field.ar : field.en}</div>
                     <div class="form-value"><input type="text" id="input-${index}" oninput="updateValueManually(${index}, this.value)" placeholder="..."></div>
+                    ${previewBtn}
                     <div class="form-controls">
                         <button class="mini-btn" onclick="moveValue(${index}, -1)">▲</button>
                         <button class="mini-btn btn-clear" onclick="clearRow(${index})">×</button>
@@ -275,11 +314,22 @@
             updateFormUI();
         }
 
+        // دوال النافذة العائمة
+        function openImageModal(url) {
+            const modal = document.getElementById('image-modal');
+            const img = document.getElementById('modal-img');
+            img.src = url;
+            modal.style.display = 'flex';
+        }
+
+        function closeImageModal() {
+            document.getElementById('image-modal').style.display = 'none';
+        }
+
         async function fitToWidth() {
             if (!pdfDoc) return;
             const page = await pdfDoc.getPage(1);
             const viewport = page.getViewport({ scale: 1 });
-            // Width of viewer container minus padding
             const availableWidth = viewer.clientWidth - 40; 
             currentScale = availableWidth / viewport.width;
             zoomLevelEl.innerText = Math.round(currentScale * 100) + "%";
@@ -303,7 +353,7 @@
                 pdfDoc = await pdfjsLib.getDocument(typedarray).promise;
                 overlay.style.display = 'none';
                 initForm();
-                await fitToWidth(); // Auto fit on load
+                await fitToWidth();
             };
             reader.readAsArrayBuffer(file);
         });
@@ -346,7 +396,6 @@
 
         function handleMapClick(e, wrapper, pageIdx) {
             if(['INPUT','BUTTON'].includes(e.target.tagName)) return;
-            if(activeFloatingInput) activeFloatingInput.remove();
             const rect = wrapper.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
@@ -354,6 +403,9 @@
         }
 
         function createFloatingInput(parent, x, y, pageIdx) {
+            const existing = document.querySelector('.floating-input-wrapper');
+            if(existing) existing.remove();
+
             const div = document.createElement('div');
             div.className = 'floating-input-wrapper';
             div.style.left = x + 'px';
@@ -366,26 +418,21 @@
             const btn = document.createElement('button');
             btn.innerHTML = '✔';
             btn.style.padding = "0 15px";
-            btn.style.background = "var(--primary)";
-            btn.style.color = "white";
-            btn.style.border = "none";
-            btn.style.borderRadius = "4px";
+            btn.style.background = "var(--primary)"; btn.style.color = "white"; btn.style.border = "none"; btn.style.borderRadius = "4px";
 
             const submit = () => {
                 if(input.value.trim()) assignToNextEmptySlot(input.value, x, y, parent, pageIdx);
                 div.remove();
-                activeFloatingInput = null;
             };
             btn.onclick = submit;
             input.onkeydown = (e) => { if(e.key === 'Enter') submit(); };
             div.appendChild(input); div.appendChild(btn);
             parent.appendChild(div);
-            activeFloatingInput = div;
         }
 
         function assignToNextEmptySlot(text, x, y, parent, pageIdx) {
             const idx = formData.findIndex(item => item.value === '');
-            if(idx === -1) return alert("Full!");
+            if(idx === -1) return alert("All slots are full!");
             const px = (x / parent.offsetWidth) * 100;
             const py = (y / parent.offsetHeight) * 100;
             const marker = document.createElement('div');
@@ -415,7 +462,10 @@
             let count = 0;
             formData.forEach((data, i) => {
                 const row = document.getElementById(`row-${i}`);
-                if(refresh) document.getElementById(`input-${i}`).value = data.value;
+                if(refresh) {
+                    const input = document.getElementById(`input-${i}`);
+                    if(input) input.value = data.value;
+                }
                 if(data.value) { row.classList.add('filled'); count++; } else row.classList.remove('filled');
             });
             filledCount.innerText = count;
@@ -424,9 +474,14 @@
         function toggleLanguage() {
             currentLang = currentLang === 'ar' ? 'en' : 'ar';
             document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
-            const values = formData.map(d => d.value);
+            const currentValues = formData.map(d => d.value);
             initForm();
-            values.forEach((v, i) => { if(v) document.getElementById(`input-${i}`).value = v; });
+            currentValues.forEach((v, i) => { 
+                if(v) {
+                    const inp = document.getElementById(`input-${i}`);
+                    if(inp) inp.value = v;
+                }
+            });
         }
 
         function copyAll() {
