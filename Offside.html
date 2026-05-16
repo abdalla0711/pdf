@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محلل التسلل الاحترافي</title>
+    <style>
+        body { margin: 0; background: #000; color: white; display: flex; flex-direction: column; align-items: center; touch-action: none; }
+        .row { display: grid; grid-template-columns: repeat(3, 1fr); width: 100vw; gap: 2px; padding: 2px; }
+        button { padding: 12px; border: 1px solid #fff; background: #333; color: white; cursor: pointer; }
+        .active { background: #ffcc00 !important; color: #000; font-weight: bold; }
+        #wrapper { width: 100vw; height: 50vh; position: relative; border: 2px solid #fff; overflow: hidden; }
+        canvas { max-width: 100%; max-height: 100%; object-fit: contain; }
+        /* تم نقل العدسة للأسفل */
+        #mag { position: fixed; bottom: 80px; left: 10px; width: 180px; height: 180px; border: 4px solid #fff; 
+               border-radius: 50%; pointer-events: none; display: none; background: #000 no-repeat; z-index: 100; }
+    </style>
+</head>
+<body>
+
+<div class="row">
+    <button id="v1" onclick="setMode('v1')">رأسي 1</button>
+    <button id="v2" onclick="setMode('v2')">رأسي 2</button>
+    <button id="v-auto" onclick="setMode('v-auto')" style="background:#880">خط التسلل الرأسي</button>
+</div>
+
+<div id="wrapper"><canvas id="c"></canvas><div id="mag"></div></div>
+
+<div class="row">
+    <button onclick="undo()" style="background:#550">تراجع</button>
+    <button onclick="saveImage()" style="background:#050">حفظ الصورة</button>
+    <button onclick="clearAll()" style="background:#800">مسح الكل</button>
+</div>
+
+<div class="row">
+    <button id="h1" onclick="setMode('h1')">أفقي 1</button>
+    <button id="h2" onclick="setMode('h2')">أفقي 2</button>
+    <button id="h-auto" onclick="setMode('h-auto')" style="background:#088">خط التسلل الأفقي</button>
+</div>
+
+<input type="file" id="upload" style="margin:5px">
+
+<script>
+    const c = document.getElementById('c'), ctx = c.getContext('2d'), mag = document.getElementById('mag');
+    let img = new Image(), mode = '', refs = {}, history = [], start = null;
+
+    function setMode(m) { mode = m; document.querySelectorAll('button').forEach(b => b.classList.remove('active')); document.getElementById(m).classList.add('active'); }
+
+    document.getElementById('upload').onchange = (e) => {
+        let r = new FileReader();
+        r.onload = (ev) => { img.onload = () => { c.width = img.width; c.height = img.height; ctx.drawImage(img, 0, 0); }; img.src = ev.target.result; };
+        r.readAsDataURL(e.target.files[0]);
+    };
+
+    c.onpointermove = (e) => {
+        if (!mode) return;
+        mag.style.display = 'block';
+        const rect = c.getBoundingClientRect();
+        let x = (e.clientX - rect.left) * (c.width / rect.width);
+        let y = (e.clientY - rect.top) * (c.height / rect.height);
+        mag.style.backgroundImage = `url(${img.src})`;
+        mag.style.backgroundSize = (c.width * 2) + 'px';
+        mag.style.backgroundPosition = `-${x * 2 - 90}px -${y * 2 - 90}px`;
+    };
+
+    c.onpointerdown = (e) => {
+        const rect = c.getBoundingClientRect();
+        start = { x: (e.clientX - rect.left) * (c.width / rect.width), y: (e.clientY - rect.top) * (c.height / rect.height) };
+    };
+
+    c.onpointerup = (e) => {
+        mag.style.display = 'none';
+        const rect = c.getBoundingClientRect();
+        let end = { x: (e.clientX - rect.left) * (c.width / rect.width), y: (e.clientY - rect.top) * (c.height / rect.height) };
+        history.push(ctx.getImageData(0,0,c.width,c.height));
+        
+        ctx.font = "bold 50px Arial";
+        ctx.fillStyle = "white";
+
+        if (mode.includes('auto')) {
+            let k1 = mode.includes('h') ? 'h1' : 'v1', k2 = mode.includes('h') ? 'h2' : 'v2';
+            if (!refs[k1] || !refs[k2]) return alert("يجب رسم المراجع أولاً");
+            let l1 = refs[k1], l2 = refs[k2];
+            let det = (l1.x1-l1.x2)*(l2.y1-l2.y2) - (l1.y1-l1.y2)*(l2.x1-l2.x2);
+            let vp = { x: ((l1.x1*l1.y2-l1.y1*l1.x2)*(l2.x1-l2.x2)-(l1.x1-l1.x2)*(l2.x1*l2.y2-l2.y1*l2.x2))/det,
+                       y: ((l1.x1*l1.y2-l1.y1*l1.x2)*(l2.y1-l2.y2)-(l1.y1-l1.y2)*(l2.x1*l2.y2-l2.y1*l2.x2))/det };
+            let angle = Math.atan2(end.y - vp.y, end.x - vp.x);
+            ctx.strokeStyle = 'white'; ctx.lineWidth = 15;
+            ctx.beginPath(); ctx.moveTo(end.x - Math.cos(angle)*3000, end.y - Math.sin(angle)*3000); ctx.lineTo(end.x + Math.cos(angle)*3000, end.y + Math.sin(angle)*3000); ctx.stroke();
+            ctx.fillText("خط التسلل", end.x, end.y);
+        } else if (mode) {
+            refs[mode] = {x1: start.x, y1: start.y, x2: end.x, y2: end.y};
+            ctx.strokeStyle = mode.includes('h') ? 'blue' : 'red';
+            ctx.lineWidth = 15;
+            ctx.beginPath(); ctx.moveTo(start.x, start.y); ctx.lineTo(end.x, end.y); ctx.stroke();
+            ctx.fillText("خط إرشادي", start.x, start.y);
+        }
+    };
+
+    function saveImage() { let link = document.createElement('a'); link.download = 'offside_analysis.png'; link.href = c.toDataURL(); link.click(); }
+    function undo() { if(history.length > 0) ctx.putImageData(history.pop(), 0, 0); }
+    function clearAll() { ctx.clearRect(0,0,c.width,c.height); ctx.drawImage(img,0,0); history=[]; refs={}; }
+</script>
+</body>
+</html>
