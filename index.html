@@ -1,20 +1,27 @@
+--- START OF FILE index.html ---
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>محرر PDF الاحترافي | النسخة المكتملة</title>
+    <title>محرر PDF الاحترافي</title>
     
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
     <style>
+        @font-face {
+            font-family: 'CustomArabic';
+            src: url('https://files.catbox.moe/hmey7o.ttf');
+        }
+
         :root {
             --primary: #4834d4; --accent: #686de0; --success: #2ecc71; --danger: #eb4d4b;
             --bg: #f5f6fa; --card: #ffffff; --text: #2f3640;
         }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        body { font-family: 'CustomArabic', 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
         .container { background: var(--card); width: 100%; max-width: 600px; padding: 20px; border-radius: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); box-sizing: border-box; }
         h1 { text-align: center; font-size: 1.3rem; margin-bottom: 20px; color: var(--primary); }
         
@@ -25,7 +32,7 @@
         .upload-section { border: 2px dashed #dcdde1; padding: 15px; border-radius: 18px; text-align: center; cursor: pointer; background: #fafafa; flex: 1; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; }
         .btn-camera { background: var(--primary); color: white; border: none; border-radius: 18px; padding: 0 20px; cursor: pointer; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; gap: 5px; }
 
-        .btn { border: none; border-radius: 12px; padding: 12px; font-size: 0.95rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; color: white; width: 100%; }
+        .btn { border: none; border-radius: 12px; padding: 12px; font-size: 0.95rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; color: white; width: 100%; font-family: 'CustomArabic', sans-serif; }
         .btn-gps { background: var(--accent); margin-bottom: 10px; }
         .btn-merge { background: var(--success); }
         .btn-images { background: #f39c12; }
@@ -37,7 +44,7 @@
         .thumb-wrapper img { width: 100%; height: 100%; object-fit: cover; }
         
         .item-content-stack { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-        .page-name-input { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.85rem; outline: none; box-sizing: border-box; }
+        .page-name-input { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.85rem; outline: none; box-sizing: border-box; font-family: 'CustomArabic', sans-serif; }
         
         .item-controls-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
         .checkbox-group { display: flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: bold; color: var(--primary); }
@@ -52,6 +59,7 @@
 
         .main-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; width: 100%; }
         .loading { display: none; text-align: center; color: var(--primary); font-weight: bold; padding: 10px; font-size: 0.9rem; }
+        textarea, input { font-family: 'CustomArabic', sans-serif; }
     </style>
 </head>
 <body>
@@ -110,6 +118,7 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
     let items = [];
+    const FONT_URL = 'https://files.catbox.moe/hmey7o.ttf';
 
     function updateItemData(idx, field, value) { items[idx][field] = value; }
 
@@ -160,6 +169,8 @@
     const handleFiles = async (e) => {
         const files = Array.from(e.target.files);
         for (const file of files) {
+            const suggestedName = file.name.replace(/\.[^/.]+$/, ""); // استخراج اسم الملف
+            
             if (file.type === 'application/pdf') {
                 const buffer = await file.arrayBuffer();
                 const pdf = await pdfjsLib.getDocument({data: buffer.slice(0)}).promise;
@@ -171,14 +182,14 @@
                     canvas.height = viewport.height; canvas.width = viewport.width;
                     await page.render({canvasContext: ctx, viewport: viewport}).promise;
                     items.push({ 
-                        id: Math.random(), type: 'pdf', customName: "", 
+                        id: Math.random(), type: 'pdf', customName: suggestedName, 
                         pageIdx: i-1, data: buffer, thumb: canvas.toDataURL(), 
                         rotation: 0, includeName: false 
                     });
                 }
             } else if (file.type.startsWith('image/')) {
                 items.push({ 
-                    id: Math.random(), type: 'image', customName: "", 
+                    id: Math.random(), type: 'image', customName: suggestedName, 
                     file: file, thumb: URL.createObjectURL(file), 
                     rotation: 0, includeName: false 
                 });
@@ -190,22 +201,122 @@
     document.getElementById('fileInput').addEventListener('change', handleFiles);
     document.getElementById('cameraInput').addEventListener('change', handleFiles);
 
-    // دالة إنشاء ملصق العنوان كصورة شفافة (لحل مشكلة اللغة العربية في الـ PDF)
-    async function createTextLabelImage(text, fontSize) {
+    async function mergeAll() {
+        const status = document.getElementById('status'); status.style.display = 'block';
+        status.textContent = "جاري تحميل الخط ومعالجة الصفحات...";
+        
+        try {
+            const { PDFDocument, rgb, degrees } = PDFLib;
+            const pdfDoc = await PDFDocument.create();
+            pdfDoc.registerFontkit(fontkit);
+            
+            // تحميل الخط العربي
+            const fontBytes = await fetch(FONT_URL).then(res => res.arrayBuffer());
+            const customFont = await pdfDoc.embedFont(fontBytes);
+            const quality = parseFloat(document.getElementById('compressionQuality').value);
+
+            for (const item of items) {
+                if (item.type === 'pdf') {
+                    const srcDoc = await PDFDocument.load(item.data);
+                    const [copiedPage] = await pdfDoc.copyPages(srcDoc, [item.pageIdx]);
+                    if(item.rotation !== 0) copiedPage.setRotation(degrees(item.rotation));
+                    
+                    if (item.includeName && item.customName) {
+                        drawArabicText(copiedPage, item.customName, customFont, 18);
+                    }
+                    pdfDoc.addPage(copiedPage);
+                } else if (item.type === 'image') {
+                    const canvas = await getProcessedCanvas(item, quality);
+                    const imgBytes = await fetch(canvas.toDataURL('image/jpeg', quality)).then(r => r.arrayBuffer());
+                    const pdfImg = await pdfDoc.embedJpg(imgBytes);
+                    const page = pdfDoc.addPage([canvas.width * 0.75, canvas.height * 0.75]);
+                    page.drawImage(pdfImg, { x: 0, y: 0, width: page.getWidth(), height: page.getHeight() });
+                    
+                    if (item.includeName && item.customName) {
+                        drawArabicText(page, item.customName, customFont, 18);
+                    }
+                } else {
+                    // صفحات النص و GPS (نصوص قابلة للتحديد)
+                    const page = pdfDoc.addPage([595, 842]); // A4
+                    const content = item.type === 'gps' ? item.content : item.text;
+                    const lines = content.split('\n');
+                    
+                    let yOffset = 800;
+                    if (item.customName) {
+                        drawArabicText(page, item.customName, customFont, 22, 780);
+                        yOffset -= 50;
+                    }
+
+                    lines.forEach(line => {
+                        page.drawText(line, {
+                            x: 50,
+                            y: yOffset,
+                            size: 14,
+                            font: customFont,
+                            color: rgb(0, 0, 0)
+                        });
+                        yOffset -= 25;
+                    });
+                }
+            }
+
+            const pdfBytes = await pdfDoc.save();
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(new Blob([pdfBytes], { type: "application/pdf" }));
+            link.download = document.getElementById('fileNameInput').value + ".pdf";
+            link.click();
+            status.textContent = "✅ تم الحفظ بنجاح!"; setTimeout(() => status.style.display = 'none', 3000);
+        } catch (e) { 
+            console.error(e);
+            alert("حدث خطأ: " + e.message); 
+            status.style.display = 'none'; 
+        }
+    }
+
+    // دالة مساعدة لرسم النص العربي (تتعامل مع التموضع البسيط)
+    function drawArabicText(page, text, font, size, customY) {
+        const { width, height } = page.getSize();
+        const textWidth = font.widthOfTextAtSize(text, size);
+        page.drawText(text, {
+            x: width - textWidth - 30, // محاذاة لليمين
+            y: customY || (height - size - 20),
+            size: size,
+            font: font,
+            color: PDFLib.rgb(0.28, 0.2, 0.83) // لون Primary
+        });
+    }
+
+    async function getProcessedCanvas(item, quality) {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        ctx.font = `bold ${fontSize}px Arial`;
-        const textWidth = ctx.measureText(text).width;
-        canvas.width = textWidth + 40;
-        canvas.height = fontSize + 40;
-        ctx.fillStyle = 'rgba(255,255,255,0.7)'; // خلفية بيضاء شفافة
-        ctx.fillRect(0,0, canvas.width, canvas.height);
-        ctx.fillStyle = '#4834d4';
-        ctx.font = `bold ${fontSize}px Arial`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(text, canvas.width/2, canvas.height/2);
-        return canvas.toDataURL('image/png');
+        const img = new Image(); 
+        img.src = item.type === 'image' ? URL.createObjectURL(item.file) : item.thumb;
+        await new Promise(r => img.onload = r);
+        canvas.width = img.width; canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        return canvas;
+    }
+
+    async function handleTextAddition() {
+        const text = document.getElementById('textPageInput').value.trim();
+        if (!text) return;
+        items.push({ 
+            id: Math.random(), type: 'text_page', 
+            customName: "صفحة نصية", text: text, 
+            thumb: await genSimpleThumb("📄 نص"), rotation: 0, includeName: true 
+        });
+        document.getElementById('textPageInput').value = ''; renderUI();
+    }
+
+    function startGPS() {
+        navigator.geolocation.getCurrentPosition((pos) => {
+            const lat = pos.coords.latitude.toFixed(6);
+            const lon = pos.coords.longitude.toFixed(6);
+            const c = `بيانات الموقع الجغرافي\nخط العرض: ${lat}\nخط الطول: ${lon}\nرابط خرائط جوجل:\nhttps://www.google.com/maps?q=${lat},${lon}`;
+            items.push({ id: Math.random(), type: 'gps', customName: "موقع GPS", content: c, rotation: 0, thumb: "", includeName: true });
+            const last = items[items.length-1];
+            genSimpleThumb("📍 GPS").then(t => { last.thumb = t; renderUI(); });
+        }, () => alert("يرجى تفعيل صلاحية الوصول للموقع"));
     }
 
     async function showPreview(idx) {
@@ -228,106 +339,16 @@
         } else if (item.type === 'image') {
             url = URL.createObjectURL(item.file);
         } else {
-            const canvas = await getProcessedCanvas(item, 1.0);
+            const canvas = document.createElement('canvas');
+            canvas.width = 400; canvas.height = 500;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'white'; ctx.fillRect(0,0,400,500);
+            ctx.fillStyle = 'black'; ctx.font = '16px CustomArabic';
+            const content = item.type === 'gps' ? item.content : item.text;
+            content.split('\n').forEach((l, i) => ctx.fillText(l, 20, 40+(i*25)));
             url = canvas.toDataURL();
         }
         previewBox.innerHTML = `<img src="${url}" style="transform: rotate(${item.rotation}deg); max-width:100%">`;
-    }
-
-    async function mergeAll() {
-        const status = document.getElementById('status'); status.style.display = 'block';
-        status.textContent = "جاري معالجة ودمج الصفحات...";
-        const quality = parseFloat(document.getElementById('compressionQuality').value);
-
-        try {
-            const { PDFDocument } = PDFLib;
-            const pdfDoc = await PDFDocument.create();
-            
-            for (const item of items) {
-                if (item.type === 'pdf') {
-                    const srcDoc = await PDFDocument.load(item.data);
-                    const [copiedPage] = await pdfDoc.copyPages(srcDoc, [item.pageIdx]);
-                    
-                    if(item.rotation !== 0) copiedPage.setRotation(PDFLib.degrees(item.rotation));
-                    
-                    if (item.includeName && item.customName) {
-                        const labelDataUrl = await createTextLabelImage(item.customName, 30);
-                        const labelImgBytes = await fetch(labelDataUrl).then(res => res.arrayBuffer());
-                        const labelImg = await pdfDoc.embedPng(labelImgBytes);
-                        const { width, height } = copiedPage.getSize();
-                        // وضع العنوان في الزاوية العلوية
-                        copiedPage.drawImage(labelImg, {
-                            x: width - labelImg.width - 20,
-                            y: height - labelImg.height - 20,
-                            width: labelImg.width,
-                            height: labelImg.height
-                        });
-                    }
-                    pdfDoc.addPage(copiedPage);
-                } else {
-                    const canvas = await getProcessedCanvas(item, quality);
-                    const imgBytes = await fetch(canvas.toDataURL('image/jpeg', quality)).then(r => r.arrayBuffer());
-                    const pdfImg = await pdfDoc.embedJpg(imgBytes);
-                    const page = pdfDoc.addPage([canvas.width * 0.75, canvas.height * 0.75]);
-                    page.drawImage(pdfImg, { x: 0, y: 0, width: page.getWidth(), height: page.getHeight() });
-                }
-            }
-
-            const pdfBytes = await pdfDoc.save();
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(new Blob([pdfBytes], { type: "application/pdf" }));
-            link.download = document.getElementById('fileNameInput').value + ".pdf";
-            link.click();
-            status.textContent = "✅ تم الحفظ!"; setTimeout(() => status.style.display = 'none', 3000);
-        } catch (e) { 
-            console.error(e);
-            alert("حدث خطأ أثناء الدمج: " + e.message); 
-            status.style.display = 'none'; 
-        }
-    }
-
-    async function getProcessedCanvas(item, quality) {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (item.type === 'image') {
-            const img = new Image(); img.src = URL.createObjectURL(item.file);
-            await new Promise(r => img.onload = r);
-            canvas.width = img.width; canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-        } else {
-            canvas.width = 800; canvas.height = 1100;
-            ctx.fillStyle = 'white'; ctx.fillRect(0,0,800,1100);
-            ctx.fillStyle = 'black'; ctx.font = '24px Arial';
-            const content = item.type === 'gps' ? item.content : item.text;
-            content.split('\n').forEach((l, i) => ctx.fillText(l, 50, 80+(i*35)));
-        }
-
-        if (item.includeName && item.customName && item.type !== 'pdf') {
-            const labelUrl = await createTextLabelImage(item.customName, 30);
-            const labelImg = new Image(); labelImg.src = labelUrl;
-            await new Promise(r => labelImg.onload = r);
-            ctx.drawImage(labelImg, canvas.width - labelImg.width - 20, 20);
-        }
-        return canvas;
-    }
-
-    async function handleTextAddition() {
-        const text = document.getElementById('textPageInput').value.trim();
-        if (!text) return;
-        items.push({ id: Math.random(), type: 'text_page', customName: "", text: text, thumb: await genSimpleThumb("📄 Text"), rotation: 0, includeName: false });
-        document.getElementById('textPageInput').value = ''; renderUI();
-    }
-
-    function startGPS() {
-        navigator.geolocation.getCurrentPosition((pos) => {
-            const lat = pos.coords.latitude.toFixed(6);
-            const lon = pos.coords.longitude.toFixed(6);
-            const c = `GPS LOCATION DATA\nCoordinates: ${lat}, ${lon}\nGoogle Maps: https://www.google.com/maps?q=${lat},${lon}`;
-            items.push({ id: Math.random(), type: 'gps', customName: "Location", content: c, rotation: 0, thumb: "", includeName: true });
-            // تحديث مصغر الـ GPS
-            const last = items[items.length-1];
-            genSimpleThumb("📍 GPS").then(t => { last.thumb = t; renderUI(); });
-        }, () => alert("يرجى تفعيل صلاحية الوصول للموقع"));
     }
 
     async function saveAsImages() {
@@ -347,7 +368,7 @@
     async function genSimpleThumb(t) { 
         const canvas = document.createElement('canvas'); canvas.width = 100; canvas.height = 100;
         const ctx = canvas.getContext('2d'); ctx.fillStyle = '#eee'; ctx.fillRect(0,0,100,100);
-        ctx.fillStyle = '#333'; ctx.font = '12px Arial'; ctx.textAlign = 'center'; ctx.fillText(t, 50, 55);
+        ctx.fillStyle = '#333'; ctx.font = '14px CustomArabic'; ctx.textAlign = 'center'; ctx.fillText(t, 50, 55);
         return canvas.toDataURL();
     }
 </script>
