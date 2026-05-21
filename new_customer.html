@@ -1,263 +1,89 @@
---- START OF FILE new_customer.html ---
-
 <!DOCTYPE html>
 <html lang="en" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PDF Data Form</title>
+    <title>PDF Smart Tool Pro V10</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.min.css">
     
     <style>
-        :root {
-            --primary: #2563eb;
-            --bg-panel: #f8f9fa;
-            --border: #e5e7eb;
-            --text-dark: #1f2937;
-        }
-
+        :root { --primary: #2563eb; --secondary: #dc2626; --bg: #0f172a; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); height: 100vh; display: flex; overflow: hidden; }
 
-        body { 
-            margin: 0; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #525659;
-            height: 100vh;
-            display: flex;
-            flex-direction: row; 
-            overflow: hidden;
-        }
-
-        /* --- PDF Viewer (Left/Top) --- */
-        #viewer-container {
-            flex: 1;
-            height: 100%;
-            overflow: auto;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            background-color: #525659;
-            min-width: 0;
-        }
-
-        .pdf-page-container {
-            position: relative;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            background: white;
-            user-select: none;
-            line-height: 0;
-        }
-
-        canvas { max-width: none; display: block; }
-
-        .marker {
-            position: absolute;
-            width: 14px;
-            height: 14px;
-            background: #ef4444;
-            border: 2px solid white;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-            z-index: 10;
-            box-shadow: 0 0 5px rgba(0,0,0,0.5);
-        }
-
-        .floating-input-wrapper {
-            position: absolute;
-            background: white;
-            padding: 5px;
-            border-radius: 6px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            display: flex;
-            gap: 5px;
-            z-index: 1000;
-            transform: translate(-50%, -130%);
-            min-width: 200px;
-            border: 1px solid #ccc;
-        }
-
-        /* --- Sidebar (Form Area) --- */
-        #sidebar {
-            width: 380px;
-            min-width: 380px;
-            background: white;
-            display: flex;
-            flex-direction: column;
-            z-index: 20;
-            border-inline-start: 1px solid #ccc;
-            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
-        }
-
-        .sidebar-header {
-            padding: 12px;
-            background: #f1f5f9;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .zoom-controls {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #fff;
-            padding: 4px 8px;
-            border-radius: 6px;
-            border: 1px solid #cbd5e1;
-        }
-
-        .zoom-btn {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            padding: 4px 12px;
-            cursor: pointer;
-            font-weight: bold;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-
-        .action-btn { 
-            width: 100%; padding: 12px; cursor: pointer; 
-            background: var(--primary); color: white; border: none; 
-            border-radius: 6px; font-weight: 600;
-        }
+        #sidebar { width: 380px; min-width: 380px; background: white; display: flex; flex-direction: column; z-index: 1000; border-left: 1px solid #ccc; }
+        .sidebar-header { padding: 15px; background: #f1f5f9; border-bottom: 2px solid #e2e8f0; display: flex; flex-direction: column; gap: 8px; }
+        .mode-toggle { display: flex; gap: 5px; background: #cbd5e1; padding: 4px; border-radius: 8px; }
+        .mode-btn { flex: 1; border: none; padding: 10px; cursor: pointer; border-radius: 6px; font-weight: bold; font-size: 13px; transition: 0.2s; }
+        .mode-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
+        .action-btn { width: 100%; padding: 10px; cursor: pointer; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: bold; margin-bottom: 5px; }
+        .save-btn { background: #059669; }
+        .custom-btn { background: #f59e0b; border: 2px solid transparent; }
+        .custom-btn.active { border-color: #000; }
 
         #form-container { flex: 1; overflow-y: auto; }
+        .form-row { display: grid; grid-template-columns: 100px 1fr 35px 35px; border-bottom: 1px solid #eee; min-height: 50px; }
+        .form-row.active-field { background: #f0fdf4 !important; border-right: 6px solid #059669; }
+        .form-row.filled { background: #eff6ff; }
+        .form-label { background: #f8fafc; padding: 5px; font-size: 11px; font-weight: bold; display: flex; align-items: center; border-left: 1px solid #eee; }
+        .form-value input { width: 100%; border: none; padding: 10px; outline: none; background: transparent; font-size: 14px; }
+        .eye-btn { background: none; border: none; cursor: pointer; font-size: 18px; color: var(--primary); }
 
-        .form-row {
-            display: grid;
-            grid-template-columns: 100px 1fr 35px 30px;
-            border-bottom: 1px solid #eee;
-            min-height: 44px;
-        }
+        #viewer-container { flex: 1; overflow: auto; display: flex; flex-direction: column; align-items: center; padding: 30px; position: relative; }
+        .pdf-page-wrapper { position: relative; margin-bottom: 30px; background: white; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+        canvas { display: block; }
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
 
-        .form-label {
-            background: #f8fafc; padding: 8px; font-size: 11px; font-weight: bold;
-            color: #475569; display: flex; align-items: center; border-inline-end: 1px solid #eee;
-        }
+        .marker { position: absolute; width: 20px; height: 20px; background: #ef4444; border: 3px solid white; border-radius: 50%; transform: translate(-50%,-50%); }
+        .rect { position: absolute; border: 4px solid #ef4444; background: rgba(239,68,68,0.2); pointer-events: none; }
+        .rect-text { position: absolute; bottom: 100%; left: -4px; background: #ef4444; color: white; padding: 5px 11px; font-size: 11px; font-weight: bold; white-space: nowrap; border-radius: 6px 6px 0 0; }
 
-        .form-value input {
-            width: 100%; border: none; padding: 10px; font-family: monospace; font-size: 14px; outline: none;
-        }
-
-        .preview-col { display: flex; align-items: center; justify-content: center; border-inline-start: 1px solid #eee; }
-        .form-controls { display: flex; flex-direction: column; border-inline-start: 1px solid #eee; }
+        .floating-input { position: absolute; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 15px 50px rgba(0,0,0,0.5); display: flex; gap: 8px; z-index: 2000; transform: translate(-50%, -120%); border: 2px solid var(--primary); }
         
-        .mini-btn { border: none; background: transparent; font-size: 12px; color: #94a3b8; cursor: pointer; flex: 1; }
-        .btn-clear { color: #ef4444; font-weight: bold; }
-        
-        .btn-preview { 
-            background: none; border: none; font-size: 18px; color: var(--primary); 
-            cursor: pointer; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
-        }
-        .btn-preview:hover { background: #f0f7ff; }
-
-        .form-row.filled { background: #f0f9ff; }
-
-        /* --- Floating Image Modal --- */
-        #image-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            z-index: 3000;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        .modal-content {
-            position: relative;
-            max-width: 95%;
-            max-height: 95%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        #modal-img {
-            max-width: 100%;
-            max-height: 90vh;
-            border: 4px solid white;
-            border-radius: 8px;
-            box-shadow: 0 0 30px rgba(0,0,0,0.5);
-            background: white;
-        }
-        .close-modal {
-            position: absolute;
-            top: -45px;
-            right: 0;
-            color: white;
-            font-size: 35px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        @media (max-width: 768px) {
-            body { flex-direction: column; }
-            #sidebar { width: 100%; height: 45vh; min-width: 100%; }
-        }
-
-        #upload-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #111; z-index: 2000; display: flex;
-            flex-direction: column; justify-content: center; align-items: center; color: white;
-        }
-        .loader {
-            border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%;
-            width: 40px; height: 40px; animation: spin 1s linear infinite; display: none; margin-top: 20px;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #upload-overlay { position: fixed; inset: 0; background: #0f172a; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        #image-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 6000; align-items: center; justify-content: center; }
+        #image-modal img { max-width: 90%; max-height: 80vh; border: 5px solid white; }
     </style>
 </head>
 <body>
 
     <div id="upload-overlay">
-        <h2>📂 Open PDF</h2>
+        <h1>📂 PDF Smart Tool Pro</h1>
+        <p>قم برفع ملف PDF للبدء</p>
         <input type="file" id="file-input" accept="application/pdf">
-        <div class="loader" id="loader"></div>
     </div>
 
-    <!-- النافذة العائمة للصور -->
-    <div id="image-modal" onclick="closeImageModal()">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <span class="close-modal" onclick="closeImageModal()">&times;</span>
-            <img id="modal-img" src="" alt="Preview">
+    <div id="image-modal" onclick="this.style.display='none'"><img id="modal-img" src=""></div>
+
+    <div id="sidebar">
+        <div class="sidebar-header">
+            <div class="mode-toggle">
+                <button class="mode-btn active" id="btn-data" onclick="setMode('data')">بيانات</button>
+                <button class="mode-btn" id="btn-label" onclick="setMode('label')">رسم</button>
+            </div>
+            <button class="action-btn custom-btn" id="btn-custom" onclick="toggleCustomText()" style="display:none;">+ نص مخصص</button>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                <button class="action-btn" style="background:#475569" onclick="undo()">تراجع (Undo)</button>
+                <button class="action-btn" style="background:#475569" onclick="skip()">تخطي (Skip)</button>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px;">
+                <button onclick="toggleLang()">AR/EN</button>
+                <span>التقدم: <b id="count">0</b>/12</span>
+            </div>
+            <!-- تم إضافة زر النسخ هنا كما طلبت -->
+            <button class="action-btn" id="copy-btn" onclick="copyAll()">Copy Data (-)</button>
+            <button class="action-btn save-btn" id="btn-export" onclick="exportPDF()" style="display:none;">📥 حفظ وتصدير PDF</button>
         </div>
+        <div id="form-container"></div>
     </div>
 
     <div id="viewer-container"></div>
 
-    <div id="sidebar">
-        <div class="sidebar-header">
-            <div class="header-top">
-                <button class="lang-btn" onclick="toggleLanguage()" style="background: #334155; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer;">عربي / EN</button>
-                <div style="font-size:12px; color:#555;">Filled: <span id="filled-count">0</span>/12</div>
-            </div>
-
-            <div class="zoom-controls">
-                <button class="zoom-btn" onclick="changeZoom(-0.2)">−</button>
-                <span id="zoom-level" style="font-size:13px; font-weight:bold;">100%</span>
-                <button class="zoom-btn" onclick="changeZoom(0.2)">+</button>
-                <button onclick="fitToWidth()" style="font-size: 11px; padding: 4px 8px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer;">Fit Width</button>
-            </div>
-
-            <button class="action-btn" id="copy-btn" onclick="copyAll()">Copy Data (-)</button>
-        </div>
-        
-        <div id="form-container"></div>
-    </div>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+    <script src="https://unpkg.com/@pdf-lib/fontkit/dist/fontkit.umd.min.js"></script>
+
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
@@ -271,219 +97,198 @@
             { key: 'building', ar: 'رقم المبني', en: 'Building Num', img: 'https://i.ibb.co/nszKXs03/bulding.png' },
             { key: 'additional', ar: 'الرقم الاضافي', en: 'Additional Num', img: 'https://i.ibb.co/TMQCHS1Q/add.png' },
             { key: 'district', ar: 'اسم الحي', en: 'District', img: 'https://i.ibb.co/QSdK6yz/distract.png' },
-            { key: 'street', ar: 'اسم الشارع', en: 'Street', img: 'https://i.ibb.co/ycKffvyW/street.png' }, // تم تحديث الرابط هنا
+            { key: 'street', ar: 'اسم الشارع', en: 'Street', img: 'https://i.ibb.co/ycKffvyW/street.png' },
             { key: 'short', ar: 'الموقع المختصر', en: 'Short Address', img: 'https://i.ibb.co/JRN93Tjg/shortcode.png' },
             { key: 'coords', ar: 'احداثيات الموقع', en: 'Coordinates', img: 'https://i.ibb.co/Qv0zM7s6/cordinate.png' }
         ];
 
-        let formData = new Array(12).fill(null).map(() => ({ value: '', markerData: null }));
-        let currentLang = 'ar';
+        let formData = new Array(12).fill(null).map(() => ({ value: '', marker: null, rect: null }));
+        let customLabels = [];
+        let history = [];
+        let pdfBytes = null;
         let pdfDoc = null;
-        let currentScale = 1.2;
+        let mode = 'data';
+        let activeIdx = 0;
+        let isCustom = false;
+        let lang = 'ar';
+        let isDrawing = false, startX, startY, activeRect = null;
 
-        const formContainer = document.getElementById('form-container');
-        const filledCount = document.getElementById('filled-count');
-        const fileInput = document.getElementById('file-input');
-        const viewer = document.getElementById('viewer-container');
-        const overlay = document.getElementById('upload-overlay');
-        const loader = document.getElementById('loader');
-        const zoomLevelEl = document.getElementById('zoom-level');
-
-        function initForm() {
-            formContainer.innerHTML = '';
-            fieldsConfig.forEach((field, index) => {
-                const row = document.createElement('div');
-                row.className = 'form-row';
-                row.id = `row-${index}`;
-                
-                const previewBtn = field.img ? 
-                    `<div class="preview-col"><button class="btn-preview" onclick="openImageModal('${field.img}')" title="Preview Area">👁️</button></div>` : 
-                    `<div class="preview-col"></div>`;
-
-                row.innerHTML = `
-                    <div class="form-label">${currentLang === 'ar' ? field.ar : field.en}</div>
-                    <div class="form-value"><input type="text" id="input-${index}" oninput="updateValueManually(${index}, this.value)" placeholder="..."></div>
-                    ${previewBtn}
-                    <div class="form-controls">
-                        <button class="mini-btn" onclick="moveValue(${index}, -1)">▲</button>
-                        <button class="mini-btn btn-clear" onclick="clearRow(${index})">×</button>
-                        <button class="mini-btn" onclick="moveValue(${index}, 1)">▼</button>
-                    </div>`;
-                formContainer.appendChild(row);
-            });
-            updateFormUI();
-        }
-
-        // دوال النافذة العائمة
-        function openImageModal(url) {
-            const modal = document.getElementById('image-modal');
-            const img = document.getElementById('modal-img');
-            img.src = url;
-            modal.style.display = 'flex';
-        }
-
-        function closeImageModal() {
-            document.getElementById('image-modal').style.display = 'none';
-        }
-
-        async function fitToWidth() {
-            if (!pdfDoc) return;
-            const page = await pdfDoc.getPage(1);
-            const viewport = page.getViewport({ scale: 1 });
-            const availableWidth = viewer.clientWidth - 40; 
-            currentScale = availableWidth / viewport.width;
-            zoomLevelEl.innerText = Math.round(currentScale * 100) + "%";
-            renderPDF();
-        }
-
-        function changeZoom(delta) {
-            if (!pdfDoc) return;
-            currentScale = Math.min(Math.max(currentScale + delta, 0.3), 4.0);
-            zoomLevelEl.innerText = Math.round(currentScale * 100) + "%";
-            renderPDF();
-        }
-
-        fileInput.addEventListener('change', async (e) => {
+        document.getElementById('file-input').addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if(!file) return;
-            loader.style.display = 'block';
-            const reader = new FileReader();
-            reader.onload = async function() {
-                const typedarray = new Uint8Array(this.result);
-                pdfDoc = await pdfjsLib.getDocument(typedarray).promise;
-                overlay.style.display = 'none';
-                initForm();
-                await fitToWidth();
-            };
-            reader.readAsArrayBuffer(file);
+            const buffer = await file.arrayBuffer();
+            pdfBytes = new Uint8Array(buffer).slice(0);
+            pdfDoc = await pdfjsLib.getDocument({ data: pdfBytes.slice(0), disableFontFace: true }).promise;
+            document.getElementById('upload-overlay').style.display = 'none';
+            initForm();
+            renderPDF();
         });
 
+        function initForm() {
+            const container = document.getElementById('form-container');
+            container.innerHTML = '';
+            fieldsConfig.forEach((f, i) => {
+                const row = document.createElement('div');
+                row.className = 'form-row'; row.id = `row-${i}`;
+                row.onclick = () => { if(mode==='label') setActive(i); };
+                row.innerHTML = `<div class="form-label">${lang==='ar'?f.ar:f.en}</div>
+                    <div class="form-value"><input type="text" id="input-${i}" oninput="formData[${i}].value=this.value;updateUI();" placeholder="..."></div>
+                    <div class="preview-col">${f.img ? `<button class="eye-btn" onclick="openImg('${f.img}')">👁️</button>`:''}</div>
+                    <div class="controls-col"><button onclick="clearRow(${i})" style="color:red;border:none;background:none;cursor:pointer;">×</button></div>`;
+                container.appendChild(row);
+            });
+            setActive(0);
+        }
+
         async function renderPDF() {
-            if (!pdfDoc) return;
-            viewer.innerHTML = '';
+            const container = document.getElementById('viewer-container');
+            container.innerHTML = '';
             for(let i=1; i<=pdfDoc.numPages; i++) {
                 const page = await pdfDoc.getPage(i);
-                const viewport = page.getViewport({scale: currentScale});
+                const vp = page.getViewport({ scale: 1.3 });
                 const wrapper = document.createElement('div');
-                wrapper.className = 'pdf-page-container';
-                wrapper.style.width = viewport.width + "px";
-                wrapper.style.height = viewport.height + "px";
-                
+                wrapper.className = 'pdf-page-wrapper'; wrapper.id = `page-${i-1}`;
+                wrapper.style.width = vp.width+'px'; wrapper.style.height = vp.height+'px';
                 const canvas = document.createElement('canvas');
-                canvas.width = viewport.width;
-                canvas.height = viewport.height;
+                canvas.width = vp.width; canvas.height = vp.height;
                 wrapper.appendChild(canvas);
-                viewer.appendChild(wrapper);
-                
-                wrapper.addEventListener('click', (e) => handleMapClick(e, wrapper, i-1));
-                await page.render({canvasContext: canvas.getContext('2d'), viewport: viewport}).promise;
-                recreateMarkers(i-1, wrapper);
+                const overlay = document.createElement('div');
+                overlay.className = 'overlay'; overlay.id = `ov-${i-1}`;
+                wrapper.appendChild(overlay);
+
+                wrapper.onmousedown = (e) => { if(mode==='label') startDraw(e, i-1); };
+                wrapper.onmousemove = (e) => { if(isDrawing) moveDraw(e); };
+                wrapper.onmouseup = (e) => { if(isDrawing) endDraw(e, i-1); };
+                wrapper.onclick = (e) => { if(mode==='data') handleDataClick(e, i-1); };
+
+                container.appendChild(wrapper);
+                await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+            }
+            drawElements();
+        }
+
+        function handleDataClick(e, pIdx) {
+            if(e.target.closest('.floating-input') || isDrawing) return;
+            const wrap = document.getElementById(`page-${pIdx}`);
+            const r = wrap.getBoundingClientRect();
+            const x = e.clientX - r.left, y = e.clientY - r.top;
+            const existing = document.querySelector('.floating-input');
+            if(existing) existing.remove();
+            const div = document.createElement('div');
+            div.className = 'floating-input'; div.style.left = x+'px'; div.style.top = y+'px';
+            div.innerHTML = `<input type="text" id="f-inp"><button id="f-btn">✔</button>`;
+            wrap.appendChild(div);
+            const inp = div.querySelector('input'); inp.focus();
+            div.querySelector('button').onclick = () => {
+                const target = formData.findIndex(f => !f.value);
+                if(target !== -1 && inp.value.trim()) {
+                    formData[target].value = inp.value;
+                    formData[target].marker = { x: (x/r.width)*100, y: (y/r.height)*100, pIdx };
+                    history.push({ type: 'marker', index: target });
+                    updateUI(); drawElements();
+                }
+                div.remove();
+            };
+        }
+
+        function startDraw(e, pIdx) {
+            isDrawing = true;
+            const wrap = document.getElementById(`page-${pIdx}`);
+            const r = wrap.getBoundingClientRect();
+            startX = e.clientX - r.left; startY = e.clientY - r.top;
+            activeRect = document.createElement('div');
+            activeRect.className = 'rect'; activeRect.style.left = startX+'px'; activeRect.style.top = startY+'px';
+            wrap.appendChild(activeRect);
+        }
+
+        function moveDraw(e) {
+            const r = activeRect.parentElement.getBoundingClientRect();
+            const x = e.clientX - r.left, y = e.clientY - r.top;
+            activeRect.style.width = Math.abs(x - startX)+'px'; activeRect.style.height = Math.abs(y - startY)+'px';
+            activeRect.style.left = Math.min(x, startX)+'px'; activeRect.style.top = Math.min(y, startY)+'px';
+        }
+
+        function endDraw(e, pIdx) {
+            isDrawing = false;
+            const r = activeRect.getBoundingClientRect();
+            const pr = activeRect.parentElement.getBoundingClientRect();
+            const rectData = { pIdx, x: ((r.left-pr.left)/pr.width)*100, y: ((r.top-pr.top)/pr.height)*100, w: (r.width/pr.width)*100, h: (r.height/pr.height)*100 };
+            if(isCustom) {
+                const txt = prompt("أدخل النص المخصص:");
+                if(txt) { customLabels.push({...rectData, text: txt}); history.push({ type: 'custom', index: customLabels.length - 1 }); }
+            } else {
+                formData[activeIdx].rect = {...rectData, text: (activeIdx+1)+'. '+(lang==='ar'?fieldsConfig[activeIdx].ar : fieldsConfig[activeIdx].en)};
+                history.push({ type: 'rect', index: activeIdx });
+                if(activeIdx < 11) setActive(activeIdx+1);
+            }
+            activeRect.remove(); drawElements();
+        }
+
+        function drawElements() {
+            document.querySelectorAll('.overlay').forEach(ov => ov.innerHTML = '');
+            formData.forEach((f, i) => {
+                if(mode==='data' && f.marker) {
+                    const l = document.getElementById(`ov-${f.marker.pIdx}`);
+                    if(l) l.innerHTML += `<div class="marker" style="left:${f.marker.x}%; top:${f.marker.y}%"></div>`;
+                }
+                if(mode==='label' && f.rect) {
+                    const l = document.getElementById(`ov-${f.rect.pIdx}`);
+                    if(l) l.innerHTML += `<div class="rect" style="left:${f.rect.x}%; top:${f.rect.y}%; width:${f.rect.w}%; height:${f.rect.h}%"><div class="rect-text">${f.rect.text}</div></div>`;
+                }
+            });
+            if(mode==='label') {
+                customLabels.forEach(t => {
+                    const l = document.getElementById(`ov-${t.pIdx}`);
+                    if(l) l.innerHTML += `<div class="rect" style="border-color:#f59e0b; left:${t.x}%; top:${t.y}%; width:${t.w}%; height:${t.h}%"><div class="rect-text" style="background:#f59e0b">${t.text}</div></div>`;
+                });
             }
         }
 
-        function recreateMarkers(pageIdx, wrapper) {
-            formData.forEach((data, index) => {
-                if (data.markerData && data.markerData.pageIdx === pageIdx) {
-                    const marker = document.createElement('div');
-                    marker.className = 'marker';
-                    marker.style.left = data.markerData.percentX + '%';
-                    marker.style.top = data.markerData.percentY + '%';
-                    wrapper.appendChild(marker);
-                    formData[index].markerElement = marker;
+        async function exportPDF() {
+            if(!pdfBytes) return;
+            try {
+                const { PDFDocument, rgb } = PDFLib;
+                const pdfDocLib = await PDFDocument.load(pdfBytes.slice(0));
+                pdfDocLib.registerFontkit(fontkit);
+                const fontRes = await fetch('https://cdn.jsdelivr.net/gh/googlefonts/almarai@master/fonts/ttf/Almarai-Bold.ttf');
+                const arabicFont = await pdfDocLib.embedFont(await fontRes.arrayBuffer());
+                const pages = pdfDocLib.getPages();
+
+                const items = [...formData.map(f => f.rect).filter(x=>x), ...customLabels];
+                for(const item of items) {
+                    const page = pages[item.pIdx];
+                    const { width, height } = page.getSize();
+                    const x = (item.x/100)*width, w = (item.w/100)*width, h = (item.h/100)*height, y = height - ((item.y/100)*height) - h;
+
+                    page.drawRectangle({ 
+                        x, y, width: w, height: h, 
+                        borderColor: rgb(1,0,0), borderWidth: 3, 
+                        color: rgb(1,0,0), 
+                        opacity: 0.15 
+                    });
+
+                    const size = 10; const tw = arabicFont.widthOfTextAtSize(item.text, size);
+                    page.drawRectangle({ x, y: y+h, width: tw + 20, height: size + 10, color: rgb(1,0,0) });
+                    page.drawText(item.text, { x: x+10, y: y+h+7, size, font: arabicFont, color: rgb(1,1,1) });
                 }
-            });
+                const finalPdf = await pdfDocLib.save();
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(new Blob([finalPdf], {type:'application/pdf'}));
+                link.download = "Labeled_Document.pdf"; link.click();
+            } catch(e) { alert("فشل الحفظ: " + e.message); }
         }
 
-        function handleMapClick(e, wrapper, pageIdx) {
-            if(['INPUT','BUTTON'].includes(e.target.tagName)) return;
-            const rect = wrapper.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            createFloatingInput(wrapper, x, y, pageIdx);
-        }
+        function setMode(m) { mode = m; document.getElementById('btn-data').classList.toggle('active', m==='data'); document.getElementById('btn-label').classList.toggle('active', m==='label'); document.getElementById('btn-custom').style.display = m==='label'?'block':'none'; document.getElementById('btn-export').style.display = m==='label'?'block':'none'; drawElements(); }
+        function setActive(i) { activeIdx = i; document.querySelectorAll('.form-row').forEach(r => r.classList.remove('active-field')); document.getElementById(`row-${i}`).classList.add('active-field'); }
+        function toggleCustomText() { isCustom = !isCustom; document.getElementById('btn-custom').classList.toggle('active', isCustom); }
+        function updateUI() { formData.forEach((f,i) => { const inp = document.getElementById(`input-${i}`); if(inp) inp.value = f.value; document.getElementById(`row-${i}`).classList.toggle('filled', !!f.value); }); document.getElementById('count').innerText = formData.filter(f=>f.value).length; }
+        function clearRow(i) { formData[i] = { value: '', marker: null, rect: null }; updateUI(); drawElements(); }
+        function skip() { if(activeIdx < 11) setActive(activeIdx+1); }
+        function toggleLang() { lang = lang==='ar'?'en':'ar'; document.documentElement.dir = lang==='ar'?'rtl':'ltr'; initForm(); updateUI(); }
+        function openImg(u) { document.getElementById('modal-img').src = u; document.getElementById('image-modal').style.display = 'flex'; }
+        function undo() { if(!history.length) return; const l = history.pop(); if(l.type==='marker') { formData[l.index].value=''; formData[l.index].marker=null; } else if(l.type==='rect') { formData[l.index].rect=null; setActive(l.index); } else if(l.type==='custom') { customLabels.splice(l.index, 1); } updateUI(); drawElements(); }
 
-        function createFloatingInput(parent, x, y, pageIdx) {
-            const existing = document.querySelector('.floating-input-wrapper');
-            if(existing) existing.remove();
-
-            const div = document.createElement('div');
-            div.className = 'floating-input-wrapper';
-            div.style.left = x + 'px';
-            div.style.top = y + 'px';
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.style.flex = "1";
-            input.style.padding = "8px";
-            setTimeout(() => input.focus(), 50);
-            const btn = document.createElement('button');
-            btn.innerHTML = '✔';
-            btn.style.padding = "0 15px";
-            btn.style.background = "var(--primary)"; btn.style.color = "white"; btn.style.border = "none"; btn.style.borderRadius = "4px";
-
-            const submit = () => {
-                if(input.value.trim()) assignToNextEmptySlot(input.value, x, y, parent, pageIdx);
-                div.remove();
-            };
-            btn.onclick = submit;
-            input.onkeydown = (e) => { if(e.key === 'Enter') submit(); };
-            div.appendChild(input); div.appendChild(btn);
-            parent.appendChild(div);
-        }
-
-        function assignToNextEmptySlot(text, x, y, parent, pageIdx) {
-            const idx = formData.findIndex(item => item.value === '');
-            if(idx === -1) return alert("All slots are full!");
-            const px = (x / parent.offsetWidth) * 100;
-            const py = (y / parent.offsetHeight) * 100;
-            const marker = document.createElement('div');
-            marker.className = 'marker';
-            marker.style.left = px + '%'; marker.style.top = py + '%';
-            parent.appendChild(marker);
-            formData[idx] = { value: text, markerElement: marker, markerData: { percentX: px, percentY: py, pageIdx } };
-            updateFormUI();
-        }
-
-        function clearRow(index) {
-            if(formData[index].markerElement) formData[index].markerElement.remove();
-            formData[index] = { value: '', markerElement: null, markerData: null };
-            updateFormUI();
-        }
-
-        function updateValueManually(index, val) { formData[index].value = val; updateFormUI(false); }
-
-        function moveValue(index, dir) {
-            const newIdx = index + dir;
-            if(newIdx < 0 || newIdx >= 12) return;
-            [formData[index], formData[newIdx]] = [formData[newIdx], formData[index]];
-            updateFormUI();
-        }
-
-        function updateFormUI(refresh = true) {
-            let count = 0;
-            formData.forEach((data, i) => {
-                const row = document.getElementById(`row-${i}`);
-                if(refresh) {
-                    const input = document.getElementById(`input-${i}`);
-                    if(input) input.value = data.value;
-                }
-                if(data.value) { row.classList.add('filled'); count++; } else row.classList.remove('filled');
-            });
-            filledCount.innerText = count;
-        }
-
-        function toggleLanguage() {
-            currentLang = currentLang === 'ar' ? 'en' : 'ar';
-            document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
-            const currentValues = formData.map(d => d.value);
-            initForm();
-            currentValues.forEach((v, i) => { 
-                if(v) {
-                    const inp = document.getElementById(`input-${i}`);
-                    if(inp) inp.value = v;
-                }
-            });
-        }
-
+        // تم إضافة دالة النسخ هنا
         function copyAll() {
             const text = formData.map(d => d.value.trim()).join('-');
             navigator.clipboard.writeText(text).then(() => {
@@ -493,8 +298,6 @@
                 setTimeout(() => btn.innerText = old, 1000);
             });
         }
-
-        initForm();
     </script>
 </body>
 </html>
