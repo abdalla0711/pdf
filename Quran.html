@@ -48,7 +48,7 @@
                     </li>
                     <li class="flex items-start gap-1.5">
                         <span class="text-indigo-600 font-bold">⚙️</span>
-                        <div><strong>تخصيص كامل للتكرارات:</strong> إمكانية تحديد تكرار منفصل لكل آية منفردة، بالإضافة لتحديد تكرار خاص بها عندما تأتي في دورة الربط الجماعي.</div>
+                        <div><strong>إعدادات تكرار موحدة:</strong> تحكم شامل من لوحة الإعدادات العلوية لتحديد تكرار الآية منفردة، تكرار الآية أثناء الربط، وتكرار الربط الجماعي الكلي لتوفير وقتك.</div>
                     </li>
                     <li class="flex items-start gap-1.5">
                         <span class="text-indigo-600 font-bold">🛑</span>
@@ -68,8 +68,8 @@
                 <ol class="text-xs text-slate-600 list-decimal list-inside space-y-2 pr-2 leading-relaxed">
                     <li>سجل الآيات بالتتالي عبر النقر على زر الميكروفون <strong class="text-red-500">🎤</strong> بالأعلى.</li>
                     <li>حدد حدود الآية للتخلص من الزوائد عن طريق سحب أطراف التظليل على الموجة الصوتية.</li>
-                    <li>اضبط التكرار الفردي وتكرار الربط من الخيارات تحت كل آية.</li>
-                    <li>اختر نمط التشغيل (عادي أو تكرار ذكي 🧠) ثم اضغط <strong>"تشغيل السلسلة"</strong> للبدء.</li>
+                    <li>اضبط إعدادات التكرار الشاملة من لوحة التحكم في الأعلى مباشرة.</li>
+                    <li>اختر نمط التشغيل المفضل (عادي أو تكرار ذكي 🧠) ثم اضغط <strong>"تشغيل السلسلة"</strong> للبدء.</li>
                 </ol>
             </div>
 
@@ -126,18 +126,25 @@
                 <div id="cycleStatus" class="font-bold text-indigo-200"></div>
             </div>
 
-            <!-- إعدادات التكرار الذكي -->
+            <!-- إعدادات التكرار الذكي الموحدة والمبسطة حديثاً -->
             <div id="smartSettings" class="hidden flex-col gap-2">
-                <div class="flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-1.5">
-                        <span>تكرار الربط (الجماعي):</span>
-                        <input type="number" id="groupRepeats" value="2" min="1" class="compact-input text-black font-bold">
-                        <span>مرات</span>
+                <div class="grid grid-cols-3 gap-2 mt-1">
+                    <div class="flex flex-col items-center bg-indigo-950 p-1.5 rounded-lg border border-indigo-800/50 text-center">
+                        <span class="text-[9px] text-indigo-300 mb-1 leading-tight">تكرار الآية منفردة</span>
+                        <input type="number" id="smartIndividualRepeats" value="3" min="1" class="compact-input text-black font-bold w-12">
                     </div>
-                    <div id="smartCycleStatus" class="font-bold text-indigo-200"></div>
+                    <div class="flex flex-col items-center bg-indigo-950 p-1.5 rounded-lg border border-indigo-800/50 text-center">
+                        <span class="text-[9px] text-indigo-300 mb-1 leading-tight">تكرار الآية في الربط</span>
+                        <input type="number" id="smartLinkRepeats" value="1" min="1" class="compact-input text-black font-bold w-12">
+                    </div>
+                    <div class="flex flex-col items-center bg-indigo-950 p-1.5 rounded-lg border border-indigo-800/50 text-center">
+                        <span class="text-[9px] text-indigo-300 mb-1 leading-tight">تكرار الربط الجماعي</span>
+                        <input type="number" id="groupRepeats" value="2" min="1" class="compact-input text-black font-bold w-12">
+                    </div>
                 </div>
-                <p class="text-[10px] text-indigo-300 leading-relaxed">
-                    * يكرر كل آية منفردة حسب تكرارها الفردي، ثم يربطها بالآيات السابقة مكرراً كل آية في السلسلة حسب عدد تكرار الربط الخاص بها.
+                <div id="smartCycleStatus" class="font-bold text-indigo-200 text-center mt-1"></div>
+                <p class="text-[10px] text-indigo-300 leading-relaxed text-center">
+                    * يطبق هذا النمط القيم المحددة أعلاه تلقائياً على كافة الآيات لتوفير وقت الإعداد.
                 </p>
             </div>
 
@@ -175,7 +182,7 @@
             <button id="stopBtn" class="bg-gray-100 text-gray-700 px-5 rounded-xl font-bold">إيقاف</button>
         </div>
         
-        <!-- خيارات الحفظ والاستيراد والتصدير المحدثة -->
+        <!-- خيارات الحفظ والاستيراد والتصدير -->
         <div class="flex justify-between items-center text-[11px] mt-1 px-1">
             <button id="saveProjectBtn" class="text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-1">
                 📥 حفظ المشروع (ZIP)
@@ -244,7 +251,7 @@
             modeSmartBtn.className = "px-3 py-1 rounded-md font-bold transition-all text-indigo-300 hover:text-white";
             normalSettings.classList.remove('hidden');
             smartSettings.classList.add('hidden');
-            updateSmartOnlyUI();
+            updateModeUI();
         };
 
         modeSmartBtn.onclick = () => {
@@ -253,14 +260,14 @@
             modeSmartBtn.className = "px-3 py-1 rounded-md font-bold transition-all bg-indigo-600 text-white";
             normalSettings.classList.add('hidden');
             smartSettings.classList.remove('hidden');
-            updateSmartOnlyUI();
+            updateModeUI();
         };
 
-        // إخفاء وإظهار حقول تخصيص تكرار الربط الذكي ديناميكياً
-        function updateSmartOnlyUI() {
-            const elements = document.querySelectorAll('.smart-only');
-            elements.forEach(el => {
-                if (currentPlayMode === 'smart') {
+        // إخفاء وإظهار حقول تخصيص التكرار الفردي على الكروت حسب النمط لتفادي التشتيت والازدحام
+        function updateModeUI() {
+            const normalOnlyElements = document.querySelectorAll('.normal-only');
+            normalOnlyElements.forEach(el => {
+                if (currentPlayMode === 'normal') {
                     el.classList.remove('hidden');
                 } else {
                     el.classList.add('hidden');
@@ -298,7 +305,6 @@
                 url: URL.createObjectURL(blob),
                 rawBlob: blob, 
                 repeats: 1,
-                linkRepeats: 1, // تكرار الآية الافتراضي في الربط الذكي
                 hasGap: false,
                 active: true, 
                 start: 0,
@@ -312,14 +318,12 @@
         function renderClipItem(clip, index) {
             if (index === undefined) index = clips.indexOf(clip);
             if (clip.active === undefined) clip.active = true;
-            if (clip.linkRepeats === undefined) clip.linkRepeats = 1;
 
             const container = document.createElement('div');
             container.id = `clip-${clip.id}`;
             container.className = "clip-container";
             
-            // تهيئة حالة الإخفاء/الإظهار لعنصر "تكرار الربط"
-            const smartOnlyClass = currentPlayMode === 'smart' ? '' : 'hidden';
+            const normalOnlyClass = currentPlayMode === 'normal' ? '' : 'hidden';
 
             container.innerHTML = `
                 <div class="flex justify-between items-center mb-1">
@@ -338,14 +342,10 @@
 
                 <div class="flex items-center justify-between mt-2">
                     <div class="flex items-center gap-3">
-                        <div class="flex items-center gap-1">
-                            <span class="text-[10px] font-bold text-indigo-700">تكرار فردي:</span>
+                        <!-- تكرار الآية (فقط للوضع العادي) -->
+                        <div class="flex items-center gap-1 normal-only ${normalOnlyClass}">
+                            <span class="text-[10px] font-bold text-indigo-700">تكرار:</span>
                             <input type="number" value="${clip.repeats}" min="1" onchange="updateClip(${clip.id}, 'repeats', this.value)" class="compact-input">
-                        </div>
-                        <!-- الحقل الجديد والمخصص للربط الذكي -->
-                        <div class="flex items-center gap-1 smart-only ${smartOnlyClass}">
-                            <span class="text-[10px] font-bold text-purple-700">تكرار الربط:</span>
-                            <input type="number" value="${clip.linkRepeats}" min="1" onchange="updateClip(${clip.id}, 'linkRepeats', this.value)" class="compact-input">
                         </div>
                         <div class="flex items-center gap-1">
                             <span class="text-[10px] font-bold text-slate-500">فراغ:</span>
@@ -425,6 +425,7 @@
             reRenderAllClips();
         }
 
+        // منطق تشغيل المقطع الأساسي
         async function playClipLogic(clip, customRepeats) {
             const el = document.getElementById(`clip-${clip.id}`);
             const duration = clip.end - clip.start;
@@ -479,7 +480,7 @@
             if (clip) await playClipLogic(clip);
         }
 
-        // تشغيل السلسلة - يدعم وضعي التشغيل العادي والذكي
+        // تشغيل السلسلة - يدعم وضعي التشغيل العادي والذكي بقيمه الموحدة الشاملة
         playAllBtn.onclick = async () => {
             stopPlayback = false;
             
@@ -496,35 +497,37 @@
             }
             
             if (currentPlayMode === 'smart') {
+                // جلب قيم تكرار الآية والربط من لوحة الإعدادات الموحدة في الأعلى
+                const smartIndividualRepeats = parseInt(document.getElementById('smartIndividualRepeats').value) || 3;
+                const smartLinkRepeats = parseInt(document.getElementById('smartLinkRepeats').value) || 1;
                 const groupRepeats = parseInt(document.getElementById('groupRepeats').value) || 2;
                 
                 smartCycleStatus.innerText = "جاري البدء...";
                 
-                // الخطوة 1: تشغيل الآية الأولى بمفردها حسب تكرارها الفردي المخصص
+                // الخطوة 1: تشغيل الآية الأولى بمفردها حسب قيمة "التكرار الفردي" الموحدة
                 if (!stopPlayback) {
                     smartCycleStatus.innerText = "الآية 1 منفردة";
-                    await playClipLogic(activeClips[0], activeClips[0].repeats);
+                    await playClipLogic(activeClips[0], smartIndividualRepeats);
                 }
                 
                 // الخطوة 2: الدورة التراكمية لباقي الآيات
                 for (let i = 1; i < activeClips.length; i++) {
                     if (stopPlayback) break;
                     
-                    // أ: تشغيل الآية الجديدة (i) منفردة حسب تكرارها الفردي المخصص
+                    // أ: تشغيل الآية الجديدة (i) منفردة حسب قيمة "التكرار الفردي" الموحدة
                     smartCycleStatus.innerText = `الآية ${i + 1} منفردة`;
-                    await playClipLogic(activeClips[i], activeClips[i].repeats);
+                    await playClipLogic(activeClips[i], smartIndividualRepeats);
                     
                     if (stopPlayback) break;
                     
-                    // ب: ربط المجموعة بأكملها مع تكرار كل آية حسب معامل "تكرار الربط" المخصص لها
+                    // ب: ربط المجموعة بأكملها مع تكرار كل آية حسب معامل "تكرار الربط" الموحد
                     for (let g = 0; g < groupRepeats; g++) {
                         if (stopPlayback) break;
                         smartCycleStatus.innerText = `ربط من 1 إلى ${i + 1} (تكرار ${g + 1}/${groupRepeats})`;
                         
                         for (let j = 0; j <= i; j++) {
                             if (stopPlayback) break;
-                            const lRepeats = activeClips[j].linkRepeats !== undefined ? activeClips[j].linkRepeats : 1;
-                            await playClipLogic(activeClips[j], lRepeats); 
+                            await playClipLogic(activeClips[j], smartLinkRepeats); 
                         }
                     }
                 }
@@ -649,7 +652,6 @@
                     serializedClips.push({
                         id: clip.id,
                         repeats: clip.repeats,
-                        linkRepeats: clip.linkRepeats || 1, // حفظ تكرار الربط المخصص
                         hasGap: clip.hasGap,
                         active: clip.active !== false,
                         start: clip.start,
@@ -662,6 +664,8 @@
                     version: 1,
                     currentPlayMode: currentPlayMode, 
                     groupRepeats: parseInt(document.getElementById('groupRepeats').value) || 2, 
+                    smartIndividualRepeats: parseInt(document.getElementById('smartIndividualRepeats').value) || 3, // حفظ القيمة الجديدة الشاملة
+                    smartLinkRepeats: parseInt(document.getElementById('smartLinkRepeats').value) || 1, // حفظ القيمة الجديدة الشاملة
                     allRepeats: parseInt(document.getElementById('allRepeats').value) || 1,
                     infiniteRepeat: document.getElementById('infiniteRepeat').checked,
                     toggleHoldMode: document.getElementById('toggleHoldMode').checked,
@@ -713,6 +717,8 @@
                 document.getElementById('infiniteRepeat').checked = !!projectData.infiniteRepeat;
                 document.getElementById('toggleHoldMode').checked = !!projectData.toggleHoldMode;
                 document.getElementById('groupRepeats').value = projectData.groupRepeats || 2;
+                document.getElementById('smartIndividualRepeats').value = projectData.smartIndividualRepeats || 3;
+                document.getElementById('smartLinkRepeats').value = projectData.smartLinkRepeats || 1;
 
                 // تفعيل وضع التشغيل الصحيح الذي تم حفظه
                 if (projectData.currentPlayMode === 'smart') {
@@ -733,7 +739,6 @@
                         url: URL.createObjectURL(blob),
                         rawBlob: blob,
                         repeats: sClip.repeats || 1,
-                        linkRepeats: sClip.linkRepeats || 1, // استعادة تكرار الربط المخصص
                         hasGap: !!sClip.hasGap,
                         active: sClip.active !== false,
                         start: sClip.start || 0,
