@@ -7,6 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/wavesurfer.js@7"></script>
     <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
+    <!-- مكتبات الضغط الخارجي لمعالجة ملفات ZIP و MP3 في المتصفح -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght=400;700&display=swap');
         body { font-family: 'Cairo', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
@@ -17,7 +20,6 @@
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
         .compact-input { width: 35px; height: 24px; font-size: 12px; text-align: center; border-radius: 4px; border: 1px solid #cbd5e1; }
         
-        /* تعطيل اللمس الافتراضي لمنع تداخل حركات التكبير والقوائم للهواتف الذكية */
         #holdBtn {
             -webkit-touch-callout: none;
             -webkit-user-select: none;
@@ -62,7 +64,7 @@
         <div id="clipsList"></div>
     </div>
 
-    <!-- زر التوقف الكبير للطفل مع زر إنهاء الجلسة المضاف حديثاً -->
+    <!-- غطاء التوقف للطفل مع زر إنهاء الجلسة -->
     <div id="holdOverlay" class="fixed inset-0 bg-slate-900/80 z-50 flex flex-col items-center justify-center hidden select-none">
         <div id="holdBtn" class="w-64 h-64 bg-red-600 active:bg-red-700 text-white rounded-full flex flex-col items-center justify-center shadow-[0_0_35px_rgba(239,68,68,0.6)] select-none cursor-pointer transform transition-all duration-150 active:scale-95 border-4 border-white/20">
             <span id="holdOverlayIcon" class="text-5xl mb-2">🛑</span>
@@ -70,30 +72,29 @@
             <span id="holdOverlaySub" class="text-[11px] text-red-200 mt-2 text-center px-4 leading-relaxed">اضغط باستمرار للإيقاف المؤقت وترديد الآية، ارفع إصبعك للمتابعة</span>
         </div>
         
-        <!-- زر إنهاء تشغيل الوضع الجديد -->
         <button id="overlayStopBtn" class="mt-8 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 px-6 py-2.5 rounded-xl font-bold text-sm shadow-md active:scale-95 transition-all">
             إنهاء الجلسة ⏹️
         </button>
     </div>
 
-    <!-- التحكم السفلي المحدث -->
+    <!-- التحكم السفلي -->
     <div class="fixed bottom-0 left-0 right-0 bg-white p-3 flex flex-col gap-2 border-t z-40 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
         <div class="flex gap-2">
             <button id="playAllBtn" class="bg-green-600 text-white py-3 rounded-xl font-bold flex-1 shadow-lg active:scale-95 text-base">تشغيل السلسلة</button>
             <button id="stopBtn" class="bg-gray-100 text-gray-700 px-5 rounded-xl font-bold">إيقاف</button>
         </div>
         
-        <!-- خيارات حفظ واستيراد وتصدير المشروع -->
+        <!-- خيارات الحفظ والاستيراد والتصدير المحدثة -->
         <div class="flex justify-between items-center text-[11px] mt-1 px-1">
             <button id="saveProjectBtn" class="text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-1">
-                📥 حفظ المشروع
+                📥 حفظ المشروع (ZIP)
             </button>
             <label class="text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-1 cursor-pointer">
-                📂 استيراد مشروع
-                <input type="file" id="importProjectInput" accept=".qproj,application/json" class="hidden">
+                📂 استيراد مشروع (ZIP)
+                <input type="file" id="importProjectInput" accept=".zip,application/zip" class="hidden">
             </label>
             <button id="exportBtn" class="text-gray-400 hover:text-gray-600 font-bold">
-                🎵 تصدير WAV
+                🎵 تصدير MP3
             </button>
         </div>
     </div>
@@ -142,7 +143,7 @@
             const clipObj = {
                 id: id,
                 url: URL.createObjectURL(blob),
-                rawBlob: blob, // تخزين الملف الصوتي الأصلي لتسهيل الحفظ والتصدير
+                rawBlob: blob, 
                 repeats: 1,
                 hasGap: false,
                 active: true, 
@@ -151,10 +152,12 @@
                 ws: null
             };
             clips.push(clipObj);
-            renderClipItem(clipObj);
+            reRenderAllClips();
         }
 
-        function renderClipItem(clip) {
+        // دالة لعرض عناصر التحكم في القائمة والآيات مع الترتيب الحالي
+        function renderClipItem(clip, index) {
+            if (index === undefined) index = clips.indexOf(clip);
             if (clip.active === undefined) clip.active = true;
 
             const container = document.createElement('div');
@@ -164,9 +167,14 @@
                 <div class="flex justify-between items-center mb-1">
                     <div class="flex items-center gap-1.5">
                         <input type="checkbox" id="check-${clip.id}" ${clip.active ? 'checked' : ''} onchange="toggleClipActive(${clip.id}, this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded cursor-pointer">
-                        <span class="text-[10px] font-bold text-gray-400 uppercase">آية ${clips.length}</span>
+                        <span class="text-[10px] font-bold text-gray-400 uppercase">آية ${index + 1}</span>
                     </div>
-                    <button onclick="deleteClip(${clip.id})" class="text-red-300 hover:text-red-500 text-[10px]">حذف</button>
+                    <div class="flex items-center gap-2">
+                        <!-- أزرار إعادة الترتيب -->
+                        <button onclick="moveClip(${clip.id}, -1)" class="text-indigo-400 hover:text-indigo-600 text-[10px] font-bold px-1.5 py-0.5 bg-indigo-50 rounded">🔼</button>
+                        <button onclick="moveClip(${clip.id}, 1)" class="text-indigo-400 hover:text-indigo-600 text-[10px] font-bold px-1.5 py-0.5 bg-indigo-50 rounded">🔽</button>
+                        <button onclick="deleteClip(${clip.id})" class="text-red-300 hover:text-red-500 text-[10px] mr-1">حذف</button>
+                    </div>
                 </div>
                 
                 <div id="wave-${clip.id}" class="h-[35px] overflow-hidden opacity-80"></div>
@@ -215,6 +223,34 @@
             clip.ws = ws;
         }
 
+        // دالة لتغيير ترتيب المقاطع في المصفوفة وتحديث العرض
+        function moveClip(id, direction) {
+            const index = clips.findIndex(c => c.id === id);
+            if (index === -1) return;
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= clips.length) return; // خارج الحدود
+            
+            // تبديل العناصر في المصفوفة
+            const temp = clips[index];
+            clips[index] = clips[newIndex];
+            clips[newIndex] = temp;
+            
+            reRenderAllClips();
+        }
+
+        // إعادة بناء القائمة وأشكال الموجات الصوتية بشكل منظم
+        function reRenderAllClips() {
+            clips.forEach(c => {
+                if (c.ws) {
+                    try { c.ws.destroy(); } catch(err){}
+                }
+            });
+            clipsList.innerHTML = "";
+            clips.forEach((clip, index) => {
+                renderClipItem(clip, index);
+            });
+        }
+
         function toggleClipActive(id, isActive) {
             const clip = clips.find(c => c.id === id);
             if (clip) clip.active = isActive;
@@ -227,7 +263,7 @@
 
         function deleteClip(id) {
             clips = clips.filter(c => c.id !== id);
-            document.getElementById(`clip-${id}`).remove();
+            reRenderAllClips();
         }
 
         async function playClipLogic(clip) {
@@ -317,7 +353,6 @@
             holdOverlay.classList.add('hidden');
         };
 
-        // دالة الإيقاف المشتركة
         function handleGlobalStop() {
             stopPlayback = true;
             isHeldPaused = false;
@@ -332,9 +367,8 @@
 
         document.getElementById('stopBtn').onclick = handleGlobalStop;
         
-        // ربط حدث زر إنهاء الجلسة الإضافي داخل نمط الضغط المستمر
         document.getElementById('overlayStopBtn').onclick = (e) => {
-            e.stopPropagation(); // منع تداخل اللمس مع الحاوية الخلفية
+            e.stopPropagation(); 
             handleGlobalStop();
         };
 
@@ -370,32 +404,14 @@
         holdBtn.addEventListener('mouseleave', (e) => { e.preventDefault(); setHoldState(false); });
         holdBtn.addEventListener('contextmenu', (e) => { e.preventDefault(); });
 
-        // --- ميزات حفظ واستيراد المشروع الجديدة ---
+        // --- تصدير واستيراد المشروع بصيغة ZIP مضغوطة ومدمجة ---
 
-        // تحويل الملف الصوتي الثنائي إلى نص Base64 للحفظ
-        function blobToBase64(blob) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-            });
-        }
-
-        // تحويل النص Base64 المستورد إلى ملف صوتي ثنائي لتهيئته
-        async function base64ToBlob(base64Uri) {
-            const res = await fetch(base64Uri);
-            return await res.blob();
-        }
-
-        // دالة حفظ المشروع الحالي
         document.getElementById('saveProjectBtn').onclick = async () => {
             if (clips.length === 0) {
                 alert("لا توجد مقاطع لحفظها في المشروع حالياً.");
                 return;
             }
 
-            // توليد الاسم الافتراضي بالتاريخ والساعة والدقيقة
             const now = new Date();
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -404,103 +420,168 @@
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const defaultName = `مشروع_محفظ_${year}-${month}-${day}_${hours}-${minutes}`;
 
-            // السؤال عن اسم المشروع مع إتاحة الخيار الافتراضي
             let projectName = prompt("أدخل اسماً مخصصاً للمشروع، أو اضغط موافق للاحتفاظ بالاسم الافتراضي المقترح:", defaultName);
-            if (projectName === null) return; // تم إلغاء العملية
+            if (projectName === null) return;
             projectName = projectName.trim() || defaultName;
 
-            const serializedClips = [];
-            for (const clip of clips) {
-                let base64 = "";
-                if (clip.rawBlob) {
-                    base64 = await blobToBase64(clip.rawBlob);
-                } else {
-                    const response = await fetch(clip.url);
-                    const blob = await response.blob();
-                    base64 = await blobToBase64(blob);
+            const saveBtn = document.getElementById('saveProjectBtn');
+            const originalText = saveBtn.innerText;
+            saveBtn.innerText = "⏳ جاري الضغط والحفظ...";
+            saveBtn.disabled = true;
+
+            try {
+                const zip = new JSZip();
+                const serializedClips = [];
+
+                for (const clip of clips) {
+                    let audioBlob = clip.rawBlob;
+                    if (!audioBlob) {
+                        const response = await fetch(clip.url);
+                        audioBlob = await response.blob();
+                    }
+                    
+                    const ext = audioBlob.type.includes('mp4') ? 'mp4' : 'webm';
+                    const fileName = `audio_${clip.id}.${ext}`;
+                    
+                    // إضافة الملف الصوتي كبيانات ثنائية مضغوطة
+                    zip.file(fileName, audioBlob);
+
+                    serializedClips.push({
+                        id: clip.id,
+                        repeats: clip.repeats,
+                        hasGap: clip.hasGap,
+                        active: clip.active !== false,
+                        start: clip.start,
+                        end: clip.end,
+                        fileName: fileName
+                    });
                 }
-                serializedClips.push({
-                    id: clip.id,
-                    repeats: clip.repeats,
-                    hasGap: clip.hasGap,
-                    active: clip.active !== false,
-                    start: clip.start,
-                    end: clip.end,
-                    audioBase64: base64
-                });
+
+                const projectData = {
+                    version: 1,
+                    allRepeats: parseInt(document.getElementById('allRepeats').value) || 1,
+                    infiniteRepeat: document.getElementById('infiniteRepeat').checked,
+                    toggleHoldMode: document.getElementById('toggleHoldMode').checked,
+                    clips: serializedClips
+                };
+
+                // إضافة التوصيف كملف نصي JSON داخل الأرشيف
+                zip.file("project.json", JSON.stringify(projectData));
+
+                const content = await zip.generateAsync({ type: "blob" });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(content);
+                a.download = `${projectName}.zip`;
+                a.click();
+            } catch (err) {
+                alert("حدث خطأ أثناء حفظ المشروع: " + err.message);
+            } finally {
+                saveBtn.innerText = originalText;
+                saveBtn.disabled = false;
             }
-
-            const projectData = {
-                version: 1,
-                allRepeats: parseInt(document.getElementById('allRepeats').value) || 1,
-                infiniteRepeat: document.getElementById('infiniteRepeat').checked,
-                toggleHoldMode: document.getElementById('toggleHoldMode').checked,
-                clips: serializedClips
-            };
-
-            const jsonStr = JSON.stringify(projectData);
-            const blob = new Blob([jsonStr], { type: "application/json" });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `${projectName}.qproj`;
-            a.click();
         };
 
-        // دالة استيراد مشروع سابق
         document.getElementById('importProjectInput').onchange = async (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
-            const reader = new FileReader();
-            reader.onload = async (evt) => {
-                try {
-                    const projectData = JSON.parse(evt.target.result);
-                    if (!projectData || !Array.isArray(projectData.clips)) {
-                        throw new Error("بنية ملف المشروع غير صالحة.");
-                    }
-
-                    // إفراغ المقاطع الحالية لتجنب التداخل
-                    clips.forEach(c => {
-                        if (c.ws) {
-                            try { c.ws.destroy(); } catch(err){}
-                        }
-                    });
-                    clips = [];
-                    clipsList.innerHTML = "";
-
-                    // استعادة الإعدادات العامة
-                    document.getElementById('allRepeats').value = projectData.allRepeats || 1;
-                    document.getElementById('infiniteRepeat').checked = !!projectData.infiniteRepeat;
-                    document.getElementById('toggleHoldMode').checked = !!projectData.toggleHoldMode;
-
-                    // استيراد المقاطع وتجهيزها
-                    for (const sClip of projectData.clips) {
-                        const blob = await base64ToBlob(sClip.audioBase64);
-                        const clipObj = {
-                            id: sClip.id || Date.now() + Math.random(),
-                            url: URL.createObjectURL(blob),
-                            rawBlob: blob,
-                            repeats: sClip.repeats || 1,
-                            hasGap: !!sClip.hasGap,
-                            active: sClip.active !== false,
-                            start: sClip.start || 0,
-                            end: sClip.end || 0,
-                            ws: null
-                        };
-                        clips.push(clipObj);
-                        renderClipItem(clipObj);
-                    }
-
-                    alert("تم استيراد المشروع بنجاح!");
-                } catch (err) {
-                    alert("فشل استيراد المشروع، يرجى التأكد من اختيار ملف مشروع صحيح: " + err.message);
+            try {
+                // فك حزمة الـ ZIP المستوردة
+                const zip = await JSZip.loadAsync(file);
+                const jsonFile = zip.file("project.json");
+                if (!jsonFile) {
+                    throw new Error("ملف مشروع تالف أو غير صالح.");
                 }
-                e.target.value = ""; // تصفير حقل الاختيار
-            };
-            reader.readAsText(file);
+
+                const jsonText = await jsonFile.async("text");
+                const projectData = JSON.parse(jsonText);
+                if (!projectData || !Array.isArray(projectData.clips)) {
+                    throw new Error("بنية ملف المشروع غير صالحة.");
+                }
+
+                // تنظيف القائمة الحالية بالكامل
+                clips.forEach(c => {
+                    if (c.ws) {
+                        try { c.ws.destroy(); } catch(err){}
+                    }
+                });
+                clips = [];
+                clipsList.innerHTML = "";
+
+                // استعادة المتغيرات العامة لخيارات التكرار
+                document.getElementById('allRepeats').value = projectData.allRepeats || 1;
+                document.getElementById('infiniteRepeat').checked = !!projectData.infiniteRepeat;
+                document.getElementById('toggleHoldMode').checked = !!projectData.toggleHoldMode;
+
+                // استعادة الملفات الصوتية الأصلية والمقاطع
+                for (const sClip of projectData.clips) {
+                    const audioFile = zip.file(sClip.fileName);
+                    if (!audioFile) {
+                        console.warn(`الملف الصوتي ${sClip.fileName} مفقود في الأرشيف.`);
+                        continue;
+                    }
+                    const blob = await audioFile.async("blob");
+                    const clipObj = {
+                        id: sClip.id || Date.now() + Math.random(),
+                        url: URL.createObjectURL(blob),
+                        rawBlob: blob,
+                        repeats: sClip.repeats || 1,
+                        hasGap: !!sClip.hasGap,
+                        active: sClip.active !== false,
+                        start: sClip.start || 0,
+                        end: sClip.end || 0,
+                        ws: null
+                    };
+                    clips.push(clipObj);
+                }
+
+                reRenderAllClips();
+                alert("تم استيراد المشروع بنجاح!");
+            } catch (err) {
+                alert("فشل استيراد المشروع: " + err.message);
+            }
+            e.target.value = ""; 
         };
 
-        // تصدير WAV النهائي للمقاطع المحددة فقط
+        // --- تصدير السلسلة بصيغة MP3 احترافية مدمجة ---
+
+        // دالة تحويل عينات الصوت إلى نسق PCM 16-Bit
+        function floatTo16BitPCM(floatSamples) {
+            const intSamples = new Int16Array(floatSamples.length);
+            for (let i = 0; i < floatSamples.length; i++) {
+                let s = Math.max(-1, Math.min(1, floatSamples[i]));
+                intSamples[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+            }
+            return intSamples;
+        }
+
+        // دالة تحويل الـ AudioBuffer إلى MP3 باستخدام LameJS
+        function bufferToMp3(audioBuffer) {
+            const channels = audioBuffer.numberOfChannels; // 1 (أحادية الصوت لتقليص الحجم)
+            const sampleRate = audioBuffer.sampleRate;
+            const kbps = 128; // جودة ممتازة للملف الصوتي النهائي
+            const mp3encoder = new lamejs.Mp3Encoder(channels, sampleRate, kbps);
+            const mp3Data = [];
+            
+            const samples = floatTo16BitPCM(audioBuffer.getChannelData(0));
+            const sampleBlockSize = 1152;
+            
+            for (let i = 0; i < samples.length; i += sampleBlockSize) {
+                const chunk = samples.subarray(i, i + sampleBlockSize);
+                const mp3buf = mp3encoder.encodeBuffer(chunk);
+                if (mp3buf.length > 0) {
+                    mp3Data.push(mp3buf);
+                }
+            }
+            
+            const mp3buf = mp3encoder.flush();
+            if (mp3buf.length > 0) {
+                mp3Data.push(mp3buf);
+            }
+            
+            return new Blob(mp3Data, { type: 'audio/mp3' });
+        }
+
         document.getElementById('exportBtn').onclick = async () => {
             const activeClips = clips.filter(c => c.active);
             if (activeClips.length === 0) {
@@ -517,6 +598,7 @@
                 totalDur += (clip.hasGap ? d * 2 : d) * clip.repeats;
                 buffers.push({ ab, clip, d });
             }
+            
             const offCtx = new OfflineAudioContext(1, 44100 * totalDur, 44100);
             let offset = 0;
             for (const b of buffers) {
@@ -528,28 +610,29 @@
                     if (b.clip.hasGap) offset += b.d;
                 }
             }
+            
             const rendered = await offCtx.startRendering();
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(bufferToWav(rendered));
-            a.download = "quran_session.wav"; a.click();
-        };
+            
+            const exportBtn = document.getElementById('exportBtn');
+            const originalText = exportBtn.innerText;
+            exportBtn.innerText = "⏳ جاري الترميز لـ MP3...";
+            exportBtn.disabled = true;
 
-        function bufferToWav(abuffer) {
-            let n = abuffer.numberOfChannels, len = abuffer.length * n * 2 + 44,
-                buf = new ArrayBuffer(len), view = new DataView(buf), pos = 0;
-            const s32 = (d) => { view.setUint32(pos, d, true); pos += 4; };
-            const s16 = (d) => { view.setUint16(pos, d, true); pos += 2; };
-            s32(0x46464952); s32(len - 8); s32(0x45564157); s32(0x20746d66); s32(16); s16(1); s16(n);
-            s32(abuffer.sampleRate); s32(abuffer.sampleRate * 2 * n); s16(n * 2); s16(16);
-            s32(0x61746164); s32(len - pos - 4);
-            for (let i = 0; i < abuffer.length; i++) {
-                for (let ch = 0; ch < n; ch++) {
-                    let s = Math.max(-1, Math.min(1, abuffer.getChannelData(ch)[i]));
-                    view.setInt16(pos, s < 0 ? s * 0x8000 : s * 0x7FFF, true); pos += 2;
+            setTimeout(() => { 
+                try {
+                    const mp3Blob = bufferToMp3(rendered);
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(mp3Blob);
+                    a.download = "session_quran.mp3"; 
+                    a.click();
+                } catch(err) {
+                    alert("فشل تصدير ملف MP3: " + err.message);
+                } finally {
+                    exportBtn.innerText = originalText;
+                    exportBtn.disabled = false;
                 }
-            }
-            return new Blob([buf], { type: "audio/wav" });
-        }
+            }, 50);
+        };
     </script>
 </body>
 </html>
