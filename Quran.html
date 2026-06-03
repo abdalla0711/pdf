@@ -8,7 +8,7 @@
     <script src="https://unpkg.com/wavesurfer.js@7"></script>
     <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght=400;700&display=swap');
         body { font-family: 'Cairo', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
         .clip-container { background: white; border-radius: 1rem; padding: 0.6rem; margin-bottom: 0.5rem; border: 1px solid #e2e8f0; transition: all 0.2s; }
         .is-playing { border-color: #10b981; background-color: #f0fdf4; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
@@ -16,6 +16,13 @@
         #recordBtn.recording { animation: pulse 1.5s infinite; background-color: #1e293b; }
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
         .compact-input { width: 35px; height: 24px; font-size: 12px; text-align: center; border-radius: 4px; border: 1px solid #cbd5e1; }
+        
+        /* تعطيل القوائم المنبثقة واللمس الافتراضي على زر التكرار التفاعلي للهواتف */
+        #holdBtn {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
     </style>
 </head>
 <body class="pb-44">
@@ -29,24 +36,43 @@
             </button>
         </header>
 
-        <!-- خيارات تكرار الكل -->
-        <div class="bg-indigo-900 text-white rounded-xl p-2 mb-3 flex items-center justify-between text-xs shadow-md">
-            <div class="flex items-center gap-2">
-                <span>تكرار القائمة:</span>
-                <input type="number" id="allRepeats" value="1" min="1" class="compact-input text-black font-bold">
-                <label class="flex items-center gap-1 cursor-pointer">
-                    <input type="checkbox" id="infiniteRepeat" class="w-4 h-4">
-                    <span>مستمر ♾️</span>
+        <!-- خيارات التكرار ونمط اللمس للأطفال -->
+        <div class="bg-indigo-900 text-white rounded-xl p-3 mb-3 flex flex-col gap-2 text-xs shadow-md">
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                    <span>تكرار السلسلة:</span>
+                    <input type="number" id="allRepeats" value="1" min="1" class="compact-input text-black font-bold">
+                    <label class="flex items-center gap-1 cursor-pointer">
+                        <input type="checkbox" id="infiniteRepeat" class="w-4 h-4">
+                        <span>مستمر ♾️</span>
+                    </label>
+                </div>
+                <div id="cycleStatus" class="font-bold text-indigo-200"></div>
+            </div>
+            <div class="border-t border-indigo-800/60 my-1"></div>
+            <div class="flex items-center justify-between">
+                <span>نمط التكرار التفاعلي للطفل:</span>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="checkbox" id="toggleHoldMode" class="w-4 h-4 text-indigo-600 rounded">
+                    <span>الضغط المستمر للإيقاف 🛑</span>
                 </label>
             </div>
-            <div id="cycleStatus" class="font-bold text-indigo-200"></div>
         </div>
 
         <div id="clipsList"></div>
     </div>
 
+    <!-- زر التوقف الكبير للطفل (يظهر كغطاء على كامل الشاشة أثناء التشغيل فقط عند تفعيله) -->
+    <div id="holdOverlay" class="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center hidden select-none">
+        <div id="holdBtn" class="w-64 h-64 bg-red-600 active:bg-red-700 text-white rounded-full flex flex-col items-center justify-center shadow-[0_0_35px_rgba(239,68,68,0.6)] select-none cursor-pointer transform transition-all duration-150 active:scale-95 border-4 border-white/20">
+            <span id="holdOverlayIcon" class="text-5xl mb-2">🛑</span>
+            <span id="holdOverlayText" class="text-lg font-bold">اضغط واستمر للتكرار</span>
+            <span id="holdOverlaySub" class="text-[11px] text-red-200 mt-2 text-center px-4 leading-relaxed">اضغط باستمرار للإيقاف المؤقت وترديد الآية، ارفع إصبعك للمتابعة</span>
+        </div>
+    </div>
+
     <!-- التحكم السفلي -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white p-3 flex flex-col gap-2 border-t z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
+    <div class="fixed bottom-0 left-0 right-0 bg-white p-3 flex flex-col gap-2 border-t z-40 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
         <div class="flex gap-2">
             <button id="playAllBtn" class="bg-green-600 text-white py-3 rounded-xl font-bold flex-1 shadow-lg active:scale-95 text-base">تشغيل السلسلة</button>
             <button id="stopBtn" class="bg-gray-100 text-gray-700 px-5 rounded-xl font-bold">إيقاف</button>
@@ -59,11 +85,16 @@
         let clips = [];
         let isRecording = false;
         let stopPlayback = false;
+        let isHeldPaused = false; // تتبع حالة إيقاف التشغيل باللمس المستمر
 
         const recordBtn = document.getElementById('recordBtn');
         const clipsList = document.getElementById('clipsList');
         const playAllBtn = document.getElementById('playAllBtn');
         const cycleStatus = document.getElementById('cycleStatus');
+        
+        const holdOverlay = document.getElementById('holdOverlay');
+        const holdBtn = document.getElementById('holdBtn');
+        const toggleHoldMode = document.getElementById('toggleHoldMode');
 
         recordBtn.onclick = async () => {
             if (!isRecording) {
@@ -95,6 +126,7 @@
                 url: URL.createObjectURL(blob),
                 repeats: 1,
                 hasGap: false,
+                active: true, // تفعيل المقاطع افتراضياً لتضمينها في السلسلة
                 start: 0,
                 end: 0,
                 ws: null
@@ -109,7 +141,10 @@
             container.className = "clip-container";
             container.innerHTML = `
                 <div class="flex justify-between items-center mb-1">
-                    <span class="text-[10px] font-bold text-gray-400 uppercase">آية ${clips.length}</span>
+                    <div class="flex items-center gap-1.5">
+                        <input type="checkbox" id="check-${clip.id}" ${clip.active ? 'checked' : ''} onchange="toggleClipActive(${clip.id}, this.checked)" class="w-3.5 h-3.5 text-indigo-600 rounded cursor-pointer">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase">آية ${clips.length}</span>
+                    </div>
                     <button onclick="deleteClip(${clip.id})" class="text-red-300 hover:text-red-500 text-[10px]">حذف</button>
                 </div>
                 
@@ -119,11 +154,11 @@
                     <div class="flex items-center gap-3">
                         <div class="flex items-center gap-1">
                             <span class="text-[10px] font-bold">تكرار:</span>
-                            <input type="number" value="1" min="1" onchange="updateClip(${clip.id}, 'repeats', this.value)" class="compact-input">
+                            <input type="number" value="${clip.repeats}" min="1" onchange="updateClip(${clip.id}, 'repeats', this.value)" class="compact-input">
                         </div>
                         <div class="flex items-center gap-1">
                             <span class="text-[10px] font-bold">فراغ:</span>
-                            <input type="checkbox" onchange="updateClip(${clip.id}, 'hasGap', this.checked)" class="w-3 h-3">
+                            <input type="checkbox" ${clip.hasGap ? 'checked' : ''} onchange="updateClip(${clip.id}, 'hasGap', this.checked)" class="w-3 h-3">
                         </div>
                     </div>
                     <button onclick="playSingle(${clip.id})" class="text-indigo-600 text-[10px] font-bold bg-indigo-50 px-2 py-1 rounded">تجربة 🔊</button>
@@ -149,6 +184,11 @@
             clip.ws = ws;
         }
 
+        function toggleClipActive(id, isActive) {
+            const clip = clips.find(c => c.id === id);
+            if (clip) clip.active = isActive;
+        }
+
         function updateClip(id, key, val) {
             const clip = clips.find(c => c.id === id);
             if (clip) clip[key] = (key === 'hasGap') ? val : parseInt(val);
@@ -159,6 +199,7 @@
             document.getElementById(`clip-${id}`).remove();
         }
 
+        // منطق تشغيل المقطع مع دعم الإيقاف المؤقت التفاعلي وفترة الصمت
         async function playClipLogic(clip) {
             const el = document.getElementById(`clip-${clip.id}`);
             const duration = clip.end - clip.start;
@@ -168,21 +209,41 @@
                 clip.ws.setTime(clip.start);
                 el.className = "clip-container is-playing";
                 
-                await new Promise(resolve => {
-                    clip.ws.play(clip.start, clip.end);
-                    const op = () => { clip.ws.un('pause', op); resolve(); };
-                    clip.ws.on('pause', op);
-                });
+                clip.ws.play();
+
+                // حلقة متابعة تقدم تشغيل الصوت مع دعم الإيقاف التفاعلي
+                while (clip.ws.getCurrentTime() < clip.end) {
+                    if (stopPlayback) break;
+
+                    if (isHeldPaused) {
+                        if (clip.ws.isPlaying()) {
+                            clip.ws.pause();
+                        }
+                    } else {
+                        if (!clip.ws.isPlaying() && !stopPlayback) {
+                            clip.ws.play();
+                        }
+                    }
+                    await new Promise(res => setTimeout(res, 50));
+                }
+
+                clip.ws.pause();
 
                 if (stopPlayback) break;
-                await new Promise(r => setTimeout(r, 100)); // راحة تقنية
+                await new Promise(r => setTimeout(r, 100)); // راحة تقنية قصيرة
 
+                // تشغيل فترة الصمت (الانتظار للتكرار) مع دعم الإيقاف التفاعلي
                 if (clip.hasGap) {
                     el.className = "clip-container is-waiting";
-                    await new Promise(resolve => {
-                        const t = setTimeout(resolve, duration * 1000);
-                        if (stopPlayback) clearTimeout(t);
-                    });
+                    const totalGapMs = duration * 1000;
+                    let gapElapsed = 0;
+                    while (gapElapsed < totalGapMs) {
+                        if (stopPlayback) break;
+                        if (!isHeldPaused) {
+                            gapElapsed += 100;
+                        }
+                        await new Promise(res => setTimeout(res, 100));
+                    }
                 }
                 el.className = "clip-container";
             }
@@ -196,9 +257,22 @@
 
         playAllBtn.onclick = async () => {
             stopPlayback = false;
+            
+            // تصفية السلسلة لتشغيل المقاطع المحددة فقط
+            const activeClips = clips.filter(c => c.active);
+            if (activeClips.length === 0) {
+                alert("الرجاء اختيار مقطع واحد على الأقل للتشغيل");
+                return;
+            }
+
             playAllBtn.disabled = true;
             const infinite = document.getElementById('infiniteRepeat').checked;
             const totalCycles = parseInt(document.getElementById('allRepeats').value);
+
+            // إظهار واجهة الضغط المستمر إذا تم تفعيل النمط
+            if (toggleHoldMode.checked) {
+                holdOverlay.classList.remove('hidden');
+            }
             
             let currentCycle = 0;
             while (infinite || currentCycle < totalCycles) {
@@ -206,7 +280,7 @@
                 currentCycle++;
                 cycleStatus.innerText = infinite ? `دورة: ${currentCycle}` : `دورة: ${currentCycle} / ${totalCycles}`;
                 
-                for (const clip of clips) {
+                for (const clip of activeClips) {
                     if (stopPlayback) break;
                     await playClipLogic(clip);
                 }
@@ -214,10 +288,14 @@
             
             cycleStatus.innerText = "";
             playAllBtn.disabled = false;
+            holdOverlay.classList.add('hidden');
         };
 
+        // دالة الإيقاف الكامل وتصفير الحالات
         document.getElementById('stopBtn').onclick = () => {
             stopPlayback = true;
+            isHeldPaused = false;
+            holdOverlay.classList.add('hidden');
             clips.forEach(c => {
                 c.ws.pause();
                 const el = document.getElementById(`clip-${c.id}`);
@@ -226,13 +304,52 @@
             playAllBtn.disabled = false;
         };
 
-        // دالة التصدير البسيطة (WAV)
+        // منطق تفعيل الإيقاف المستمر عند الضغط وإلغائه عند الإفلات
+        function setHoldState(active) {
+            const holdBtnEl = document.getElementById('holdBtn');
+            const icon = document.getElementById('holdOverlayIcon');
+            const text = document.getElementById('holdOverlayText');
+            const subText = document.getElementById('holdOverlaySub');
+
+            if (active) {
+                isHeldPaused = true;
+                holdBtnEl.classList.remove('bg-red-600', 'active:bg-red-700');
+                holdBtnEl.classList.add('bg-green-600');
+                icon.innerText = "🗣️";
+                text.innerText = "ردد الآن... طفلك يتكلم";
+                subText.innerText = "أبقِ إصبعك على الزر حتى تفرغ من التكرار، ثم ارفعه للاستمرار";
+            } else {
+                isHeldPaused = false;
+                holdBtnEl.classList.remove('bg-green-600');
+                holdBtnEl.classList.add('bg-red-600', 'active:bg-red-700');
+                icon.innerText = "🛑";
+                text.innerText = "اضغط واستمر للتكرار";
+                subText.innerText = "اضغط باستمرار للإيقاف المؤقت وترديد الآية، ارفع إصبعك للمتابعة";
+            }
+        }
+
+        // تسجيل أحداث اللمس (لمنع تداخل اللمس الافتراضي للهواتف)
+        holdBtn.addEventListener('touchstart', (e) => { e.preventDefault(); setHoldState(true); });
+        holdBtn.addEventListener('touchend', (e) => { e.preventDefault(); setHoldState(false); });
+        holdBtn.addEventListener('touchcancel', (e) => { e.preventDefault(); setHoldState(false); });
+
+        // تسجيل أحداث الفأرة للحواسب
+        holdBtn.addEventListener('mousedown', (e) => { e.preventDefault(); setHoldState(true); });
+        holdBtn.addEventListener('mouseup', (e) => { e.preventDefault(); setHoldState(false); });
+        holdBtn.addEventListener('mouseleave', (e) => { e.preventDefault(); setHoldState(false); });
+        holdBtn.addEventListener('contextmenu', (e) => { e.preventDefault(); }); // منع ظهور القائمة المنبثقة
+
+        // دالة تصدير WAV للمقاطع المحددة فقط
         document.getElementById('exportBtn').onclick = async () => {
-            if (clips.length === 0) return;
+            const activeClips = clips.filter(c => c.active);
+            if (activeClips.length === 0) {
+                alert("الرجاء تحديد مقطع واحد على الأقل لتصديره");
+                return;
+            }
             const audioCtx = new AudioContext();
             let totalDur = 0;
             const buffers = [];
-            for (const clip of clips) {
+            for (const clip of activeClips) {
                 const res = await fetch(clip.url);
                 const ab = await audioCtx.decodeAudioData(await res.arrayBuffer());
                 const d = clip.end - clip.start;
