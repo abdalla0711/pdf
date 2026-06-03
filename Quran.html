@@ -17,7 +17,7 @@
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
         .compact-input { width: 35px; height: 24px; font-size: 12px; text-align: center; border-radius: 4px; border: 1px solid #cbd5e1; }
         
-        /* تعطيل القوائم المنبثقة واللمس الافتراضي على زر التكرار التفاعلي للهواتف */
+        /* تعطيل اللمس الافتراضي لمنع تداخل حركات التكبير والقوائم للهواتف الذكية */
         #holdBtn {
             -webkit-touch-callout: none;
             -webkit-user-select: none;
@@ -62,22 +62,40 @@
         <div id="clipsList"></div>
     </div>
 
-    <!-- زر التوقف الكبير للطفل (يظهر كغطاء على كامل الشاشة أثناء التشغيل فقط عند تفعيله) -->
-    <div id="holdOverlay" class="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center hidden select-none">
+    <!-- زر التوقف الكبير للطفل مع زر إنهاء الجلسة المضاف حديثاً -->
+    <div id="holdOverlay" class="fixed inset-0 bg-slate-900/80 z-50 flex flex-col items-center justify-center hidden select-none">
         <div id="holdBtn" class="w-64 h-64 bg-red-600 active:bg-red-700 text-white rounded-full flex flex-col items-center justify-center shadow-[0_0_35px_rgba(239,68,68,0.6)] select-none cursor-pointer transform transition-all duration-150 active:scale-95 border-4 border-white/20">
             <span id="holdOverlayIcon" class="text-5xl mb-2">🛑</span>
             <span id="holdOverlayText" class="text-lg font-bold">اضغط واستمر للتكرار</span>
             <span id="holdOverlaySub" class="text-[11px] text-red-200 mt-2 text-center px-4 leading-relaxed">اضغط باستمرار للإيقاف المؤقت وترديد الآية، ارفع إصبعك للمتابعة</span>
         </div>
+        
+        <!-- زر إنهاء تشغيل الوضع الجديد -->
+        <button id="overlayStopBtn" class="mt-8 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 px-6 py-2.5 rounded-xl font-bold text-sm shadow-md active:scale-95 transition-all">
+            إنهاء الجلسة ⏹️
+        </button>
     </div>
 
-    <!-- التحكم السفلي -->
+    <!-- التحكم السفلي المحدث -->
     <div class="fixed bottom-0 left-0 right-0 bg-white p-3 flex flex-col gap-2 border-t z-40 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
         <div class="flex gap-2">
             <button id="playAllBtn" class="bg-green-600 text-white py-3 rounded-xl font-bold flex-1 shadow-lg active:scale-95 text-base">تشغيل السلسلة</button>
             <button id="stopBtn" class="bg-gray-100 text-gray-700 px-5 rounded-xl font-bold">إيقاف</button>
         </div>
-        <button id="exportBtn" class="text-gray-400 py-1 text-[10px] font-bold uppercase tracking-wider">حفظ المشروع (WAV)</button>
+        
+        <!-- خيارات حفظ واستيراد وتصدير المشروع -->
+        <div class="flex justify-between items-center text-[11px] mt-1 px-1">
+            <button id="saveProjectBtn" class="text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-1">
+                📥 حفظ المشروع
+            </button>
+            <label class="text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-1 cursor-pointer">
+                📂 استيراد مشروع
+                <input type="file" id="importProjectInput" accept=".qproj,application/json" class="hidden">
+            </label>
+            <button id="exportBtn" class="text-gray-400 hover:text-gray-600 font-bold">
+                🎵 تصدير WAV
+            </button>
+        </div>
     </div>
 
     <script>
@@ -85,7 +103,7 @@
         let clips = [];
         let isRecording = false;
         let stopPlayback = false;
-        let isHeldPaused = false; // تتبع حالة إيقاف التشغيل باللمس المستمر
+        let isHeldPaused = false; 
 
         const recordBtn = document.getElementById('recordBtn');
         const clipsList = document.getElementById('clipsList');
@@ -124,9 +142,10 @@
             const clipObj = {
                 id: id,
                 url: URL.createObjectURL(blob),
+                rawBlob: blob, // تخزين الملف الصوتي الأصلي لتسهيل الحفظ والتصدير
                 repeats: 1,
                 hasGap: false,
-                active: true, // تفعيل المقاطع افتراضياً لتضمينها في السلسلة
+                active: true, 
                 start: 0,
                 end: 0,
                 ws: null
@@ -136,6 +155,8 @@
         }
 
         function renderClipItem(clip) {
+            if (clip.active === undefined) clip.active = true;
+
             const container = document.createElement('div');
             container.id = `clip-${clip.id}`;
             container.className = "clip-container";
@@ -177,8 +198,18 @@
 
             const wsRegions = ws.registerPlugin(WaveSurfer.Regions.create());
             ws.on('ready', () => {
-                clip.end = ws.getDuration();
-                wsRegions.addRegion({ id: 'r', start: 0, end: ws.getDuration(), color: 'rgba(99, 102, 241, 0.1)', drag: true, resize: true });
+                const duration = ws.getDuration();
+                if (clip.end === 0 || clip.end > duration) {
+                    clip.end = duration;
+                }
+                wsRegions.addRegion({ 
+                    id: 'r', 
+                    start: clip.start, 
+                    end: clip.end, 
+                    color: 'rgba(99, 102, 241, 0.1)', 
+                    drag: true, 
+                    resize: true 
+                });
             });
             wsRegions.on('region-updated', (region) => { clip.start = region.start; clip.end = region.end; });
             clip.ws = ws;
@@ -199,7 +230,6 @@
             document.getElementById(`clip-${id}`).remove();
         }
 
-        // منطق تشغيل المقطع مع دعم الإيقاف المؤقت التفاعلي وفترة الصمت
         async function playClipLogic(clip) {
             const el = document.getElementById(`clip-${clip.id}`);
             const duration = clip.end - clip.start;
@@ -211,7 +241,6 @@
                 
                 clip.ws.play();
 
-                // حلقة متابعة تقدم تشغيل الصوت مع دعم الإيقاف التفاعلي
                 while (clip.ws.getCurrentTime() < clip.end) {
                     if (stopPlayback) break;
 
@@ -230,9 +259,8 @@
                 clip.ws.pause();
 
                 if (stopPlayback) break;
-                await new Promise(r => setTimeout(r, 100)); // راحة تقنية قصيرة
+                await new Promise(r => setTimeout(r, 100)); 
 
-                // تشغيل فترة الصمت (الانتظار للتكرار) مع دعم الإيقاف التفاعلي
                 if (clip.hasGap) {
                     el.className = "clip-container is-waiting";
                     const totalGapMs = duration * 1000;
@@ -258,7 +286,6 @@
         playAllBtn.onclick = async () => {
             stopPlayback = false;
             
-            // تصفية السلسلة لتشغيل المقاطع المحددة فقط
             const activeClips = clips.filter(c => c.active);
             if (activeClips.length === 0) {
                 alert("الرجاء اختيار مقطع واحد على الأقل للتشغيل");
@@ -269,7 +296,6 @@
             const infinite = document.getElementById('infiniteRepeat').checked;
             const totalCycles = parseInt(document.getElementById('allRepeats').value);
 
-            // إظهار واجهة الضغط المستمر إذا تم تفعيل النمط
             if (toggleHoldMode.checked) {
                 holdOverlay.classList.remove('hidden');
             }
@@ -291,20 +317,27 @@
             holdOverlay.classList.add('hidden');
         };
 
-        // دالة الإيقاف الكامل وتصفير الحالات
-        document.getElementById('stopBtn').onclick = () => {
+        // دالة الإيقاف المشتركة
+        function handleGlobalStop() {
             stopPlayback = true;
             isHeldPaused = false;
             holdOverlay.classList.add('hidden');
             clips.forEach(c => {
-                c.ws.pause();
+                if (c.ws) c.ws.pause();
                 const el = document.getElementById(`clip-${c.id}`);
                 if (el) el.className = "clip-container";
             });
             playAllBtn.disabled = false;
+        }
+
+        document.getElementById('stopBtn').onclick = handleGlobalStop;
+        
+        // ربط حدث زر إنهاء الجلسة الإضافي داخل نمط الضغط المستمر
+        document.getElementById('overlayStopBtn').onclick = (e) => {
+            e.stopPropagation(); // منع تداخل اللمس مع الحاوية الخلفية
+            handleGlobalStop();
         };
 
-        // منطق تفعيل الإيقاف المستمر عند الضغط وإلغائه عند الإفلات
         function setHoldState(active) {
             const holdBtnEl = document.getElementById('holdBtn');
             const icon = document.getElementById('holdOverlayIcon');
@@ -328,18 +361,146 @@
             }
         }
 
-        // تسجيل أحداث اللمس (لمنع تداخل اللمس الافتراضي للهواتف)
         holdBtn.addEventListener('touchstart', (e) => { e.preventDefault(); setHoldState(true); });
         holdBtn.addEventListener('touchend', (e) => { e.preventDefault(); setHoldState(false); });
         holdBtn.addEventListener('touchcancel', (e) => { e.preventDefault(); setHoldState(false); });
 
-        // تسجيل أحداث الفأرة للحواسب
         holdBtn.addEventListener('mousedown', (e) => { e.preventDefault(); setHoldState(true); });
         holdBtn.addEventListener('mouseup', (e) => { e.preventDefault(); setHoldState(false); });
         holdBtn.addEventListener('mouseleave', (e) => { e.preventDefault(); setHoldState(false); });
-        holdBtn.addEventListener('contextmenu', (e) => { e.preventDefault(); }); // منع ظهور القائمة المنبثقة
+        holdBtn.addEventListener('contextmenu', (e) => { e.preventDefault(); });
 
-        // دالة تصدير WAV للمقاطع المحددة فقط
+        // --- ميزات حفظ واستيراد المشروع الجديدة ---
+
+        // تحويل الملف الصوتي الثنائي إلى نص Base64 للحفظ
+        function blobToBase64(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        // تحويل النص Base64 المستورد إلى ملف صوتي ثنائي لتهيئته
+        async function base64ToBlob(base64Uri) {
+            const res = await fetch(base64Uri);
+            return await res.blob();
+        }
+
+        // دالة حفظ المشروع الحالي
+        document.getElementById('saveProjectBtn').onclick = async () => {
+            if (clips.length === 0) {
+                alert("لا توجد مقاطع لحفظها في المشروع حالياً.");
+                return;
+            }
+
+            // توليد الاسم الافتراضي بالتاريخ والساعة والدقيقة
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const defaultName = `مشروع_محفظ_${year}-${month}-${day}_${hours}-${minutes}`;
+
+            // السؤال عن اسم المشروع مع إتاحة الخيار الافتراضي
+            let projectName = prompt("أدخل اسماً مخصصاً للمشروع، أو اضغط موافق للاحتفاظ بالاسم الافتراضي المقترح:", defaultName);
+            if (projectName === null) return; // تم إلغاء العملية
+            projectName = projectName.trim() || defaultName;
+
+            const serializedClips = [];
+            for (const clip of clips) {
+                let base64 = "";
+                if (clip.rawBlob) {
+                    base64 = await blobToBase64(clip.rawBlob);
+                } else {
+                    const response = await fetch(clip.url);
+                    const blob = await response.blob();
+                    base64 = await blobToBase64(blob);
+                }
+                serializedClips.push({
+                    id: clip.id,
+                    repeats: clip.repeats,
+                    hasGap: clip.hasGap,
+                    active: clip.active !== false,
+                    start: clip.start,
+                    end: clip.end,
+                    audioBase64: base64
+                });
+            }
+
+            const projectData = {
+                version: 1,
+                allRepeats: parseInt(document.getElementById('allRepeats').value) || 1,
+                infiniteRepeat: document.getElementById('infiniteRepeat').checked,
+                toggleHoldMode: document.getElementById('toggleHoldMode').checked,
+                clips: serializedClips
+            };
+
+            const jsonStr = JSON.stringify(projectData);
+            const blob = new Blob([jsonStr], { type: "application/json" });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `${projectName}.qproj`;
+            a.click();
+        };
+
+        // دالة استيراد مشروع سابق
+        document.getElementById('importProjectInput').onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (evt) => {
+                try {
+                    const projectData = JSON.parse(evt.target.result);
+                    if (!projectData || !Array.isArray(projectData.clips)) {
+                        throw new Error("بنية ملف المشروع غير صالحة.");
+                    }
+
+                    // إفراغ المقاطع الحالية لتجنب التداخل
+                    clips.forEach(c => {
+                        if (c.ws) {
+                            try { c.ws.destroy(); } catch(err){}
+                        }
+                    });
+                    clips = [];
+                    clipsList.innerHTML = "";
+
+                    // استعادة الإعدادات العامة
+                    document.getElementById('allRepeats').value = projectData.allRepeats || 1;
+                    document.getElementById('infiniteRepeat').checked = !!projectData.infiniteRepeat;
+                    document.getElementById('toggleHoldMode').checked = !!projectData.toggleHoldMode;
+
+                    // استيراد المقاطع وتجهيزها
+                    for (const sClip of projectData.clips) {
+                        const blob = await base64ToBlob(sClip.audioBase64);
+                        const clipObj = {
+                            id: sClip.id || Date.now() + Math.random(),
+                            url: URL.createObjectURL(blob),
+                            rawBlob: blob,
+                            repeats: sClip.repeats || 1,
+                            hasGap: !!sClip.hasGap,
+                            active: sClip.active !== false,
+                            start: sClip.start || 0,
+                            end: sClip.end || 0,
+                            ws: null
+                        };
+                        clips.push(clipObj);
+                        renderClipItem(clipObj);
+                    }
+
+                    alert("تم استيراد المشروع بنجاح!");
+                } catch (err) {
+                    alert("فشل استيراد المشروع، يرجى التأكد من اختيار ملف مشروع صحيح: " + err.message);
+                }
+                e.target.value = ""; // تصفير حقل الاختيار
+            };
+            reader.readAsText(file);
+        };
+
+        // تصدير WAV النهائي للمقاطع المحددة فقط
         document.getElementById('exportBtn').onclick = async () => {
             const activeClips = clips.filter(c => c.active);
             if (activeClips.length === 0) {
