@@ -1,30 +1,30 @@
 {
-  "_readme": "هذا الملف يُدار من GitHub مباشرة. كل مفتاح هو رقم تفعيل، وقيمته تحتوي حالته. عدّل status إلى disabled لتعطيل أي اشتراك فوراً.",
+  "_readme": "ÙØ°Ø§ Ø§ÙÙÙÙ ÙÙØ¯Ø§Ø± ÙÙ GitHub ÙØ¨Ø§Ø´Ø±Ø©. ÙÙ ÙÙØªØ§Ø­ ÙÙ Ø±ÙÙ ØªÙØ¹ÙÙØ ÙÙÙÙØªÙ ØªØ­ØªÙÙ Ø­Ø§ÙØªÙ. Ø¹Ø¯ÙÙ status Ø¥ÙÙ disabled ÙØªØ¹Ø·ÙÙ Ø£Ù Ø§Ø´ØªØ±Ø§Ù ÙÙØ±Ø§Ù.",
   "licenses": {
     "BAYAN-2026-TEST1-DEMO": {
       "status": "active",
-      "customerName": "عميل تجريبي 1",
+      "customerName": "Ø¹ÙÙÙ ØªØ¬Ø±ÙØ¨Ù 1",
       "expiresAt": "2026-12-31",
-      "deviceId": null,
-      "activatedAt": null
+      "deviceId": "dev_d2dfd2ec9a2e9372b189f854e30ba2fe",
+      "activatedAt": "2026-06-28T10:29:16.344Z"
     },
     "BAYAN-2026-TEST2-DEMO": {
       "status": "active",
-      "customerName": "عميل تجريبي 2",
+      "customerName": "Ø¹ÙÙÙ ØªØ¬Ø±ÙØ¨Ù 2",
       "expiresAt": "2027-06-30",
       "deviceId": null,
       "activatedAt": null
     },
     "BAYAN-2026-EXPIRED-X9Z": {
       "status": "active",
-      "customerName": "عميل منتهي (مثال)",
+      "customerName": "Ø¹ÙÙÙ ÙÙØªÙÙ (ÙØ«Ø§Ù)",
       "expiresAt": "2026-01-01",
       "deviceId": "dev_abc123sample",
       "activatedAt": "2025-12-01T10:00:00Z"
     },
     "BAYAN-2026-BLOCKED-Q7K": {
       "status": "disabled",
-      "customerName": "عميل معطل (مثال)",
+      "customerName": "Ø¹ÙÙÙ ÙØ¹Ø·Ù (ÙØ«Ø§Ù)",
       "expiresAt": "2027-12-31",
       "deviceId": null,
       "activatedAt": null
