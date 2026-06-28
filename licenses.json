@@ -1,0 +1,33 @@
+{
+  "_readme": "هذا الملف يُدار من GitHub مباشرة. كل مفتاح هو رقم تفعيل، وقيمته تحتوي حالته. عدّل status إلى disabled لتعطيل أي اشتراك فوراً.",
+  "licenses": {
+    "BAYAN-2026-TEST1-DEMO": {
+      "status": "active",
+      "customerName": "عميل تجريبي 1",
+      "expiresAt": "2026-12-31",
+      "deviceId": null,
+      "activatedAt": null
+    },
+    "BAYAN-2026-TEST2-DEMO": {
+      "status": "active",
+      "customerName": "عميل تجريبي 2",
+      "expiresAt": "2027-06-30",
+      "deviceId": null,
+      "activatedAt": null
+    },
+    "BAYAN-2026-EXPIRED-X9Z": {
+      "status": "active",
+      "customerName": "عميل منتهي (مثال)",
+      "expiresAt": "2026-01-01",
+      "deviceId": "dev_abc123sample",
+      "activatedAt": "2025-12-01T10:00:00Z"
+    },
+    "BAYAN-2026-BLOCKED-Q7K": {
+      "status": "disabled",
+      "customerName": "عميل معطل (مثال)",
+      "expiresAt": "2027-12-31",
+      "deviceId": null,
+      "activatedAt": null
+    }
+  }
+}
