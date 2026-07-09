@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مشغل ومقص الفيديو المحلي السريع</title>
+    
+    <!-- خط Tajawal الأنيق من Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    
+    <!-- مكتبة FFmpeg.wasm المخصصة للعمل محلياً بالكامل -->
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --panel-color: #111827;
+            --card-color: #1f2937;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --danger-color: #ef4444;
+            --danger-hover: #dc2626;
+            --success-color: #10b981;
+            --text-color: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border-color: #374151;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            direction: rtl;
+        }
+
+        header {
+            background-color: var(--panel-color);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo-container h1 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            background: linear-gradient(to left, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-badge {
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #eab308; /* yellow initially */
+            display: inline-block;
+        }
+
+        .status-ready .status-dot {
+            background-color: var(--success-color);
+            box-shadow: 0 0 8px var(--success-color);
+        }
+
+        .status-loading .status-dot {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+
+        main {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* حاوية رفع الفيديو */
+        .upload-container {
+            border: 2px dashed var(--border-color);
+            background-color: var(--panel-color);
+            border-radius: 1rem;
+            padding: 4rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .upload-container:hover, .upload-container.drag-over {
+            border-color: var(--accent-color);
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 3.5rem;
+            color: var(--accent-color);
+        }
+
+        .upload-container p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        /* واجهة العمل عند اختيار الفيديو */
+        .workspace {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 968px) {
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .video-panel {
+            background-color: var(--panel-color);
+            border-radius: 1rem;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        video {
+            width: 100%;
+            max-height: 60vh;
+            background-color: #000;
+            display: block;
+        }
+
+        .controls-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .card {
+            background-color: var(--panel-color);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        /* التحكم في سرعة التشغيل */
+        .speed-presets {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        button {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--card-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 0.6rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: var(--border-color);
+        }
+
+        button.active {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+            color: white;
+        }
+
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent-color);
+            cursor: pointer;
+        }
+
+        /* أدوات القص والتقطيع */
+        .trim-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .btn-cut {
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 1rem;
+            font-size: 1.1rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-cut:hover:not(:disabled) {
+            background-color: var(--danger-hover);
+        }
+
+        .btn-cut.trimming-active {
+            background-color: #b91c1c;
+            animation: pulse-red 1.5s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        .btn-stop {
+            background-color: #eab308;
+            color: #0f172a;
+            border: none;
+            padding: 1rem;
+            font-size: 1.1rem;
+            border-radius: 0.75rem;
+        }
+
+        .btn-stop:hover:not(:disabled) {
+            background-color: #ca8a04;
+        }
+
+        .btn-stop:disabled {
+            background-color: #374151;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        /* تفاصيل حالة القص الحالية */
+        .trim-status-card {
+            background-color: rgba(239, 68, 68, 0.05);
+            border: 1px dashed var(--danger-color);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            display: none;
+            flex-direction: column;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        /* الإعدادات */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .input-group label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        input[type="number"] {
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 0.6rem;
+            border-radius: 0.5rem;
+            font-family: inherit;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        input[type="number"]:focus {
+            border-color: var(--accent-color);
+        }
+
+        /* نافذة معالجة وحفظ الانتظار */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background-color: var(--panel-color);
+            border: 1px solid var(--border-color);
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--border-color);
+            border-top-color: var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .btn-change-video {
+            margin-top: 1rem;
+            background-color: transparent;
+            color: var(--text-muted);
+            border: 1px dashed var(--border-color);
+        }
+        .btn-change-video:hover {
+            color: var(--text-color);
+            border-color: var(--text-color);
+        }
+
+        .tip-box {
+            background-color: rgba(59, 130, 246, 0.05);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <h1>✂️ مشغل ومقص الفيديو المحلي</h1>
+        </div>
+        <div class="status-badge" id="engine-status">
+            <span class="status-dot"></span>
+            <span id="status-text">جاري تهيئة النظام...</span>
+        </div>
+    </header>
+
+    <main>
+        <!-- قسم رفع الفيديو -->
+        <div class="upload-container" id="upload-container" onclick="document.getElementById('file-input').click()">
+            <div class="upload-icon">📂</div>
+            <h2>اختر مقطع فيديو للبدء</h2>
+            <p>اسحب وأفلت ملف الفيديو هنا أو اضغط للتصفح من جهازك</p>
+            <p style="font-size: 0.85rem; color: var(--accent-color)">يدعم ملفات MP4 محلياً بالكامل دون أي رفع للسيرفر</p>
+            <input type="file" id="file-input" accept="video/mp4, video/*">
+        </div>
+
+        <!-- واجهة مشغل الفيديو والتحكم -->
+        <div class="workspace" id="workspace-container" style="display: none;">
+            
+            <!-- مشغل الفيديو -->
+            <div class="video-panel">
+                <video id="video-player" controls preload="auto"></video>
+                <button class="btn-change-video" id="change-video-btn">📂 اختيار فيديو آخر</button>
+            </div>
+
+            <!-- لوحة التحكم -->
+            <div class="controls-panel">
+                
+                <!-- كرت التحكم بالسرعة -->
+                <div class="card">
+                    <div class="card-title">🚀 سرعة التشغيل</div>
+                    <div class="speed-presets">
+                        <button data-speed="1" class="active" onclick="setSpeed(1)">1x</button>
+                        <button data-speed="1.5" onclick="setSpeed(1.5)">1.5x</button>
+                        <button data-speed="2" onclick="setSpeed(2)">2x</button>
+                        <button data-speed="3" onclick="setSpeed(3)">3x</button>
+                        <button data-speed="4" onclick="setSpeed(4)">4x</button>
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>سرعة مخصصة:</span>
+                            <span id="custom-speed-val" style="font-weight: 700; color: var(--accent-color)">1.00x</span>
+                        </div>
+                        <input type="range" id="speed-slider" min="0.25" max="8" step="0.25" value="1">
+                    </div>
+                </div>
+
+                <!-- كرت قص وتقطيع الفيديو -->
+                <div class="card">
+                    <div class="card-title">✂️ قص الفيديو الذكي</div>
+                    
+                    <div class="trim-controls">
+                        <!-- زر قص (البداية) -->
+                        <button class="btn-cut" id="trim-btn" disabled>
+                            🎬 ابدأ نطاق القص (تطبيق الخصم)
+                        </button>
+
+                        <!-- تفاصيل عملية القص المباشرة -->
+                        <div class="trim-status-card" id="trim-status-card">
+                            <div style="font-weight: bold; color: var(--danger-color)">🔴 جاري تحديد المقطع...</div>
+                            <div>نقطة البداية المحتسبة: <span id="status-start-time" style="font-weight: bold;">00:00</span></div>
+                            <div>توقيت الفيديو الحالي: <span id="status-current-time" style="font-weight: bold;">00:00</span></div>
+                            <div>المدة المسجلة حتى الآن: <span id="status-duration" style="font-weight: bold; color: var(--accent-color)">0 ثوانٍ</span></div>
+                        </div>
+
+                        <!-- زر التوقف (النهاية والحفظ) -->
+                        <button class="btn-stop" id="stop-btn" disabled>
+                            ⏹️ إيقاف ومعالجة المقطع المقصوص
+                        </button>
+                    </div>
+                </div>
+
+                <!-- كرت الإعدادات -->
+                <div class="card">
+                    <div class="card-title">⚙️ إعدادات القص التلقائي</div>
+                    <div class="settings-grid">
+                        <div class="input-group">
+                            <label for="offset-input">قيمة الخصم للبداية (بالثواني):</label>
+                            <input type="number" id="offset-input" value="30" min="0" max="300">
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem">
+                                عند الضغط على "ابدأ نطاق القص"، ستبدأ البداية الفعلية من (الوقت الحالي مطروحاً منه هذه القيمة).
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- تلميحات -->
+                <div class="tip-box">
+                    💡 <b>ملاحظة هامة:</b> القص يتم بطريقة نسخ المسار (Stream Copy) دون معالجة بصرية ثقيلة. هذا يحفظ الملف فوراً بالوقت الحقيقي الأساسي للفيديو، وبنفس الجودة الأصلية. قد تكون البداية قريبة جداً لأقرب إطار رئيسي (Keyframe) لضمان عدم تلف الفيديو.
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <!-- نافذة المعالجة والانتظار اللامتناهية -->
+    <div class="modal" id="loading-modal">
+        <div class="modal-content">
+            <div class="spinner"></div>
+            <h3 id="modal-title" style="font-size: 1.2rem; font-weight: 700;">جاري معالجة مقطع الفيديو</h3>
+            <p id="modal-text" style="color: var(--text-muted); line-height: 1.6;">يتم الآن استخراج المقطع المختار محلياً على جهازك دون استخدام الإنترنت...</p>
+        </div>
+    </div>
+
+    <script>
+        // المتغيرات العامة للمشروع
+        let ffmpeg = null;
+        let isEngineLoaded = false;
+        let currentFile = null;
+        let trimStartTime = null;
+        let isTrimming = false;
+        let trimTimer = null;
+
+        const video = document.getElementById('video-player');
+        const speedSlider = document.getElementById('speed-slider');
+        const customSpeedVal = document.getElementById('custom-speed-val');
+        const trimBtn = document.getElementById('trim-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const offsetInput = document.getElementById('offset-input');
+        const uploadContainer = document.getElementById('upload-container');
+        const workspaceContainer = document.getElementById('workspace-container');
+        const fileInput = document.getElementById('file-input');
+        const changeVideoBtn = document.getElementById('change-video-btn');
+
+        // 1. تحميل محرك FFmpeg محلياً دون الحاجة لـ SharedArrayBuffer (متوافق مع الهواتف والحواسب دون قيود أمان متطرفة)
+        async function loadFFmpegEngine() {
+            const statusText = document.getElementById('status-text');
+            const statusBadge = document.getElementById('engine-status');
+            
+            statusBadge.className = "status-badge status-loading";
+            statusText.innerText = "جاري تحميل محرك المعالجة المحلي...";
+
+            try {
+                const { createFFmpeg } = FFmpeg;
+                ffmpeg = createFFmpeg({
+                    log: false,
+                    // استخدام سيرفر jsDelivr السريع لتحميل ملفات WASM الأحادية
+                    corePath: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core-st@0.11.1/dist/ffmpeg-core.js'
+                });
+                
+                await ffmpeg.load();
+                isEngineLoaded = true;
+                
+                statusBadge.className = "status-badge status-ready";
+                statusText.innerText = "المحرك المحلي جاهز للعمل";
+                
+                if (currentFile) {
+                    trimBtn.disabled = false;
+                }
+            } catch (err) {
+                console.error("خطأ أثناء تحميل محرك المعالجة: ", err);
+                statusBadge.className = "status-badge";
+                statusText.innerText = "🔴 فشل تحميل المحرك. يرجى التحقق من اتصال الإنترنت (لأول مرة فقط).";
+                alert("لم نتمكن من تنزيل ملفات المحرك المحلي. تأكد من فتح الصفحة بوجود إنترنت ليتم حفظ المحرك في ذاكرة المتصفح المؤقتة للعمل أوفلاين مستقبلاً.");
+            }
+        }
+
+        // استدعاء التحميل فور بدء التطبيق
+        loadFFmpegEngine();
+
+        // 2. إدارة رفع وملامسة الملفات
+        uploadContainer.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadContainer.classList.add('drag-over');
+        });
+
+        uploadContainer.addEventListener('dragleave', () => {
+            uploadContainer.classList.remove('drag-over');
+        });
+
+        uploadContainer.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadContainer.classList.remove('drag-over');
+            if (e.dataTransfer.files.length > 0) {
+                handleFileSelection(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelection(e.target.files[0]);
+            }
+        });
+
+        changeVideoBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        function handleFileSelection(file) {
+            if (!file.type.startsWith('video/')) {
+                alert('الرجاء اختيار ملف فيديو صالح بصيغة MP4 أو ما شابه.');
+                return;
+            }
+            currentFile = file;
+            const fileURL = URL.createObjectURL(file);
+            video.src = fileURL;
+            video.load();
+
+            // تبديل واجهات العرض
+            uploadContainer.style.display = 'none';
+            workspaceContainer.style.display = 'grid';
+
+            resetTrimmingState();
+            
+            // تفعيل زر القص إذا كان المحرك محملاً
+            if (isEngineLoaded) {
+                trimBtn.disabled = false;
+            }
+        }
+
+        // 3. إدارة سرعة تشغيل الفيديو
+        function setSpeed(rate) {
+            video.playbackRate = rate;
+            customSpeedVal.innerText = rate.toFixed(2) + 'x';
+            speedSlider.value = rate;
+
+            // تحديد الزر النشط في الأزرار الجاهزة
+            const buttons = document.querySelectorAll('.speed-presets button');
+            buttons.forEach(btn => {
+                const speedAttr = parseFloat(btn.getAttribute('data-speed'));
+                if (speedAttr === rate) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        speedSlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            setSpeed(val);
+        });
+
+        // 4. آلية قص الفيديو الذكي
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '00:00';
+            const hrs = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+            
+            let result = '';
+            if (hrs > 0) {
+                result += (hrs < 10 ? '0' : '') + hrs + ':';
+            }
+            result += (mins < 10 ? '0' : '') + mins + ':';
+            result += (secs < 10 ? '0' : '') + secs;
+            return result;
+        }
+
+        // عند الضغط على زر ابدأ القص
+        trimBtn.addEventListener('click', () => {
+            if (!currentFile) return;
+
+            const offsetSeconds = parseFloat(offsetInput.value) || 30;
+            // حساب وقت البداية الحقيقي (الوقت الحالي ناقص الإزاحة المحددة بالإعدادات مع ضمان عدم النزول عن الصفر)
+            trimStartTime = Math.max(0, video.currentTime - offsetSeconds);
+            isTrimming = true;
+
+            // تغيير حالة وتصميم الزر
+            trimBtn.classList.add('trimming-active');
+            trimBtn.innerText = '🔴 جاري تتبع نهاية المقطع...';
+            
+            stopBtn.disabled = false;
+            
+            // تفعيل لوحة متابعة التوقيت المباشر
+            const statusCard = document.getElementById('trim-status-card');
+            const startTimeEl = document.getElementById('status-start-time');
+            const currentTimeEl = document.getElementById('status-current-time');
+            const durationEl = document.getElementById('status-duration');
+
+            statusCard.style.display = 'flex';
+            startTimeEl.innerText = formatTime(trimStartTime) + ` (تم خصم ${offsetSeconds}ث)`;
+
+            // تحديث المؤشرات كل 100 ملي ثانية
+            trimTimer = setInterval(() => {
+                const currentVideoTime = video.currentTime;
+                currentTimeEl.innerText = formatTime(currentVideoTime);
+                
+                const currentTrimDuration = Math.max(0, currentVideoTime - trimStartTime);
+                durationEl.innerText = currentTrimDuration.toFixed(1) + ' ثانية';
+            }, 100);
+        });
+
+        // عند الضغط على زر التوقف والمعالجة
+        stopBtn.addEventListener('click', async () => {
+            if (!isTrimming || trimStartTime === null) return;
+
+            const trimEndTime = video.currentTime;
+            
+            // إيقاف مؤقت للعداد وتجميد تشغيل الفيديو تسهيلاً للمستخدم
+            clearInterval(trimTimer);
+            video.pause();
+
+            if (trimEndTime <= trimStartTime) {
+                alert("خطأ: وقت النهاية أصغر أو يساوي وقت البداية. يرجى تشغيل الفيديو لبعض الوقت ثم الضغط على زر توقف.");
+                resetTrimmingState();
+                return;
+            }
+
+            // بدء المعالجة
+            await executeFFmpegTrim(trimStartTime, trimEndTime);
+        });
+
+        // إعادة ضبط حالة الأزرار والعدادات
+        function resetTrimmingState() {
+            isTrimming = false;
+            trimStartTime = null;
+            if (trimTimer) {
+                clearInterval(trimTimer);
+                trimTimer = null;
+            }
+            trimBtn.classList.remove('trimming-active');
+            trimBtn.innerText = '🎬 ابدأ نطاق القص (تطبيق الخصم)';
+            stopBtn.disabled = true;
+            document.getElementById('trim-status-card').style.display = 'none';
+        }
+
+        // 5. استدعاء وتنفيذ FFmpeg محلياً للقص السريع والخفيف جداً
+        async function executeFFmpegTrim(start, end) {
+            const modal = document.getElementById('loading-modal');
+            const modalText = document.getElementById('modal-text');
+            
+            modal.style.display = 'flex';
+            modalText.innerText = "جاري جلب وقراءة ملف الفيديو في الذاكرة المحلية...";
+
+            try {
+                const { fetchFile } = FFmpeg;
+
+                // كتابة الملف الأصلي في بيئة عمل الذاكرة الافتراضية لـ FFmpeg
+                ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(currentFile));
+
+                modalText.innerText = `جاري معالجة وقص الفيديو محلياً...\nمن التوقيت: ${formatTime(start)} إلى التوقيت: ${formatTime(end)}\n\nيرجى الانتظار، تتم العملية بسرعة خاطفة وبدون استهلاك للإنترنت!`;
+
+                // كود الاستدعاء السريع (Stream Copy) دون فك وضغط الفيديو لضمان السرعة القصوى وعدم تأثر الجودة
+                await ffmpeg.run(
+                    '-ss', start.toString(),
+                    '-to', end.toString(),
+                    '-i', 'input.mp4',
+                    '-c', 'copy',
+                    'output.mp4'
+                );
+
+                modalText.innerText = "اكتملت المعالجة بنجاح! جاري تحضير الملف للتنزيل...";
+
+                // قراءة المخرجات وحفظها في الذاكرة
+                const data = ffmpeg.FS('readFile', 'output.mp4');
+
+                // إنشاء ملف Blob ومحاكاة التحميل للهاتف أو الكمبيوتر
+                const blob = new Blob([data.buffer], { type: 'video/mp4' });
+                const downloadUrl = URL.createObjectURL(blob);
+                
+                const downloadAnchor = document.createElement('a');
+                downloadAnchor.href = downloadUrl;
+                
+                // توليد اسم ملف مناسب للمقطع المقصوص
+                const baseName = currentFile.name.substring(0, currentFile.name.lastIndexOf('.')) || 'video';
+                downloadAnchor.download = `${baseName}_مقصوص_${Math.round(start)}s_إلى_${Math.round(end)}s.mp4`;
+                
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                document.body.removeChild(downloadAnchor);
+
+                // تنظيف ذاكرة FFmpeg الافتراضية لتوفير المساحة
+                ffmpeg.FS('unlink', 'input.mp4');
+                ffmpeg.FS('unlink', 'output.mp4');
+
+                // إعادة تهيئة الواجهة
+                resetTrimmingState();
+                modal.style.display = 'none';
+                
+                alert("🎉 تم قص المقطع بنجاح وحفظه في جهازك مباشرة!");
+
+            } catch (error) {
+                console.error("خطأ أثناء قص الفيديو: ", error);
+                modal.style.display = 'none';
+                resetTrimmingState();
+                alert("حدث خطأ أثناء معالجة وقص الفيديو. قد يكون السبب عدم توافق الملف أو قيود في ذاكرة المتصفح للهواتف القديمة.");
+            }
+        }
+
+        // 6. اختصارات الكيبورد الإضافية للتسهيل (للكمبيوتر)
+        window.addEventListener('keydown', (e) => {
+            if (!currentFile) return;
+            
+            // زر المسافة لتشغيل وإيقاف الفيديو مؤقتاً
+            if (e.code === 'Space' && document.activeElement !== offsetInput) {
+                e.preventDefault();
+                if (video.paused) {
+                    video.play();
+                } else {
+                    video.pause();
+                }
+            }
+            // السهم الأيمن لتقديم الفيديو 5 ثوانٍ
+            if (e.code === 'ArrowRight') {
+                video.currentTime = Math.min(video.duration, video.currentTime + 5);
+            }
+            // السهم الأيسر لترجيع الفيديو 5 ثوانٍ
+            if (e.code === 'ArrowLeft') {
+                video.currentTime = Math.max(0, video.currentTime - 5);
+            }
+        });
+    </script>
+</body>
+</html>
