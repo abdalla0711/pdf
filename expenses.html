@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+<title>سجل مصروفات ايجل للتجارة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --navy:#16283F;
+    --navy-2:#1F3B57;
+    --teal:#2F8F86;
+    --teal-dark:#227168;
+    --amber:#E3A23C;
+    --bg:#F3F6F5;
+    --card:#FFFFFF;
+    --text:#1D2530;
+    --text-muted:#6B7684;
+    --danger:#C4483C;
+    --border:#E4E8EA;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Tajawal',sans-serif;
+    font-feature-settings:"tnum" 1;
+    min-height:100vh;
+    padding-bottom:calc(78px + env(safe-area-inset-bottom));
+  }
+  .app{max-width:560px;margin:0 auto;}
+
+  /* Header */
+  header.top{
+    background:linear-gradient(160deg,var(--navy),var(--navy-2));
+    color:#fff;
+    padding:calc(18px + env(safe-area-inset-top)) 18px 22px;
+    position:relative;
+    overflow:hidden;
+  }
+  header.top::after{
+    content:"";
+    position:absolute;left:-40px;bottom:-60px;width:180px;height:180px;
+    background:radial-gradient(circle,rgba(227,162,60,.18),transparent 70%);
+  }
+  .brand{display:flex;align-items:center;gap:10px;position:relative;z-index:1;}
+  .brand svg{flex:none;}
+  .brand-text .name{font-weight:900;font-size:18px;letter-spacing:.3px;}
+  .brand-text .sub{font-size:12px;color:#B9C6D4;margin-top:2px;}
+  .header-stats{
+    display:flex;gap:10px;margin-top:16px;position:relative;z-index:1;
+  }
+  .stat-pill{
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:12px;
+    padding:9px 12px;
+    flex:1;
+    min-width:0;
+  }
+  .stat-pill .k{font-size:11px;color:#AEBBC9;}
+  .stat-pill .v{font-size:15px;font-weight:700;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+  main{padding:16px 14px 10px;}
+
+  /* Tabs content visibility */
+  .view{display:none;}
+  .view.active{display:block;}
+
+  /* Card / receipt styling */
+  .card{
+    background:var(--card);
+    border-radius:var(--radius);
+    border:1px solid var(--border);
+    box-shadow:0 1px 2px rgba(20,30,40,.04);
+    margin-bottom:14px;
+    overflow:hidden;
+  }
+  .card-body{padding:16px;}
+  .receipt-tear{
+    height:11px;
+    background:
+      linear-gradient(135deg, var(--bg) 8px, transparent 0) 0 -4px,
+      linear-gradient(-135deg, var(--bg) 8px, transparent 0) 0 -4px;
+    background-size:16px 16px;
+    background-repeat:repeat-x;
+    background-color:var(--card);
+  }
+
+  .section-title{
+    font-size:13px;font-weight:700;color:var(--text-muted);
+    margin:2px 0 10px;display:flex;align-items:center;gap:6px;
+  }
+  .section-title .num{
+    background:var(--teal);color:#fff;width:19px;height:19px;border-radius:6px;
+    display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;
+  }
+
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block;font-size:13.5px;font-weight:700;margin-bottom:7px;color:var(--text);
+  }
+  .field .hint{font-size:11.5px;color:var(--text-muted);font-weight:400;margin-right:2px;}
+
+  select, input[type=text], input[type=number], input[type=date], textarea{
+    width:100%;
+    border:1.5px solid var(--border);
+    border-radius:10px;
+    padding:12px 12px;
+    font-family:'Tajawal',sans-serif;
+    font-size:15px;
+    color:var(--text);
+    background:#FBFCFC;
+    transition:border-color .15s;
+  }
+  select:focus, input:focus, textarea:focus{
+    outline:none;border-color:var(--teal);background:#fff;
+  }
+  textarea{resize:vertical;min-height:64px;}
+
+  .row2{display:flex;gap:10px;}
+  .row2 > div{flex:1;min-width:0;}
+
+  /* toggle buttons */
+  .toggle-group{display:flex;gap:10px;}
+  .toggle-btn{
+    flex:1;padding:12px 8px;border-radius:10px;border:1.5px solid var(--border);
+    background:#FBFCFC;text-align:center;font-weight:700;font-size:14.5px;color:var(--text-muted);
+    cursor:pointer;user-select:none;transition:.15s;
+  }
+  .toggle-btn.active-yes{background:#FFF4E3;border-color:var(--amber);color:#8A5F14;}
+  .toggle-btn.active-no{background:#EAF5F3;border-color:var(--teal);color:var(--teal-dark);}
+
+  .invoice-box{
+    background:#FFFBF2;border:1.5px dashed var(--amber);border-radius:12px;
+    padding:14px;margin-top:6px;
+  }
+  .invoice-box .section-title{color:#8A5F14;}
+  .invoice-box .section-title .num{background:var(--amber);}
+
+  .mic-wrap{position:relative;}
+  .mic-btn{
+    position:absolute;left:8px;bottom:8px;
+    width:38px;height:38px;border-radius:50%;
+    background:var(--teal);color:#fff;border:none;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 2px 6px rgba(47,143,134,.35);
+    cursor:pointer;
+  }
+  .mic-btn.recording{background:var(--danger);animation:pulse 1.1s infinite;}
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(196,72,60,.45);}
+    70%{box-shadow:0 0 0 12px rgba(196,72,60,0);}
+    100%{box-shadow:0 0 0 0 rgba(196,72,60,0);}
+  }
+  .mic-status{font-size:11.5px;color:var(--teal-dark);margin-top:6px;display:none;}
+  .mic-status.show{display:block;}
+
+  .primary-btn{
+    width:100%;background:var(--teal);color:#fff;border:none;border-radius:12px;
+    padding:15px;font-size:16px;font-weight:700;font-family:'Tajawal',sans-serif;
+    cursor:pointer;box-shadow:0 3px 10px rgba(47,143,134,.3);
+  }
+  .primary-btn:active{background:var(--teal-dark);}
+  .ghost-btn{
+    background:transparent;border:1.5px solid var(--border);color:var(--text-muted);
+    border-radius:10px;padding:10px 14px;font-family:'Tajawal',sans-serif;font-weight:700;font-size:13.5px;cursor:pointer;
+  }
+
+  .err-msg{
+    background:#FDEEEC;color:var(--danger);border:1px solid #F3C9C4;
+    padding:10px 12px;border-radius:10px;font-size:13.5px;margin-bottom:14px;display:none;
+  }
+  .err-msg.show{display:block;}
+
+  /* Records view */
+  .filter-bar{display:flex;gap:8px;margin-bottom:14px;}
+  .filter-bar select, .filter-bar input{font-size:13.5px;padding:10px;}
+  .summary-bar{
+    display:flex;justify-content:space-between;align-items:center;
+    background:var(--navy);color:#fff;border-radius:12px;padding:12px 16px;margin-bottom:14px;
+  }
+  .summary-bar .lbl{font-size:12px;color:#B9C6D4;}
+  .summary-bar .amt{font-size:19px;font-weight:900;color:var(--amber);}
+
+  .entry-card{
+    background:var(--card);border:1px solid var(--border);border-radius:12px;
+    padding:13px 14px;margin-bottom:10px;
+  }
+  .entry-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .entry-account{font-weight:700;font-size:15px;}
+  .entry-amount{font-weight:900;font-size:16px;color:var(--teal-dark);white-space:nowrap;}
+  .entry-meta{font-size:12px;color:var(--text-muted);margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;}
+  .badge{
+    display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;
+    padding:2px 8px;border-radius:20px;
+  }
+  .badge.tax{background:#FFF4E3;color:#8A5F14;}
+  .badge.car{background:#EAF5F3;color:var(--teal-dark);}
+  .entry-desc{font-size:13px;color:var(--text);margin-top:8px;line-height:1.5;}
+  .entry-actions{display:flex;gap:8px;margin-top:10px;}
+  .entry-actions button{
+    flex:1;border:none;border-radius:8px;padding:8px;font-family:'Tajawal',sans-serif;
+    font-weight:700;font-size:12.5px;cursor:pointer;
+  }
+  .btn-del{background:#FDEEEC;color:var(--danger);}
+  .btn-edit{background:#EAF5F3;color:var(--teal-dark);}
+
+  .empty-state{
+    text-align:center;padding:50px 20px;color:var(--text-muted);
+  }
+  .empty-state svg{margin-bottom:10px;opacity:.5;}
+  .empty-state p{font-size:14px;margin:0;}
+
+  .export-btn{
+    width:100%;background:var(--amber);color:#3D2B04;border:none;border-radius:12px;
+    padding:14px;font-size:15px;font-weight:900;font-family:'Tajawal',sans-serif;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+    margin-bottom:16px;box-shadow:0 3px 10px rgba(227,162,60,.35);
+  }
+
+  /* Bottom nav */
+  nav.bottom{
+    position:fixed;bottom:0;left:0;right:0;
+    background:#fff;border-top:1px solid var(--border);
+    display:flex;
+    padding-bottom:env(safe-area-inset-bottom);
+    max-width:560px;margin:0 auto;
+    box-shadow:0 -2px 10px rgba(20,30,40,.05);
+  }
+  nav.bottom button{
+    flex:1;background:none;border:none;padding:11px 4px 9px;
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    font-family:'Tajawal',sans-serif;font-size:11.5px;font-weight:700;color:var(--text-muted);
+    cursor:pointer;
+  }
+  nav.bottom button.active{color:var(--teal-dark);}
+  nav.bottom button.active svg{stroke:var(--teal-dark);}
+
+  .toast{
+    position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--navy);color:#fff;padding:11px 20px;border-radius:30px;font-size:13.5px;
+    font-weight:700;opacity:0;transition:all .25s;pointer-events:none;z-index:50;white-space:nowrap;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  @media (prefers-reduced-motion: reduce){
+    .mic-btn.recording{animation:none;}
+    .toast{transition:none;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <div class="brand">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
+        <rect x="3" y="2" width="18" height="20" rx="2" fill="#E3A23C" opacity="0.9"/>
+        <path d="M6 7h12M6 11h12M6 15h7" stroke="#16283F" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <div class="brand-text">
+        <div class="name">سجل مصروفات</div>
+        <div class="sub">مؤسسة ايجل للتجارة</div>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="stat-pill">
+        <div class="k">عدد المصروفات</div>
+        <div class="v" id="statCount">0</div>
+      </div>
+      <div class="stat-pill">
+        <div class="k">إجمالي المبالغ</div>
+        <div class="v" id="statTotal">0.00 ر.س</div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ===== ENTRY VIEW ===== -->
+    <section class="view active" id="view-entry">
+      <div class="err-msg" id="formError"></div>
+
+      <div class="card">
+        <div class="card-body">
+          <div class="section-title"><span class="num">1</span> هل يوجد فاتورة ضريبية؟</div>
+          <div class="toggle-group">
+            <div class="toggle-btn" id="btnInvoiceNo" onclick="setInvoice(false)">لا يوجد</div>
+            <div class="toggle-btn" id="btnInvoiceYes" onclick="setInvoice(true)">يوجد فاتورة ضريبية</div>
+          </div>
+
+          <div id="invoiceExtra" style="display:none;">
+            <div class="invoice-box" style="margin-top:14px;">
+              <div class="section-title"><span class="num">✓</span> بيانات الفاتورة الضريبية</div>
+              <div class="field" style="margin-bottom:12px;">
+                <label>اسم المورد</label>
+                <input type="text" id="supplierName" placeholder="مثال: محطة الدريس">
+              </div>
+              <div class="row2">
+                <div class="field" style="margin-bottom:0;">
+                  <label>رقم الفاتورة</label>
+                  <input type="text" id="invoiceNumber" placeholder="رقم الفاتورة">
+                </div>
+                <div class="field" style="margin-bottom:0;">
+                  <label>الرقم الضريبي</label>
+                  <input type="text" id="taxNumber" placeholder="الرقم الضريبي" inputmode="numeric">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="receipt-tear"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <div class="section-title"><span class="num">2</span> بيانات المصروف</div>
+
+          <div class="field">
+            <label>اسم الحساب</label>
+            <select id="accountName">
+              <option value="">-- اختر الحساب --</option>
+            </select>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label>المبلغ شامل الضريبة</label>
+              <input type="number" id="amount" placeholder="0.00" step="0.01" min="0" inputmode="decimal">
+            </div>
+            <div class="field">
+              <label>التاريخ</label>
+              <input type="date" id="expenseDate">
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom:6px;">
+            <label>شرح المصروف <span class="hint">(اكتب أو استخدم التسجيل الصوتي)</span></label>
+            <div class="mic-wrap">
+              <textarea id="description" placeholder="اكتب تفاصيل المصروف هنا..." style="padding-left:52px;"></textarea>
+              <button type="button" class="mic-btn" id="micBtn" onclick="toggleMic()" title="تسجيل صوتي">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <rect x="9" y="2" width="6" height="12" rx="3" fill="#fff"/>
+                  <path d="M5 11a7 7 0 0014 0M12 18v3" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+            <div class="mic-status" id="micStatus">🎙️ جاري الاستماع... تحدث الآن</div>
+          </div>
+        </div>
+        <div class="receipt-tear"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <div class="section-title"><span class="num">3</span> بيانات إضافية <span class="hint">(اختياري)</span></div>
+          <div class="row2">
+            <div class="field" style="margin-bottom:0;">
+              <label>السيارة</label>
+              <select id="vehicle">
+                <option value="">بدون تحديد</option>
+              </select>
+            </div>
+            <div class="field" style="margin-bottom:0;">
+              <label>عداد السيارة</label>
+              <input type="number" id="odometer" placeholder="القراءة" min="0" inputmode="numeric">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="primary-btn" onclick="saveEntry()">💾 حفظ المصروف</button>
+      <div style="height:8px;"></div>
+    </section>
+
+    <!-- ===== RECORDS VIEW ===== -->
+    <section class="view" id="view-records">
+      <button class="export-btn" onclick="exportExcel()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="#3D2B04" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        تصدير تقرير Excel
+      </button>
+
+      <div class="filter-bar">
+        <select id="filterMonth" onchange="renderRecords()">
+          <option value="">كل الأشهر</option>
+        </select>
+        <select id="filterYear" onchange="renderRecords()">
+          <option value="">كل السنوات</option>
+        </select>
+      </div>
+      <div class="field" style="margin-bottom:12px;">
+        <input type="text" id="filterSearch" placeholder="بحث بالحساب أو الشرح..." oninput="renderRecords()">
+      </div>
+
+      <div class="summary-bar">
+        <div>
+          <div class="lbl">إجمالي المعروض</div>
+          <div class="amt" id="filteredTotal">0.00 ر.س</div>
+        </div>
+        <div style="text-align:left;">
+          <div class="lbl">عدد السجلات</div>
+          <div class="amt" id="filteredCount" style="color:#fff;font-size:16px;">0</div>
+        </div>
+      </div>
+
+      <div id="recordsList"></div>
+    </section>
+  </main>
+
+  <nav class="bottom">
+    <button class="active" id="tabEntry" onclick="switchTab('entry')">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14" stroke-width="2" stroke-linecap="round"/></svg>
+      إدخال مصروف
+    </button>
+    <button id="tabRecords" onclick="switchTab('records')">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h10" stroke-width="2" stroke-linecap="round"/></svg>
+      السجل والتصدير
+    </button>
+  </nav>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+/* =================== DATA =================== */
+const STORAGE_KEY = 'eagle_expenses_v1';
+const ACCOUNTS = [
+  "ديزل تبوك","ديزل القريات","صيانة تبوك","صيانة القريات","مياه","كهرباء",
+  "مستلزمات مكتبية","مستلزمات مستودع","فاتورة هاتف","ايجار مستودع","ايجار سكن",
+  "توصيل بضاعه","اقامات","رحلات","اكراميات","وجبات","مصروفات اخرى","السيارات",
+  "محطة الدريس للمحروقات","اشتراك خدمة شهرية محطة الدريس للمحروقات",
+  "عمولة البنك لنقاط البيع","سابر","جمارك","البرنامج المحاسبي"
+];
+const VEHICLES = [
+  "سيارة وجية","سيارة نسيم","سيارة سراج","سيارة امين","سيارة سامي",
+  "سيارة احمد عيسى","سيارة احمد عادل","سيارة نصر","سيارة محمد انور","سيارة فوركلفت"
+];
+const MONTH_NAMES = ["يناير","فبراير","مارس","ابريل","مايو","يونيو","يوليو","اغسطس","سبتمبر","اكتوبر","نوفمبر","ديسمبر"];
+
+let expenses = [];
+let hasInvoiceState = false;
+let editingId = null;
+
+/* =================== INIT =================== */
+function init(){
+  loadExpenses();
+  populateSelect('accountName', ACCOUNTS);
+  populateSelect('vehicle', VEHICLES, true);
+  populateFilterOptions();
+  document.getElementById('expenseDate').value = todayISO();
+  renderStats();
+  renderRecords();
+  setupMic();
+}
+
+function populateSelect(id, items, isVehicle){
+  const sel = document.getElementById(id);
+  items.forEach(item=>{
+    const opt = document.createElement('option');
+    opt.value = item;
+    opt.textContent = item;
+    sel.appendChild(opt);
+  });
+}
+
+function todayISO(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+/* =================== STORAGE =================== */
+function loadExpenses(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    expenses = raw ? JSON.parse(raw) : [];
+  }catch(e){
+    expenses = [];
+  }
+}
+function persist(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
+}
+
+/* =================== TABS =================== */
+function switchTab(tab){
+  document.getElementById('view-entry').classList.toggle('active', tab==='entry');
+  document.getElementById('view-records').classList.toggle('active', tab==='records');
+  document.getElementById('tabEntry').classList.toggle('active', tab==='entry');
+  document.getElementById('tabRecords').classList.toggle('active', tab==='records');
+  if(tab==='records'){ renderStats(); renderRecords(); }
+}
+
+/* =================== INVOICE TOGGLE =================== */
+function setInvoice(val){
+  hasInvoiceState = val;
+  document.getElementById('btnInvoiceYes').classList.toggle('active-yes', val);
+  document.getElementById('btnInvoiceNo').classList.toggle('active-no', !val);
+  document.getElementById('invoiceExtra').style.display = val ? 'block' : 'none';
+}
+
+/* =================== VOICE INPUT =================== */
+let recognition = null;
+let isRecording = false;
+function setupMic(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){
+    document.getElementById('micBtn').style.display = 'none';
+    return;
+  }
+  recognition = new SR();
+  recognition.lang = 'ar-SA';
+  recognition.continuous = true;
+  recognition.interimResults = false;
+
+  recognition.onresult = (e)=>{
+    let text = '';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      text += e.results[i][0].transcript;
+    }
+    const ta = document.getElementById('description');
+    ta.value = (ta.value.trim() ? ta.value.trim()+' ' : '') + text.trim();
+  };
+  recognition.onerror = ()=>{ stopMic(); };
+  recognition.onend = ()=>{ if(isRecording){ stopMic(); } };
+}
+function toggleMic(){
+  if(!recognition) return;
+  isRecording ? stopMic() : startMic();
+}
+function startMic(){
+  try{
+    recognition.start();
+    isRecording = true;
+    document.getElementById('micBtn').classList.add('recording');
+    document.getElementById('micStatus').classList.add('show');
+  }catch(e){}
+}
+function stopMic(){
+  try{ recognition.stop(); }catch(e){}
+  isRecording = false;
+  document.getElementById('micBtn').classList.remove('recording');
+  document.getElementById('micStatus').classList.remove('show');
+}
+
+/* =================== SAVE ENTRY =================== */
+function showError(msg){
+  const el = document.getElementById('formError');
+  el.textContent = msg;
+  el.classList.add('show');
+  el.scrollIntoView({behavior:'smooth', block:'center'});
+}
+function clearError(){
+  document.getElementById('formError').classList.remove('show');
+}
+
+function saveEntry(){
+  clearError();
+  const accountName = document.getElementById('accountName').value;
+  const amount = parseFloat(document.getElementById('amount').value);
+  const dateVal = document.getElementById('expenseDate').value;
+  const description = document.getElementById('description').value.trim();
+  const vehicle = document.getElementById('vehicle').value;
+  const odometer = document.getElementById('odometer').value;
+
+  if(!accountName){ showError('يرجى اختيار اسم الحساب.'); return; }
+  if(!amount || amount<=0){ showError('يرجى إدخال مبلغ صحيح.'); return; }
+  if(!dateVal){ showError('يرجى اختيار تاريخ المصروف.'); return; }
+
+  let supplierName='', invoiceNumber='', taxNumber='';
+  if(hasInvoiceState){
+    supplierName = document.getElementById('supplierName').value.trim();
+    invoiceNumber = document.getElementById('invoiceNumber').value.trim();
+    taxNumber = document.getElementById('taxNumber').value.trim();
+    if(!supplierName || !invoiceNumber || !taxNumber){
+      showError('عند وجود فاتورة ضريبية، يجب إدخال اسم المورد ورقم الفاتورة والرقم الضريبي.');
+      return;
+    }
+  }
+
+  const d = new Date(dateVal+'T00:00:00');
+  const entry = {
+    id: editingId || (Date.now()+'-'+Math.random().toString(36).slice(2,7)),
+    hasInvoice: hasInvoiceState ? 1 : '',
+    accountName,
+    amount: Math.round(amount*100)/100,
+    day: d.getDate(),
+    month: d.getMonth()+1,
+    year: d.getFullYear(),
+    dateISO: dateVal,
+    description,
+    vehicle,
+    odometer: odometer ? Number(odometer) : '',
+    supplierName, invoiceNumber, taxNumber,
+    createdAt: editingId ? (expenses.find(x=>x.id===editingId)?.createdAt || Date.now()) : Date.now()
+  };
+
+  if(editingId){
+    const idx = expenses.findIndex(x=>x.id===editingId);
+    if(idx>-1) expenses[idx] = entry;
+    editingId = null;
+    showToast('تم تحديث المصروف بنجاح');
+  }else{
+    expenses.unshift(entry);
+    showToast('تم حفظ المصروف بنجاح');
+  }
+  persist();
+  resetForm();
+  renderStats();
+  populateFilterOptions();
+}
+
+function resetForm(){
+  document.getElementById('accountName').value = '';
+  document.getElementById('amount').value = '';
+  document.getElementById('expenseDate').value = todayISO();
+  document.getElementById('description').value = '';
+  document.getElementById('vehicle').value = '';
+  document.getElementById('odometer').value = '';
+  document.getElementById('supplierName').value = '';
+  document.getElementById('invoiceNumber').value = '';
+  document.getElementById('taxNumber').value = '';
+  setInvoice(false);
+  clearError();
+}
+
+/* =================== RECORDS / RENDER =================== */
+function renderStats(){
+  document.getElementById('statCount').textContent = expenses.length;
+  const total = expenses.reduce((s,e)=>s+Number(e.amount||0),0);
+  document.getElementById('statTotal').textContent = total.toFixed(2)+' ر.س';
+}
+
+function populateFilterOptions(){
+  const monthSel = document.getElementById('filterMonth');
+  const yearSel = document.getElementById('filterYear');
+  const curMonth = monthSel.value, curYear = yearSel.value;
+  monthSel.innerHTML = '<option value="">كل الأشهر</option>' +
+    MONTH_NAMES.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('');
+  const years = [...new Set(expenses.map(e=>e.year))].sort((a,b)=>b-a);
+  yearSel.innerHTML = '<option value="">كل السنوات</option>' +
+    years.map(y=>`<option value="${y}">${y}</option>`).join('');
+  monthSel.value = curMonth; yearSel.value = curYear;
+}
+
+function getFiltered(){
+  const month = document.getElementById('filterMonth').value;
+  const year = document.getElementById('filterYear').value;
+  const search = document.getElementById('filterSearch').value.trim().toLowerCase();
+  return expenses.filter(e=>{
+    if(month && String(e.month)!==String(month)) return false;
+    if(year && String(e.year)!==String(year)) return false;
+    if(search){
+      const hay = (e.accountName+' '+e.description+' '+e.vehicle).toLowerCase();
+      if(!hay.includes(search)) return false;
+    }
+    return true;
+  });
+}
+
+function renderRecords(){
+  const list = document.getElementById('recordsList');
+  const filtered = getFiltered().sort((a,b)=> b.dateISO.localeCompare(a.dateISO) || b.createdAt-a.createdAt);
+
+  document.getElementById('filteredCount').textContent = filtered.length;
+  const total = filtered.reduce((s,e)=>s+Number(e.amount||0),0);
+  document.getElementById('filteredTotal').textContent = total.toFixed(2)+' ر.س';
+
+  if(filtered.length===0){
+    list.innerHTML = `<div class="empty-state">
+      <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#98A2AE"><path d="M4 6h16M4 12h16M4 18h10" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <p>لا توجد مصروفات مطابقة</p>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(e=>{
+    const badges = [];
+    if(e.hasInvoice) badges.push('<span class="badge tax">فاتورة ضريبية</span>');
+    if(e.vehicle) badges.push(`<span class="badge car">${escapeHtml(e.vehicle)}</span>`);
+    return `
+    <div class="entry-card">
+      <div class="entry-top">
+        <div>
+          <div class="entry-account">${escapeHtml(e.accountName)}</div>
+          <div class="entry-meta">
+            <span>${e.day}/${e.month}/${e.year}</span>
+            ${badges.join('')}
+          </div>
+        </div>
+        <div class="entry-amount">${Number(e.amount).toFixed(2)} ر.س</div>
+      </div>
+      ${e.description ? `<div class="entry-desc">${escapeHtml(e.description)}</div>` : ''}
+      <div class="entry-actions">
+        <button class="btn-edit" onclick="editEntry('${e.id}')">تعديل</button>
+        <button class="btn-del" onclick="deleteEntry('${e.id}')">حذف</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escapeHtml(str){
+  return String(str||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function editEntry(id){
+  const e = expenses.find(x=>x.id===id);
+  if(!e) return;
+  editingId = id;
+  switchTab('entry');
+  document.getElementById('accountName').value = e.accountName;
+  document.getElementById('amount').value = e.amount;
+  document.getElementById('expenseDate').value = e.dateISO;
+  document.getElementById('description').value = e.description;
+  document.getElementById('vehicle').value = e.vehicle;
+  document.getElementById('odometer').value = e.odometer;
+  setInvoice(!!e.hasInvoice);
+  document.getElementById('supplierName').value = e.supplierName||'';
+  document.getElementById('invoiceNumber').value = e.invoiceNumber||'';
+  document.getElementById('taxNumber').value = e.taxNumber||'';
+  clearError();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function deleteEntry(id){
+  if(!confirm('هل تريد حذف هذا المصروف؟')) return;
+  expenses = expenses.filter(x=>x.id!==id);
+  persist();
+  renderStats();
+  populateFilterOptions();
+  renderRecords();
+  showToast('تم حذف المصروف');
+}
+
+/* =================== TOAST =================== */
+let toastTimer;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove('show'), 2200);
+}
+
+/* =================== EXCEL EXPORT =================== */
+function exportExcel(){
+  const data = getFiltered().sort((a,b)=> a.dateISO.localeCompare(b.dateISO));
+  if(data.length===0){
+    showToast('لا توجد بيانات للتصدير');
+    return;
+  }
+  const headers = [
+    "فاتورة ضريبية","اسم الحساب","المبلغ شامل الضريبة","اليوم","الشهر","السنة",
+    "شرح المصروف","السيارة","عداد السيارة","اسم المورد","رقم الفاتورة","الرقم الضريبي"
+  ];
+  const rows = data.map(e=>[
+    e.hasInvoice || '',
+    e.accountName,
+    Number(e.amount),
+    e.day,
+    e.month,
+    e.year,
+    e.description || '',
+    e.vehicle || '',
+    e.odometer || '',
+    e.supplierName || '',
+    e.invoiceNumber || '',
+    e.taxNumber || ''
+  ]);
+  const totalRow = ["", "الإجمالي", rows.reduce((s,r)=>s+Number(r[2]||0),0), "", "", "", "", "", "", "", "", ""];
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows, totalRow]);
+  ws['!cols'] = [
+    {wch:10},{wch:24},{wch:14},{wch:7},{wch:7},{wch:8},
+    {wch:34},{wch:16},{wch:12},{wch:20},{wch:16},{wch:16}
+  ];
+  ws['!views'] = [{RTL:true}];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "تقرير المصروفات");
+
+  const month = document.getElementById('filterMonth').value;
+  const year = document.getElementById('filterYear').value;
+  let fname = 'تقرير_المصروفات';
+  if(year) fname += '_'+year;
+  if(month) fname += '_'+MONTH_NAMES[Number(month)-1];
+  fname += '.xlsx';
+
+  XLSX.writeFile(wb, fname);
+  showToast('تم تصدير التقرير بنجاح');
+}
+
+init();
+</script>
+</body>
+</html>
