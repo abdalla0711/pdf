@@ -1,482 +1,404 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
-<title>سجل مصروفات ايجل للتجارة - مطور</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<style>
-  :root{
-    --navy:#16283F; --navy-2:#1F3B57; --teal:#2F8F86; --teal-dark:#227168;
-    --amber:#E3A23C; --bg:#F3F6F5; --card:#FFFFFF; --text:#1D2530;
-    --text-muted:#6B7684; --danger:#C4483C; --border:#E4E8EA; --radius:14px;
-  }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  body{
-    background:var(--bg); color:var(--text); font-family:'Tajawal',sans-serif;
-    margin:0; padding-bottom:calc(80px + env(safe-area-inset-bottom));
-  }
-  .app{max-width:560px; margin:0 auto;}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+    <title>ايجل للتجارة - نظام 58mm المطور</title>
+    
+    <style>
+        @font-face {
+            font-family: 'EagleFont';
+            src: url('https://files.catbox.moe/hmey7o.ttf') format('truetype');
+        }
 
-  /* Header */
-  header.top{
-    background:linear-gradient(160deg,var(--navy),var(--navy-2)); color:#fff;
-    padding:calc(20px + env(safe-area-inset-top)) 18px 25px; position:relative; overflow:hidden;
-  }
-  .brand{display:flex; align-items:center; gap:10px; position:relative; z-index:1;}
-  .brand-text .name{font-weight:900; font-size:18px;}
-  .brand-text .sub{font-size:12px; color:#AEBBC9;}
+        :root {
+            --navy: #16283F; --teal: #2F8F86; --amber: #E3A23C; --bg: #F3F6F5; --border: #E4E8EA; --danger: #C4483C;
+        }
 
-  main{padding:16px 14px;}
-  .view{display:none;} .view.active{display:block;}
+        * { box-sizing: border-box; font-family: 'EagleFont', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); margin: 0; padding-bottom: 100px; direction: rtl; }
+        .app { max-width: 500px; margin: 0 auto; }
 
-  /* UI Components */
-  .card{
-    background:var(--card); border-radius:var(--radius); border:1px solid var(--border);
-    box-shadow:0 1px 3px rgba(0,0,0,0.05); margin-bottom:15px; overflow:hidden;
-  }
-  .card-body{padding:16px;}
-  .section-title{
-    font-size:13px; font-weight:700; color:var(--text-muted); margin-bottom:12px;
-    display:flex; align-items:center; gap:6px;
-  }
-  .section-title .num{
-    background:var(--teal); color:#fff; width:20px; height:20px; border-radius:6px;
-    display:inline-flex; align-items:center; justify-content:center; font-size:11px;
-  }
+        header { background: var(--navy); color: #fff; padding: 25px 20px; text-align: center; border-radius: 0 0 20px 20px; }
+        .view { display: none; padding: 15px; }
+        .view.active { display: block; }
 
-  .field{margin-bottom:16px;}
-  label{display:block; font-size:13px; font-weight:700; margin-bottom:6px;}
-  select, input, textarea{
-    width:100%; border:1.5px solid var(--border); border-radius:10px;
-    padding:12px; font-family:inherit; font-size:15px; background:#FBFCFC;
-  }
-  input:focus{outline:none; border-color:var(--teal);}
+        /* البطاقات */
+        .card { background: #fff; border-radius: 15px; padding: 18px; margin-bottom: 15px; border: 1px solid var(--border); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .field { margin-bottom: 12px; }
+        label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 6px; color: var(--navy); }
+        input, select, textarea { width: 100%; border: 1.5px solid var(--border); border-radius: 10px; padding: 12px; font-size: 15px; background: #FBFCFC; outline: none; }
+        
+        .row { display: flex; gap: 10px; }
+        .row > div { flex: 1; }
 
-  .row2{display:flex; gap:10px;} .row2 > div{flex:1;}
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
+        .btn-primary { background: var(--teal); color: white; }
+        .btn-amber { background: var(--amber); color: #000; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-outline { background: #fff; border: 1.5px solid var(--border); color: var(--navy); }
 
-  /* Toggles */
-  .toggle-group{display:flex; gap:10px;}
-  .toggle-btn{
-    flex:1; padding:12px; border-radius:10px; border:1.5px solid var(--border);
-    text-align:center; font-weight:700; color:var(--text-muted); cursor:pointer;
-  }
-  .toggle-btn.active-yes{background:#FFF4E3; border-color:var(--amber); color:#8A5F14;}
-  .toggle-btn.active-no{background:#EAF5F3; border-color:var(--teal); color:var(--teal-dark);}
+        /* السجل */
+        .expense-item { background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 12px; border: 1px solid var(--border); }
+        .item-head { display: flex; justify-content: space-between; font-weight: 900; color: var(--teal); border-bottom: 1px dashed #ddd; padding-bottom: 8px; margin-bottom: 8px; }
 
-  .invoice-box{background:#FFFBF2; border:1.5px dashed var(--amber); border-radius:12px; padding:14px;}
+        nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; display: flex; border-top: 1px solid var(--border); max-width: 500px; margin: 0 auto; z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
+        nav button { flex: 1; padding: 15px; border: none; background: none; color: #94a3b8; font-size: 14px; font-weight: bold; }
+        nav button.active { color: var(--teal); border-top: 3px solid var(--teal); }
 
-  /* Voice */
-  .mic-wrap{position:relative;}
-  .mic-btn{
-    position:absolute; left:8px; bottom:8px; width:38px; height:38px; border-radius:50%;
-    background:var(--teal); border:none; display:flex; align-items:center; justify-content:center;
-  }
-  .mic-btn.recording{background:var(--danger); animation:pulse 1.2s infinite;}
-  @keyframes pulse{ 0%{box-shadow:0 0 0 0 rgba(196,72,60,0.4);} 70%{box-shadow:0 0 0 12px rgba(196,72,60,0);} }
+        /* Modal */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
+        .modal.active { display: flex; }
+        .modal-content { background: #fff; border-radius: 20px; width: 100%; max-width: 350px; padding: 25px; text-align: center; }
 
-  .primary-btn{
-    width:100%; background:var(--teal); color:#fff; border:none; border-radius:12px;
-    padding:15px; font-size:16px; font-weight:700; cursor:pointer;
-  }
+        /* طباعة 58mm الموفرة للمساحة */
+        #print-wrap { width: 58mm; padding: 2mm; background: white; display: none; color: #000; font-family: 'EagleFont', sans-serif; }
+        .p-header { text-align: center; border-bottom: 1px solid #000; margin-bottom: 6px; padding-bottom: 4px; }
+        .p-block { border-bottom: 1px dashed #000; padding: 4px 0; font-size: 10px; }
+        .p-row { display: flex; justify-content: space-between; margin-bottom: 1px; }
+        .p-label { font-weight: bold; }
+        .p-vat-box { background: #f9f9f9; padding: 2px; margin: 2px 0; border: 0.5px solid #ccc; text-align: center; font-weight: bold; }
 
-  /* Records List */
-  .entry-card{
-    background:#fff; border:1px solid var(--border); border-radius:12px;
-    padding:14px; margin-bottom:10px;
-  }
-  .entry-top{display:flex; justify-content:space-between;}
-  .entry-amt{font-weight:900; color:var(--teal-dark);}
-  .badge{font-size:10px; padding:2px 6px; border-radius:4px; background:#eee; margin-right:4px;}
+        .toast { position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%); background: var(--navy); color: #fff; padding: 10px 20px; border-radius: 25px; font-size: 13px; opacity: 0; z-index: 3000; transition: 0.3s; }
+        .toast.show { opacity: 1; }
+    </style>
 
-  /* Navigation */
-  nav.bottom{
-    position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid var(--border);
-    display:flex; max-width:560px; margin:0 auto; padding-bottom:env(safe-area-inset-bottom);
-  }
-  nav.bottom button{
-    flex:1; background:none; border:none; padding:12px; font-size:11px; font-weight:700;
-    color:var(--text-muted); display:flex; flex-direction:column; align-items:center; gap:4px;
-  }
-  nav.bottom button.active{color:var(--teal-dark);}
-
-  .toast{
-    position:fixed; bottom:100px; left:50%; transform:translateX(-50%);
-    background:var(--navy); color:#fff; padding:10px 20px; border-radius:20px;
-    font-size:13px; opacity:0; transition:0.3s; z-index:99;
-  }
-  .toast.show{opacity:1;}
-</style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 
 <div class="app">
-  <header class="top">
-    <div class="brand">
-      <div class="brand-text">
-        <div class="name">ايجل للتجارة</div>
-        <div class="sub">نظام إدارة المصروفات الذكي</div>
-      </div>
+    <header>
+        <div style="font-size: 22px; font-weight: 900;">ايجل للتجارة</div>
+        <div id="stat-bar" style="font-size: 12px; margin-top: 5px; opacity: 0.8;"></div>
+    </header>
+
+    <main>
+        <section id="view-entry" class="view active">
+            <div class="card">
+                <label>فاتورة ضريبية؟</label>
+                <div class="row">
+                    <button class="btn btn-outline" id="t-off" onclick="toggleTax(false)">لا</button>
+                    <button class="btn btn-outline" id="t-on" onclick="toggleTax(true)">نعم</button>
+                </div>
+                <div id="tax-fields" style="display:none; margin-top:10px; padding:10px; background:#fffcf0; border:1px dashed var(--amber); border-radius:10px;">
+                    <div class="field">
+                        <label>المورد</label>
+                        <input type="text" id="sup-name" list="sup-list" oninput="autoVat()" placeholder="بحث في القائمة...">
+                        <datalist id="sup-list"></datalist>
+                    </div>
+                    <div class="row">
+                        <div class="field"><label>رقم الفاتورة</label><input type="text" id="sup-inv"></div>
+                        <div class="field"><label>الرقم الضريبي</label><input type="text" id="sup-vat"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="field"><label>اسم الحساب</label><select id="acc-name"></select></div>
+                <div class="row">
+                    <div class="field"><label>المبلغ شامل</label><input type="number" id="amt" step="0.01"></div>
+                    <div class="field"><label>التاريخ</label><input type="date" id="date"></div>
+                </div>
+                <div class="field">
+                    <label>شرح المصروف</label>
+                    <div style="position:relative;">
+                        <textarea id="desc" rows="2" placeholder="اكتب أو سجل بصوتك..."></textarea>
+                        <button onclick="startVoice()" style="position:absolute; left:8px; bottom:8px; border:none; background:var(--teal); color:#fff; border-radius:50%; width:38px; height:38px; cursor:pointer;">🎤</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="row">
+                    <div class="field"><label>السيارة</label><select id="car-name"></select></div>
+                    <div class="field"><label>العداد</label><input type="number" id="odo"></div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" id="save-btn" onclick="save()">💾 حفظ البيانات</button>
+        </section>
+
+        <section id="view-records" class="view">
+            <div style="display:flex; gap:10px; background:var(--navy); padding:10px; border-radius:15px; margin-bottom:15px;">
+                <select id="f-m" onchange="render()"></select>
+                <select id="f-y" onchange="render()"></select>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+                <button class="btn btn-amber" style="font-size:11px;" onclick="printFullPDF()">🖨️ تقرير PDF شامل (58mm)</button>
+                <button class="btn btn-amber" style="font-size:11px;" onclick="exportExcel()">📊 إكسل (Excel)</button>
+            </div>
+
+            <div id="list"></div>
+            
+            <button class="btn btn-danger" style="margin-top:20px; opacity:0.7;" onclick="purgeStep1()">🗑️ مسح السجل بالكامل</button>
+        </section>
+    </main>
+
+    <nav>
+        <button id="nav-entry" class="active" onclick="tab('entry')">➕ إضافة</button>
+        <button id="nav-records" onclick="tab('records')">📋 السجل</button>
+    </nav>
+
+    <div id="print-wrap"></div>
+
+    <div id="modal-purge" class="modal">
+        <div class="modal-content">
+            <h3 id="m-title">تنبيه</h3>
+            <p id="m-body"></p>
+            <div id="m-btns" style="display:flex; gap:10px; margin-top:20px;"></div>
+        </div>
     </div>
-  </header>
 
-  <main>
-    <!-- Entry View -->
-    <section class="view active" id="view-entry">
-      <div class="card">
-        <div class="card-body">
-          <div class="section-title"><span class="num">1</span> نوع الفاتورة</div>
-          <div class="toggle-group">
-            <div class="toggle-btn" id="btnNo" onclick="setTaxable(false)">عادية</div>
-            <div class="toggle-btn" id="btnYes" onclick="setTaxable(true)">ضريبية</div>
-          </div>
-
-          <div id="taxFields" style="display:none; margin-top:15px;">
-            <div class="invoice-box">
-              <div class="field">
-                <label>اسم المورد (اختر أو اكتب جديداً)</label>
-                <input type="text" id="supInput" list="supList" oninput="onSupplierType()" placeholder="ابحث عن مورد...">
-                <datalist id="supList"></datalist>
-              </div>
-              <div class="row2">
-                <div class="field">
-                  <label>رقم الفاتورة</label>
-                  <input type="text" id="invNo" placeholder="0000">
-                </div>
-                <div class="field">
-                  <label>الرقم الضريبي</label>
-                  <input type="text" id="taxNo" placeholder="300...">
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-body">
-          <div class="section-title"><span class="num">2</span> التفاصيل المالية</div>
-          <div class="field">
-            <label>اسم الحساب</label>
-            <select id="accName"></select>
-          </div>
-          <div class="row2">
-            <div class="field">
-              <label>المبلغ (شامل)</label>
-              <input type="number" id="amt" step="0.01" inputmode="decimal">
-            </div>
-            <div class="field">
-              <label>التاريخ</label>
-              <input type="date" id="expDate">
-            </div>
-          </div>
-          <div class="field">
-            <label>شرح المصروف</label>
-            <div class="mic-wrap">
-              <textarea id="desc" placeholder="اكتب أو سجل صوتياً..."></textarea>
-              <button class="mic-btn" onclick="toggleMic()" id="micBtn">🎤</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-body">
-          <div class="section-title"><span class="num">3</span> بيانات السيارة (اختياري)</div>
-          <div class="row2">
-            <div class="field">
-              <label>السيارة</label>
-              <select id="carName"></select>
-            </div>
-            <div class="field">
-              <label>العداد</label>
-              <input type="number" id="odo" placeholder="كم">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <button class="primary-btn" onclick="saveData()">💾 حفظ البيانات</button>
-    </section>
-
-    <!-- Records View -->
-    <section class="view" id="view-records">
-        <button class="primary-btn" style="background:var(--amber); color:#000; margin-bottom:15px;" onclick="exportExcel()">📊 تصدير إكسل (Excel)</button>
-        <div id="listContainer"></div>
-    </section>
-  </main>
-
-  <nav class="bottom">
-    <button onclick="switchTab('entry')" id="t-entry" class="active"><span>➕</span>إضافة</button>
-    <button onclick="switchTab('records')" id="t-records"><span>📋</span>السجل</button>
-  </nav>
-
-  <div class="toast" id="toast"></div>
+    <div class="toast" id="toast"></div>
 </div>
 
 <script>
-/* ==========================================
-   CONFIG: القوائم القابلة للتعديل بسهولة
-   ========================================== */
 const CONFIG = {
-  accounts: [
-    "ديزل تبوك","ديزل القريات","صيانة تبوك","صيانة القريات","مياه","كهرباء",
-    "مستلزمات مكتبية","مستلزمات مستودع","فاتورة هاتف","ايجار مستودع","ايجار سكن",
-    "توصيل بضاعه","اقامات","رحلات","اكراميات","وجبات","مصروفات اخرى","السيارات",
-    "محطة الدريس للمحروقات","اشتراك خدمة شهرية محطة الدريس للمحروقات",
-    "عمولة البنك لنقاط البيع","سابر","جمارك","البرنامج المحاسبي"
-  ],
-  vehicles: [
-    "بدون تحديد","سيارة وجية","سيارة نسيم","سيارة سراج","سيارة امين","سيارة سامي",
-    "سيارة احمد عيسى","سيارة احمد عادل","سيارة نصر","سيارة محمد انور","فوركلفت"
-  ],
-  // القائمة الأساسية للموردين
-  suppliers: [
-    {n: "النور غير بالقريات", v: "301332968800003"},
-    {n: "مؤسسة امدادات الشمال التجارية", v: "300496999300003"},
-    {n: "شركة الزوايا المتميزة للخدمات البترولية", v: "311815386200003"},
-    {n: "الفحص الدوري بالقريات", v: "311145924800003"},
-    {n: "مؤسسة عبدالوهاب مرزوق لبيع وصيانة معدات الاطفاء", v: "301128985500003"},
-    {n: "شركة عبدالله محمد عايد الشراري", v: "311472419800003"},
-    {n: "نخبة المملك لقطع غيار الشاحنات", v: "310241428300003"},
-    {n: "شركة الدريس للخدمات البترولية", v: "300056462300003"},
-    {n: "اهل القصور البخاري", v: "311672826900003"},
-    {n: "مؤسسة قطع النهضة لقطع الغيار", v: "310313025100003"},
-    {n: "شركة نظم المحركات المحدودة", v: "312594879200003"},
-    {n: "شركة خدمات النفط", v: "300237216410003"},
-    {n: "تموينات بن دعيجاء", v: "302162115200003"},
-    {n: "شركة تالا للإطارات", v: "311071470800003"},
-    {n: "مؤسسة فهد رشيد بقريط العرجان للتجارة", v: "301000963500003"},
-    {n: "مؤسسة خالد حمود المطلق", v: "310057683900003"},
-    {n: "مؤسسة محمد عثمان العبيد اسوزو -ميتسوبيشي", v: "300583761500003"},
-    {n: "مؤسسة مدار الفرسان لقطع الغيار", v: "311304716500003"},
-    {n: "مؤسسة القوة القصوى لقطع الغيار", v: "312041707200003"},
-    {n: "شركة مدار الفرسات لقطع الغيار", v: "311304716500003"},
-    {n: "مؤسسة عبدالاله رشيد مطرد العنزي لقطع غيار السيارات", v: "310869735900003"},
-    {n: "الوردة لقطع غيار السيارات", v: "301049659800003"},
-    {n: "شركة السواحل الجنوبية", v: "311071470800003"},
-    {n: "شركة وسم الغلا للتجارة", v: "311456759100003"},
-    {n: "مؤسسة سنارة الخليج للتجارة", v: "302284074600003"},
-    {n: "بنشر مها عمر ابوالمجد لخدمات السيارات", v: "311170587900003"},
-    {n: "شركة ياسر بن محمد المحيميد وشريكه", v: "310289331500003"},
-    {n: "مؤسسة سهم البراق للتشغيل والصيانة", v: "305006414400003"},
-    {n: "محطة بدر عيد عريعر العنزي للمحروقات", v: "311822424200003"},
-    {n: "بنشر الاطار الشمالي لخدمات السيارات", v: "311527824800003"},
-    {n: "درب الوطن", v: "311510940300003"},
-    {n: "مطتبة حزائن المعرفة للقرطاسية", v: "302087638500003"},
-    {n: "مؤسسة قباء المدينة للتجارة", v: "310597731500003"},
-    {n: "مؤسسة شوق الشمال لقطع غيار السيارات", v: "312104987800003"},
-    {n: "ورشة عبدالله عجيج الشراري لصيانة السيارات", v: "301134092500003"},
-    {n: "مؤسسة علي المفلح التجارية", v: "310086493500003"},
-    {n: "مؤسسة رحمة الاولي التجارية", v: "310304354600003"},
-    {n: "شركة رواسي الشمال للاطارات", v: "311331928600003"},
-    {n: "شركة التطور التكنولوجي للمقاولات", v: "311283440300003"},
-    {n: "مؤسسة الوليد غير لقطع غيار السيارات", v: "301014476400003"},
-    {n: "شركة دانة الجملة التجارية", v: "311322909900003"},
-    {n: "مؤسسة مفتاح منصور التجارية", v: "301017759800003"},
-    {n: "عنوان التوفير", v: "310167365900003"},
-    {n: "الفحص الدوري تبوك", v: "311145924800003"},
-    {n: "روائع امازون", v: "310970064200003"},
-    {n: "روس للخدمات البترولية", v: "301306866200003"},
-    {n: "سهم التوفير للتجارة", v: "311320577900003"},
-    {n: "مؤسسة الهدى للتجارة", v: "311900074800003"},
-    {n: "مؤسسة ابراهيم القوير للوقود", v: "300885891500003"},
-    {n: "مؤسسة الجزيرة بلس", v: "313341511800003"},
-    {n: "مؤسسة الجوهرة الفريدة لخمات السيارات", v: "310586618400003"},
-    {n: "شركة محبرة التاج للقرطاسية", v: "311098273300003"},
-    {n: "مكتبة خزائن المعرفة للقرطاسية", v: "302087638500003"},
-    {n: "مكتبة العواد", v: "300962593200003"},
-    {n: "شركة سنديان الشمال للتجارة", v: "311270708800003"},
-    {n: "مؤسسة روايا الكنج للبطاريات", v: "301322863500003"},
-    {n: "بترومين", v: "300000603210003"},
-    {n: "شركة ساحة الباسم", v: "311239947500003"},
-    {n: "شركة بصمة التوفير", v: "311636475100003"},
-    {n: "مؤسسة احمد صياح العنزي للتجارة", v: "310343983500003"},
-    {n: "شركة الحرفيون السعودية للمقاولات", v: "312138042700003"},
-    {n: "عالم الزيوت السريع ضبا", v: "312669962700003"},
-    {n: "بنشر روائع الضاحية لخدمات السيارات", v: "310262008100003"},
-    {n: "مؤسسة جروو المحيط التجارية", v: "312399254900003"},
-    {n: "مؤسسة اساس الحاسوب للصيانه", v: "310750236800003"},
-    {n: "شركة هلا وان التجارية", v: "314433396800003"}
-  ]
+    accounts: ["ديزل تبوك","ديزل القريات","صيانة تبوك","صيانة القريات","مياه","كهرباء","مستلزمات مكتبية","مستلزمات مستودع","فاتورة هاتف","ايجار مستودع","ايجار سكن","توصيل بضاعه","اقامات","رحلات","اكراميات","وجبات","مصروفات اخرى","السيارات","محطة الدريس للمحروقات","اشتراك خدمة شهرية محطة الدريس للمحروقات","عمولة البنك لنقاط البيع","سابر","جمارك","البرنامج المحاسبي"],
+    vehicles: ["بدون تحديد","سيارة وجية","سيارة نسيم","سيارة سراج","سيارة امين","سيارة سامي","سيارة احمد عيسى","سيارة احمد عادل","سيارة نصر","سيارة محمد انور","فوركلفت"],
+    suppliers: [
+        {n:"النور غير بالقريات", v:"301332968800003"}, {n:"مؤسسة امدادات الشمال التجارية", v:"300496999300003"}, {n:"شركة الزوايا المتميزة", v:"311815386200003"}, {n:"الفحص الدوري بالقريات", v:"311145924800003"}, {n:"مؤسسة عبدالوهاب مرزوق", v:"301128985500003"}, {n:"شركة عبدالله محمد عايد الشراري", v:"311472419800003"}, {n:"نخبة المملك لقطع غيار الشاحنات", v:"310241428300003"}, {n:"شركة الدريس للخدمات البترولية", v:"300056462300003"}, {n:"اهل القصور البخاري", v:"311672826900003"}, {n:"مؤسسة قطع النهضة", v:"310313025100003"}, {n:"شركة نظم المحركات المحدودة", v:"312594879200003"}, {n:"شركة خدمات النفط", v:"300237216410003"}, {n:"تموينات بن دعيجاء", v:"302162115200003"}, {n:"شركة تالا للإطارات", v:"311071470800003"}, {n:"مؤسسة فهد رشيد بقريط العرجان", v:"301000963500003"}, {n:"مؤسسة خالد حمود المطلق", v:"310057683900003"}, {n:"مؤسسة محمد عثمان العبيد اسوزو", v:"300583761500003"}, {n:"مؤسسة مدار الفرسان لقطع الغيار", v:"311304716500003"}, {n:"مؤسسة القوة القصوى لقطع الغيار", v:"312041707200003"}, {n:"شركة مدار الفرسات لقطع الغيار", v:"311304716500003"}, {n:"مؤسسة عبدالاله رشيد مطرد", v:"310869735900003"}, {n:"الوردة لقطع غيار السيارات", v:"301049659800003"}, {n:"شركة السواحل الجنوبية", v:"311071470800003"}, {n:"شركة وسم الغلا للتجارة", v:"311456759100003"}, {n:"مؤسسة سنارة الخليج للتجارة", v:"302284074600003"}, {n:"بنشر مها عمر ابوالمجد", v:"311170587900003"}, {n:"شركة ياسر بن محمد المحيميد", v:"310289331500003"}, {n:"مؤسسة سهم البراق للتشغيل", v:"305006414400003"}, {n:"محطة بدر عيد عريعر العنزي", v:"311822424200003"}, {n:"بنشر الاطار الشمالي", v:"311527824800003"}, {n:"درب الوطن", v:"311510940300003"}, {n:"مكتبة حزائن المعرفة", v:"302087638500003"}, {n:"مؤسسة قباء المدينة للتجارة", v:"310597731500003"}, {n:"مؤسسة شوق الشمال", v:"312104987800003"}, {n:"ورشة عبدالله عجيج الشراري", v:"301134092500003"}, {n:"مؤسسة علي المفلح التجارية", v:"310086493500003"}, {n:"مؤسسة رحمة الاولي التجارية", v:"310304354600003"}, {n:"شركة رواسي الشمال للاطارات", v:"311331928600003"}, {n:"شركة التطور التكنولوجي", v:"311283440300003"}, {n:"مؤسسة الوليد غير", v:"301014476400003"}, {n:"شركة دانة الجملة التجارية", v:"311322909900003"}, {n:"مؤسسة مفتاح منصور التجارية", v:"301017759800003"}, {n:"عنوان التوفير", v:"310167365900003"}, {n:"الفحص الدوري تبوك", v:"311145924800003"}, {n:"روائع امازون", v:"310970064200003"}, {n:"روس للخدمات البترولية", v:"301306866200003"}, {n:"سهم التوفير للتجارة", v:"311320577900003"}, {n:"مؤسسة الهدى للتجارة", v:"311900074800003"}, {n:"مؤسسة ابراهيم القوير للوقود", v:"300885891500003"}, {n:"مؤسسة الجزيرة بلس", v:"313341511800003"}, {n:"مؤسسة الجوهرة الفريدة", v:"310586618400003"}, {n:"شركة محبرة التاج للقرطاسية", v:"311098273300003"}, {n:"مكتبة العواد", v:"300962593200003"}, {n:"شركة سنديان الشمال للتجارة", v:"311270708800003"}, {n:"مؤسسة روايا الكنج للبطاريات", v:"301322863500003"}, {n:"بترومين", v:"300000603210003"}, {n:"شركة ساحة الباسم", v:"311239947500003"}, {n:"شركة بصمة التوفير", v:"311636475100003"}, {n:"مؤسسة احمد صياح العنزي", v:"310343983500003"}, {n:"شركة الحرفيون السعودية", v:"312138042700003"}, {n:"عالم الزيوت السريع ضبا", v:"312669962700003"}, {n:"بنشر روائع الضاحية", v:"310262008100003"}, {n:"مؤسسة جروو المحيط التجارية", v:"312399254900003"}, {n:"مؤسسة اساس الحاسوب للصيانه", v:"310750236800003"}, {n:"شركة هلا وان التجارية", v:"314433396800003"}
+    ]
 };
 
-let expenses = JSON.parse(localStorage.getItem('eagle_exp_v2')) || [];
-let customSuppliers = JSON.parse(localStorage.getItem('eagle_sups')) || [];
-let isTaxable = false;
+let db = JSON.parse(localStorage.getItem('eagle_v10_db')) || [];
+let isTax = false, editId = null;
 
-// تهيئة القوائم
 function init() {
-  const accSel = document.getElementById('accName');
-  CONFIG.accounts.forEach(a => accSel.add(new Option(a, a)));
+    const aS = document.getElementById('acc-name');
+    CONFIG.accounts.forEach(a => aS.add(new Option(a, a)));
+    const cS = document.getElementById('car-name');
+    CONFIG.vehicles.forEach(c => cS.add(new Option(c, c)));
+    const sD = document.getElementById('sup-list');
+    CONFIG.suppliers.forEach(s => sD.appendChild(new Option(s.n, s.n)));
 
-  const carSel = document.getElementById('carName');
-  CONFIG.vehicles.forEach(v => carSel.add(new Option(v, v)));
+    const fm = document.getElementById('f-m'); fm.add(new Option("كل الشهور", "all"));
+    ["يناير","فبراير","مارس","إبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"].forEach((n,i)=>fm.add(new Option(n, i+1)));
+    const fy = document.getElementById('f-y'); const curY = new Date().getFullYear();
+    for(let y=curY; y>=2024; y--) fy.add(new Option(y, y));
 
-  document.getElementById('expDate').valueAsDate = new Date();
-  updateSupDatalist();
-  setTaxable(false);
-  renderList();
+    document.getElementById('date').valueAsDate = new Date();
+    toggleTax(false);
+    render();
 }
 
-// تحديث قائمة البحث عن الموردين
-function updateSupDatalist() {
-  const list = document.getElementById('supList');
-  list.innerHTML = "";
-  const allSups = [...CONFIG.suppliers, ...customSuppliers];
-  allSups.forEach(s => {
-    let opt = document.createElement('option');
-    opt.value = s.n;
-    list.appendChild(opt);
-  });
+function autoVat() {
+    const val = document.getElementById('sup-name').value;
+    const s = CONFIG.suppliers.find(x => x.n === val);
+    if(s) document.getElementById('sup-vat').value = s.v;
 }
 
-// عند كتابة اسم المورد
-function onSupplierType() {
-  const val = document.getElementById('supInput').value;
-  const allSups = [...CONFIG.suppliers, ...customSuppliers];
-  const found = allSups.find(s => s.n === val);
-  if(found) {
-    document.getElementById('taxNo').value = found.v;
-  }
+function toggleTax(v) {
+    isTax = v;
+    document.getElementById('tax-fields').style.display = v ? 'block' : 'none';
+    document.getElementById('t-on').style.background = v ? 'var(--amber)' : '#fff';
+    document.getElementById('t-off').style.background = !v ? 'var(--teal)' : '#fff';
+    document.getElementById('t-off').style.color = !v ? '#fff' : '#000';
 }
 
-function setTaxable(val) {
-  isTaxable = val;
-  document.getElementById('taxFields').style.display = val ? 'block' : 'none';
-  document.getElementById('btnYes').className = 'toggle-btn' + (val ? ' active-yes' : '');
-  document.getElementById('btnNo').className = 'toggle-btn' + (!val ? ' active-no' : '');
+function save() {
+    const amt = document.getElementById('amt').value;
+    const dV = document.getElementById('date').value;
+    if(!amt || !dV) return showToast("أدخل المبلغ والتاريخ");
+
+    const d = new Date(dV);
+    const entry = {
+        id: editId || Date.now(),
+        taxCol: isTax ? "1" : "",
+        acc: document.getElementById('acc-name').value,
+        amt: parseFloat(amt),
+        day: d.getDate(), month: d.getMonth() + 1, year: d.getFullYear(), date: dV,
+        desc: document.getElementById('desc').value,
+        car: document.getElementById('car-name').value,
+        odo: document.getElementById('odo').value,
+        sup: isTax ? document.getElementById('sup-name').value : "",
+        inv: isTax ? document.getElementById('sup-inv').value : "",
+        vat: isTax ? document.getElementById('sup-vat').value : ""
+    };
+
+    if(editId) {
+        const i = db.findIndex(x => x.id === editId); db[i] = entry;
+    } else db.unshift(entry);
+
+    localStorage.setItem('eagle_v10_db', JSON.stringify(db));
+    showToast("تم الحفظ");
+    location.reload();
 }
 
-// وظيفة حفظ البيانات
-function saveData() {
-  const amt = document.getElementById('amt').value;
-  if(!amt) return alert("الرجاء إدخال المبلغ");
+function render() {
+    const m = document.getElementById('f-m').value;
+    const y = document.getElementById('f-y').value;
+    const filtered = db.filter(e => (m === 'all' || e.month == m) && e.year == y);
+    const total = filtered.reduce((s, e) => s + e.amt, 0);
+    document.getElementById('stat-bar').innerText = `عدد: ${filtered.length} | إجمالي: ${total.toFixed(2)} ر.س`;
 
-  const supName = document.getElementById('supInput').value;
-  const taxNumber = document.getElementById('taxNo').value;
+    const container = document.getElementById('list');
+    container.innerHTML = filtered.map(e => `
+        <div class="expense-item">
+            <div class="item-head"><span>${e.acc}</span><span>${e.amt.toFixed(2)}</span></div>
+            <div style="font-size:12px; color:#555;">📅 ${e.date} | 🚗 ${e.car} ${e.taxCol ? ' | 🏷️ ضريبة' : ''}</div>
+            <div style="display:flex; gap:8px; margin-top:10px;">
+                <button class="btn btn-outline" style="flex:1; padding:8px;" onclick="editItem(${e.id})">تعديل</button>
+                <button class="btn btn-outline" style="flex:1; padding:8px;" onclick="printOnePDF(${e.id})">🖨️ سند (58mm)</button>
+                <button class="btn btn-outline" style="flex:0.3; color:red;" onclick="deleteItem(${e.id})">🗑️</button>
+            </div>
+        </div>
+    `).join('');
+}
 
-  // إذا كان مورد جديد، احفظه في الذاكرة
-  if(isTaxable && supName) {
-    const allSups = [...CONFIG.suppliers, ...customSuppliers];
-    if(!allSups.find(s => s.n === supName)) {
-      customSuppliers.push({n: supName, v: taxNumber});
-      localStorage.setItem('eagle_sups', JSON.stringify(customSuppliers));
-      updateSupDatalist();
+/* ================== الطباعة الموفرة للمساحة 58mm ================== */
+
+// تقرير شامل مجمع 58mm
+async function printFullPDF() {
+    const m = document.getElementById('f-m').value;
+    const y = document.getElementById('f-y').value;
+    const filtered = db.filter(e => (m === 'all' || e.month == m) && e.year == y);
+
+    if(filtered.length === 0) return alert("لا توجد بيانات");
+
+    const wrap = document.getElementById('print-wrap');
+    wrap.style.display = 'block';
+    
+    let html = `
+        <div class="p-header"><strong>ايجل للتجارة</strong><br>تقرير شامل مصروفات</div>
+        <div style="text-align:center; font-size:10px;">الفترة: ${m}/${y}</div>
+    `;
+
+    filtered.forEach((e, i) => {
+        html += `
+            <div class="p-block">
+                <div class="p-row">
+                    <span>${i+1}. <b>${e.acc}</b></span>
+                    <span>${e.taxCol ? '<b>(ض)</b>' : ''}</span>
+                </div>
+                <div class="p-row">
+                    <span>${e.amt.toFixed(2)} ر.س</span>
+                    <span>${e.day}/${e.month}</span>
+                </div>
+                ${e.car !== 'بدون تحديد' ? `<div class="p-row"><span>${e.car}</span> <span>${e.odo ? `ع: ${e.odo}` : ''}</span></div>` : ''}
+                ${e.sup ? `<div class="p-row"><span>م: ${e.sup}</span> <span>ف: ${e.inv || '--'}</span></div>` : ''}
+                ${e.vat ? `<div class="p-vat-box">ضريبي: ${e.vat}</div>` : ''}
+                ${e.desc ? `<div style="font-size:9px; color:#333;">ش: ${e.desc}</div>` : ''}
+            </div>
+        `;
+    });
+
+    const total = filtered.reduce((s, e) => s + e.amt, 0);
+    html += `<div class="p-total">الإجمالي: ${total.toFixed(2)} ر.س</div>
+             <div style="text-align:center; font-size:8px; margin-top:5px;">انتهى التقرير</div>`;
+
+    wrap.innerHTML = html;
+    const opt = {
+        margin: 0, filename: `Report_${m}_${y}.pdf`, html2canvas: { scale: 3 },
+        jsPDF: { unit: 'mm', format: [58, 60 + (filtered.length * 35)], orientation: 'portrait' }
+    };
+    await html2pdf().set(opt).from(wrap).save();
+    wrap.style.display = 'none';
+}
+
+// سند واحد 58mm
+async function printOnePDF(id) {
+    const e = db.find(x => x.id === id);
+    const wrap = document.getElementById('print-wrap');
+    wrap.style.display = 'block';
+    wrap.innerHTML = `
+        <div class="p-header"><strong>ايجل للتجارة</strong><br>سند مصروفات</div>
+        <div class="p-row"><span>رقم العملية:</span> <span>${e.id.toString().slice(-6)}</span></div>
+        <div class="p-row"><span>التاريخ:</span> <span>${e.date}</span></div>
+        <div style="border-top:1px solid #000; margin:4px 0;"></div>
+        <div class="p-row" style="font-size:12px;"><strong>${e.acc}</strong> <strong>${e.amt.toFixed(2)}</strong></div>
+        ${e.sup ? `<div class="p-row"><span>المورد:</span> <span>${e.sup}</span></div>` : ''}
+        ${e.inv ? `<div class="p-row"><span>الفاتورة:</span> <span>${e.inv}</span></div>` : ''}
+        ${e.vat ? `<div class="p-vat-box">ضريبي: ${e.vat}</div>` : ''}
+        <div class="p-row"><span>السيارة:</span> <span>${e.car}</span></div>
+        ${e.odo ? `<div class="p-row"><span>العداد:</span> <span>${e.odo}</span></div>` : ''}
+        ${e.desc ? `<div style="font-size:10px; margin-top:5px;">الشرح: ${e.desc}</div>` : ''}
+        <div style="text-align:center; font-size:9px; margin-top:10px; border-top:0.5px solid #eee;">شكراً لك</div>
+    `;
+    const opt = {
+        margin: 0, filename: `Receipt_${e.id}.pdf`,
+        jsPDF: { unit: 'mm', format: [58, 140], orientation: 'portrait' }
+    };
+    await html2pdf().set(opt).from(wrap).save();
+    wrap.style.display = 'none';
+}
+
+/* ================== الحذف وحماية البيانات ================== */
+function purgeStep1() {
+    showModal("تحذير", "سيتم مسح السجل بالكامل. هل أنت متأكد؟", "نعم، التالي", "إلغاء", () => {
+        hideModal(); setTimeout(purgeStep2, 400);
+    });
+}
+
+function purgeStep2() {
+    showModal("تأكيد نهائي", "اضغط على الزر الأحمر للمسح النهائي.", "إلغاء", "نعم، امسح الكل", () => {
+        hideModal();
+    }, () => {
+        db = []; localStorage.removeItem('eagle_v10_db'); location.reload();
+    }, true);
+}
+
+function showModal(t, b, b1, b2, a1, a2, swap = false) {
+    document.getElementById('m-title').innerText = t; document.getElementById('m-body').innerText = b;
+    const btns = document.getElementById('m-btns');
+    btns.innerHTML = `
+        <button id="mb1" class="btn" style="background:${swap ? '#e2e8f0' : 'var(--danger)'}; color:${swap ? '#000' : '#fff'}; flex:1;">${b1}</button>
+        <button id="mb2" class="btn" style="background:${swap ? 'var(--danger)' : '#e2e8f0'}; color:${swap ? '#fff' : '#000'}; flex:1;">${b2}</button>
+    `;
+    document.getElementById('mb1').onclick = a1; document.getElementById('mb2').onclick = a2 || hideModal;
+    document.getElementById('modal-purge').classList.add('active');
+}
+function hideModal() { document.getElementById('modal-purge').classList.remove('active'); }
+
+/* ================== أدوات مساعدة ================== */
+function tab(t) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById('view-'+t).classList.add('active');
+    document.getElementById('nav-'+t).classList.add('active');
+    if(t === 'records') render();
+}
+
+function editItem(id) {
+    const e = db.find(x => x.id === id); editId = id; tab('entry');
+    toggleTax(!!e.taxCol);
+    document.getElementById('acc-name').value = e.acc; document.getElementById('amt').value = e.amt;
+    document.getElementById('date').value = e.date; document.getElementById('desc').value = e.desc;
+    document.getElementById('car-name').value = e.car; document.getElementById('odo').value = e.odo;
+    document.getElementById('sup-name').value = e.sup; document.getElementById('sup-inv').value = e.inv;
+    document.getElementById('sup-vat').value = e.vat;
+    document.getElementById('save-btn').innerText = "🔄 تحديث البيانات";
+}
+
+function deleteItem(id) {
+    if(confirm("حذف هذا المصروف؟")) {
+        db = db.filter(x => x.id !== id); localStorage.setItem('eagle_v10_db', JSON.stringify(db)); render();
     }
-  }
-
-  const date = new Date(document.getElementById('expDate').value);
-  const entry = {
-    id: Date.now(),
-    isTax: isTaxable ? 1 : "",
-    acc: document.getElementById('accName').value,
-    amt: parseFloat(amt),
-    day: date.getDate(),
-    month: date.getMonth() + 1,
-    desc: document.getElementById('desc').value,
-    car: document.getElementById('carName').value,
-    odo: document.getElementById('odo').value,
-    sup: isTaxable ? supName : "",
-    inv: isTaxable ? document.getElementById('invNo').value : "",
-    tax: isTaxable ? taxNumber : ""
-  };
-
-  expenses.unshift(entry);
-  localStorage.setItem('eagle_exp_v2', JSON.stringify(expenses));
-  showToast("تم الحفظ بنجاح");
-  resetForm();
-}
-
-function resetForm() {
-  document.getElementById('amt').value = "";
-  document.getElementById('desc').value = "";
-  document.getElementById('odo').value = "";
-  document.getElementById('supInput').value = "";
-  document.getElementById('taxNo').value = "";
-  document.getElementById('invNo').value = "";
-}
-
-// السجل والتصدير
-function renderList() {
-  const container = document.getElementById('listContainer');
-  if(expenses.length === 0) {
-    container.innerHTML = "<p style='text-align:center; color:gray;'>لا يوجد سجلات حالياً</p>";
-    return;
-  }
-  container.innerHTML = expenses.map(e => `
-    <div class="entry-card">
-      <div class="entry-top">
-        <strong>${e.acc}</strong>
-        <span class="entry-amt">${e.amt.toFixed(2)}</span>
-      </div>
-      <div style="font-size:12px; margin-top:5px; color:#666;">
-        ${e.day}/${e.month} | ${e.car !== 'بدون تحديد' ? e.car : ''} 
-        ${e.isTax ? '<span class="badge" style="background:#FFF4E3; color:#8A5F14;">ضريبية</span>' : ''}
-      </div>
-    </div>
-  `).join('');
 }
 
 function exportExcel() {
-  if(expenses.length === 0) return alert("لا توجد بيانات");
-  const data = expenses.map(e => ({
-    "ضريبية": e.isTax,
-    "الحساب": e.acc,
-    "المبلغ": e.amt,
-    "اليوم": e.day,
-    "الشهر": e.month,
-    "الشرح": e.desc,
-    "السيارة": e.car,
-    "العداد": e.odo,
-    "المورد": e.sup,
-    "رقم الفاتورة": e.inv,
-    "الرقم الضريبي": e.tax
-  }));
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "المصروفات");
-  XLSX.writeFile(wb, `Eagle_Expenses_${Date.now()}.xlsx`);
+    const data = db.map(e => ({
+        "ضريبية": e.taxCol, "اسم الحساب": e.acc, "المبلغ": e.amt, "اليوم": e.day, "الشهر": e.month, "الشرح": e.desc, "السيارة": e.car, "العداد": e.odo, "المورد": e.sup, "رقم الفاتورة": e.inv, "الرقم الضريبي": e.vat
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "S1");
+    XLSX.writeFile(wb, "Eagle_Expenses.xlsx");
 }
 
-// صوت إلى نص
-let rec;
-function toggleMic() {
-  const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!Speech) return alert("متصفحك لا يدعم التسجيل الصوتي");
-  
-  if(!rec) {
-    rec = new Speech();
-    rec.lang = 'ar-SA';
-    rec.onresult = (e) => {
-      document.getElementById('desc').value += e.results[0][0].transcript;
-      stopMic();
-    };
-  }
-  
-  document.getElementById('micBtn').classList.add('recording');
-  rec.start();
-}
-function stopMic() {
-  document.getElementById('micBtn').classList.remove('recording');
-  if(rec) rec.stop();
-}
-
-function switchTab(t) {
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-  document.getElementById('view-' + t).classList.add('active');
-  document.getElementById('t-' + t).classList.add('active');
-  if(t === 'records') renderList();
+function startVoice() {
+    const S = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!S) return alert("المتصفح لا يدعم الصوت");
+    const r = new S(); r.lang = 'ar-SA';
+    r.onresult = (e) => document.getElementById('desc').value += e.results[0][0].transcript;
+    r.start();
 }
 
 function showToast(m) {
-  const t = document.getElementById('toast');
-  t.innerText = m; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2000);
+    const t = document.getElementById('toast'); t.innerText = m; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
 }
 
 init();
