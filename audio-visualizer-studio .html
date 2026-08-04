@@ -1,0 +1,1791 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Audio Visualizer Studio</title>
+<meta name="description" content="استوديو مؤثرات بصرية تفاعلية مع الصوت — يعمل بالكامل داخل المتصفح">
+<meta name="theme-color" content="#07060d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* =====================================================================
+   Audio Visualizer Studio — Stylesheet
+   نظام تصميم: Glassmorphism داكن بلمسات نيون (سماوي × بنفسجي)
+   ===================================================================== */
+
+:root{
+  --bg-0:#07060d;
+  --bg-1:#0c0a18;
+  --panel: rgba(255,255,255,0.055);
+  --panel-border: rgba(255,255,255,0.10);
+  --panel-border-hi: rgba(255,255,255,0.22);
+  --text-0:#f3f2fb;
+  --text-1:#a9a6c4;
+  --text-2:#716e91;
+
+  --neon-cyan:#39f5c9;
+  --neon-violet:#c239f5;
+  --neon-pink:#ff3d9a;
+  --neon-amber:#ffb23d;
+
+  --grad-signature: linear-gradient(135deg, var(--neon-cyan), var(--neon-violet));
+
+  --radius-lg: 22px;
+  --radius-md: 16px;
+  --radius-sm: 10px;
+  --tap-min: 52px;
+
+  --ease: cubic-bezier(.22,.9,.32,1);
+}
+
+*{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  background: var(--bg-0);
+  color: var(--text-0);
+  font-family:'IBM Plex Sans Arabic', 'Rajdhani', sans-serif;
+  overflow-x:hidden;
+  min-height:100vh;
+  position:relative;
+}
+
+/* ===================== خلفية جوية زخرفية ===================== */
+.ambient-bg{ position:fixed; inset:0; z-index:-1; overflow:hidden; }
+.ambient-glow{
+  position:absolute; width:60vmax; height:60vmax; border-radius:50%;
+  filter: blur(90px); opacity:.28; mix-blend-mode:screen;
+}
+.glow-a{ background: var(--neon-cyan); top:-20vmax; right:-18vmax; }
+.glow-b{ background: var(--neon-violet); bottom:-24vmax; left:-20vmax; }
+.ambient-grid{
+  position:absolute; inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: radial-gradient(ellipse at 50% 20%, black, transparent 75%);
+}
+
+/* ===================== عناصر مشتركة ===================== */
+.hidden{ display:none !important; }
+.glass{
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:.5em;
+  min-height: var(--tap-min);
+  padding: 0 22px;
+  border-radius: 999px;
+  border: 1px solid var(--panel-border);
+  background: var(--panel);
+  color: var(--text-0);
+  font-family:inherit;
+  font-size: 1rem;
+  font-weight:600;
+  cursor:pointer;
+  transition: transform .18s var(--ease), border-color .18s var(--ease), box-shadow .25s var(--ease), background .2s;
+  backdrop-filter: blur(14px);
+  user-select:none;
+  text-decoration:none;
+}
+.btn:active{ transform: scale(.96); }
+.btn-ghost:hover{ border-color: var(--panel-border-hi); }
+
+.btn-primary{
+  background: var(--grad-signature);
+  border:none;
+  color:#050308;
+  box-shadow: 0 8px 30px -8px rgba(57,245,201,.55);
+}
+.btn-primary:hover{ box-shadow: 0 10px 38px -6px rgba(194,57,245,.6); }
+
+.btn-huge{
+  min-height: 64px;
+  padding: 0 34px;
+  font-size: 1.15rem;
+  border-radius: 20px;
+  width:100%;
+  max-width: 380px;
+}
+.btn-sm{ min-height:40px; padding:0 16px; font-size:.85rem; }
+.btn-icon{ font-size:1.25em; line-height:1; }
+
+/* ===================== الرأس ===================== */
+.app-header{
+  display:flex; align-items:center; justify-content:center;
+  padding: 22px 16px 10px;
+}
+.brand{ display:flex; align-items:center; gap:12px; }
+.brand-mark{
+  width:44px; height:44px; border-radius:14px;
+  display:flex; align-items:center; justify-content:center;
+  background: var(--panel); border:1px solid var(--panel-border);
+  box-shadow: 0 0 24px -4px rgba(57,245,201,.35);
+}
+.brand-text h1{
+  font-family:'Rajdhani', sans-serif;
+  font-size: 1.32rem;
+  margin:0; letter-spacing:.02em; font-weight:700;
+}
+.brand-text h1 em{
+  font-style:normal;
+  background: var(--grad-signature);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.brand-text p{ margin:2px 0 0; font-size:.78rem; color: var(--text-1); }
+
+/* ===================== المحتوى الرئيسي ===================== */
+.app-main{ max-width: 720px; margin: 0 auto; padding: 6px 14px 60px; }
+.stage{ display:flex; flex-direction:column; align-items:center; }
+
+/* --------- شاشة الرفع --------- */
+.upload-stage{
+  min-height: 62vh;
+  justify-content:center;
+  gap: 20px;
+  text-align:center;
+  padding: 20px 8px;
+}
+.upload-visual{
+  width:100%; max-width:340px; aspect-ratio:1/1;
+  border-radius: 28px;
+  overflow:hidden;
+  border:1px solid var(--panel-border);
+  background: radial-gradient(circle at 50% 45%, rgba(194,57,245,.14), transparent 70%), var(--panel);
+  position:relative;
+}
+#idleCanvas{ width:100%; height:100%; display:block; }
+.upload-hint{ color:var(--text-1); font-size:.95rem; max-width:320px; line-height:1.7; margin:0; }
+.upload-note{ color:var(--text-2); font-size:.75rem; margin:0; }
+
+/* --------- منطقة المعاينة --------- */
+.preview-wrap{ width:100%; display:flex; flex-direction:column; gap:12px; margin-bottom:18px; }
+.preview-frame{
+  position:relative; width:100%; aspect-ratio: 9/16; max-height:72vh;
+  margin:0 auto; border-radius: var(--radius-lg); overflow:hidden;
+  background:#000; border:1px solid var(--panel-border);
+  box-shadow: 0 20px 60px -20px rgba(0,0,0,.7);
+}
+#sourceVideo{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; background:#000; z-index:0; }
+#mainCanvas{ position:absolute; inset:0; width:100%; height:100%; z-index:1; pointer-events:none; }
+.text-layer{ position:absolute; inset:0; z-index:2; pointer-events:none; overflow:hidden; }
+
+.export-overlay{
+  position:absolute; inset:0; z-index:5;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+  background: rgba(4,3,10,.72); backdrop-filter: blur(6px);
+}
+.export-ring{ position:relative; width:110px; height:110px; }
+.export-ring svg{ width:100%; height:100%; transform:rotate(-90deg); }
+.ring-bg{ fill:none; stroke: rgba(255,255,255,.12); stroke-width:8; }
+.ring-fg{
+  fill:none; stroke:url(#none); stroke: var(--neon-cyan); stroke-width:8; stroke-linecap:round;
+  stroke-dasharray: 327; stroke-dashoffset:327; transition: stroke-dashoffset .2s linear;
+}
+.export-ring span{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:1.15rem; font-family:'Rajdhani',sans-serif;
+}
+#exportStatusText{ color:var(--text-1); font-size:.85rem; margin:0; }
+
+/* --------- شريط تحكم المشغل --------- */
+.player-controls{
+  display:flex; align-items:center; gap:8px;
+  padding: 10px 12px; border-radius: 999px;
+  flex-wrap: nowrap;
+}
+.ctrl-btn{
+  width:44px; height:44px; min-width:44px; border-radius:50%;
+  border:1px solid var(--panel-border); background:rgba(255,255,255,.04);
+  color:var(--text-0); font-size:1rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition: transform .15s var(--ease), border-color .15s;
+}
+.ctrl-btn:active{ transform:scale(.9); }
+.time-label{ font-size:.7rem; color:var(--text-1); font-variant-numeric:tabular-nums; min-width:38px; text-align:center; }
+.seek-bar{ flex:1; min-width:0; }
+.player-controls .btn-ghost{ white-space:nowrap; flex-shrink:0; }
+
+input[type="range"]{
+  -webkit-appearance:none; appearance:none;
+  height:6px; border-radius:999px;
+  background: linear-gradient(90deg, var(--neon-cyan), var(--neon-violet));
+  background-size: 100% 100%;
+  outline:none;
+}
+input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none; appearance:none;
+  width:20px; height:20px; border-radius:50%;
+  background:#fff; border:3px solid var(--neon-violet);
+  box-shadow:0 0 10px rgba(194,57,245,.7);
+  cursor:pointer;
+}
+input[type="range"]::-moz-range-thumb{
+  width:20px; height:20px; border-radius:50%;
+  background:#fff; border:3px solid var(--neon-violet);
+  cursor:pointer;
+}
+
+/* --------- تبويبات لوحة التحكم --------- */
+.panel-tabs{
+  display:flex; gap:8px; overflow-x:auto; padding: 4px 2px 12px;
+  scrollbar-width:none;
+}
+.panel-tabs::-webkit-scrollbar{ display:none; }
+.tab-btn{
+  flex-shrink:0; min-height:44px; padding:0 18px;
+  border-radius:14px; border:1px solid var(--panel-border);
+  background: var(--panel); color:var(--text-1);
+  font-family:inherit; font-size:.88rem; font-weight:600; cursor:pointer;
+  transition: all .2s var(--ease);
+  white-space:nowrap;
+}
+.tab-btn.active{
+  color:#050308; background: var(--grad-signature); border-color:transparent;
+  box-shadow:0 6px 20px -6px rgba(57,245,201,.5);
+}
+
+.control-panel{ display:none; animation: fadeUp .35s var(--ease); }
+.control-panel.active{ display:block; }
+@keyframes fadeUp{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+
+.panel-title{
+  font-family:'Rajdhani', sans-serif; font-size:1.15rem; font-weight:700;
+  margin: 4px 0 14px; letter-spacing:.02em;
+}
+
+/* --------- شبكة المؤثرات --------- */
+.effects-grid{
+  display:grid; grid-template-columns: repeat(2, 1fr); gap:12px;
+}
+@media(min-width:480px){ .effects-grid{ grid-template-columns: repeat(3, 1fr); } }
+
+.effect-card{
+  position:relative;
+  border-radius: var(--radius-md);
+  border:1px solid var(--panel-border);
+  background: var(--panel);
+  padding: 10px;
+  cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  transition: transform .18s var(--ease), border-color .2s, box-shadow .25s;
+  min-height: var(--tap-min);
+}
+.effect-card:active{ transform: scale(.95); }
+.effect-card.selected{
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 0 1px var(--neon-cyan), 0 10px 30px -10px rgba(57,245,201,.5);
+}
+.effect-card canvas{
+  width:100%; aspect-ratio:1.5/1; border-radius:10px; background:#050308;
+  display:block;
+}
+.effect-card span{ font-size:.74rem; color:var(--text-1); text-align:center; line-height:1.3; }
+.effect-card.selected span{ color: var(--text-0); font-weight:600; }
+.effect-badge{
+  position:absolute; top:6px; inset-inline-end:6px;
+  width:20px; height:20px; border-radius:50%;
+  background: var(--grad-signature);
+  display:none; align-items:center; justify-content:center;
+  font-size:.65rem; color:#050308; font-weight:800;
+}
+.effect-card.selected .effect-badge{ display:flex; }
+
+/* --------- شبكة الإعدادات --------- */
+.settings-grid{
+  display:grid; grid-template-columns: 1fr; gap:16px;
+}
+@media(min-width:520px){ .settings-grid{ grid-template-columns: 1fr 1fr; } }
+
+.setting-item label{
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:.85rem; color:var(--text-1); margin-bottom:8px; gap:8px;
+}
+.setting-item .val{ color: var(--neon-cyan); font-weight:600; font-variant-numeric:tabular-nums; }
+.setting-item input[type="color"]{
+  width:100%; height:44px; border-radius:12px; border:1px solid var(--panel-border);
+  background:transparent; cursor:pointer; padding:2px;
+}
+.setting-item select{
+  width:100%; min-height:44px; border-radius:12px;
+  background: var(--panel); color:var(--text-0);
+  border:1px solid var(--panel-border); padding:0 12px; font-family:inherit; font-size:.9rem;
+}
+.checkbox-label{ display:flex !important; align-items:center; gap:8px; cursor:pointer; }
+.checkbox-label input{ width:20px; height:20px; }
+
+#resetSettingsBtn{ margin-top:22px; width:100%; }
+
+/* --------- قسم الخلفية --------- */
+.bg-options{ display:flex; flex-wrap:wrap; gap:10px; }
+.bg-opt{
+  display:flex; align-items:center; gap:8px;
+  padding:10px 16px; border-radius:14px;
+  border:1px solid var(--panel-border); background: var(--panel);
+  color:var(--text-1); font-family:inherit; font-size:.85rem; cursor:pointer;
+  min-height:48px;
+  transition: all .2s var(--ease);
+}
+.bg-opt.active{ border-color: var(--neon-violet); color:var(--text-0); box-shadow:0 0 0 1px var(--neon-violet); }
+.bg-swatch{
+  width:22px; height:22px; border-radius:7px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; font-size:12px;
+  border:1px solid rgba(255,255,255,.2);
+}
+.swatch-black{ background:#000; }
+.swatch-white{ background:#fff; }
+.swatch-gradient{ background: linear-gradient(135deg,#39f5c9,#c239f5,#ff3d9a); }
+.swatch-image, .swatch-video{ background:rgba(255,255,255,.08); }
+.hint-small{ color:var(--text-2); font-size:.76rem; margin-top:14px; line-height:1.6; }
+
+/* --------- قسم النصوص --------- */
+.text-form{ display:flex; flex-direction:column; gap:16px; }
+#textInput{
+  width:100%; min-height:48px; border-radius:14px;
+  background:var(--panel); border:1px solid var(--panel-border);
+  color:var(--text-0); padding:0 16px; font-family:inherit; font-size:1rem;
+}
+.text-list{ display:flex; flex-direction:column; gap:8px; margin-top:18px; }
+.text-list-item{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 14px; border-radius:12px; background:var(--panel); border:1px solid var(--panel-border);
+  font-size:.85rem;
+}
+.text-list-item button{
+  background:none; border:none; color:var(--neon-pink); font-size:1rem; cursor:pointer; padding:6px;
+}
+
+/* عناصر النص المتحركة فوق الفيديو */
+.floating-text{
+  position:absolute; white-space:nowrap; will-change: transform, opacity;
+  pointer-events:none; font-weight:700;
+}
+@keyframes txtPulse{ 0%,100%{ transform:translate(-50%,-50%) scale(1);} 50%{ transform:translate(-50%,-50%) scale(1.12);} }
+@keyframes txtFloat{ 0%,100%{ transform:translate(-50%,-50%) translateY(0);} 50%{ transform:translate(-50%,-50%) translateY(-14px);} }
+@keyframes txtShake{ 0%,100%{ transform:translate(-50%,-50%) rotate(0deg);} 25%{ transform:translate(-50%,-50%) rotate(-3deg);} 75%{ transform:translate(-50%,-50%) rotate(3deg);} }
+
+/* --------- قسم التصدير --------- */
+.res-options{ display:flex; gap:10px; margin-bottom:6px; flex-wrap:wrap; }
+.res-opt{
+  flex:1; min-width:90px; min-height:52px; border-radius:14px;
+  border:1px solid var(--panel-border); background:var(--panel);
+  color:var(--text-1); font-family:'Rajdhani',sans-serif; font-weight:700; font-size:1rem;
+  cursor:pointer; transition:all .2s var(--ease);
+}
+.res-opt.active{ color:#050308; background:var(--grad-signature); border-color:transparent; }
+.res-opt:disabled{ opacity:.35; cursor:not-allowed; }
+
+.export-progress-wrap{ display:flex; align-items:center; gap:10px; margin:18px 0; }
+.export-progress-bar{ flex:1; height:10px; border-radius:999px; background:rgba(255,255,255,.08); overflow:hidden; }
+.export-progress-fill{ height:100%; width:0%; background:var(--grad-signature); border-radius:999px; transition:width .15s linear; }
+#exportProgressLabel{ font-size:.78rem; color:var(--text-1); min-width:38px; text-align:end; font-variant-numeric:tabular-nums; }
+
+#exportBtn{ margin-top:18px; }
+#downloadLink{ margin-top:14px; width:100%; max-width:380px; }
+
+/* ===================== استجابة للشاشات الكبيرة ===================== */
+@media(min-width:860px){
+  .app-main{ max-width:900px; }
+  .studio-stage{ display:grid; grid-template-columns: 380px 1fr; gap:22px; align-items:start; }
+  .preview-wrap{ grid-column:1; position:sticky; top:16px; }
+  .panel-tabs, .control-panel{ grid-column:2; }
+  .panel-tabs{ grid-row:1; }
+  .control-panel{ grid-row:2; }
+}
+
+/* تقليل الحركة لمن يفضل ذلك */
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ===================== خلفية الأجواء (زخرفية فقط) ===================== -->
+<div class="ambient-bg" aria-hidden="true">
+  <div class="ambient-glow glow-a"></div>
+  <div class="ambient-glow glow-b"></div>
+  <div class="ambient-grid"></div>
+</div>
+
+<!-- ===================== الرأس ===================== -->
+<header class="app-header">
+  <div class="brand">
+    <span class="brand-mark">
+      <svg viewBox="0 0 48 48" width="26" height="26" aria-hidden="true">
+        <path d="M6 24 L12 14 L18 34 L24 8 L30 40 L36 18 L42 24" fill="none" stroke="url(#gA)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <defs><linearGradient id="gA" x1="0" y1="0" x2="48" y2="0">
+          <stop offset="0" stop-color="#39f5c9"/><stop offset="1" stop-color="#c239f5"/>
+        </linearGradient></defs>
+      </svg>
+    </span>
+    <div class="brand-text">
+      <h1>Audio Visualizer <em>Studio</em></h1>
+      <p>مؤثرات بصرية تتفاعل مع الصوت — كل شيء داخل متصفحك</p>
+    </div>
+  </div>
+</header>
+
+<main class="app-main">
+
+  <!-- ===================== شاشة البداية: اختيار فيديو ===================== -->
+  <section id="uploadStage" class="stage upload-stage">
+    <div class="upload-visual" aria-hidden="true">
+      <canvas id="idleCanvas"></canvas>
+    </div>
+    <p class="upload-hint">ارفع أي مقطع فيديو من هاتفك، وشاهد الصوت يتحول إلى حركة وضوء</p>
+    <label class="btn btn-primary btn-huge" for="videoInput">
+      <span class="btn-icon">📁</span>
+      <span>اختيار فيديو</span>
+    </label>
+    <input type="file" id="videoInput" accept="video/*" hidden>
+    <p class="upload-note">الملفات لا تغادر جهازك — لا يوجد رفع لأي خادم</p>
+  </section>
+
+  <!-- ===================== شاشة العمل الرئيسية ===================== -->
+  <section id="studioStage" class="stage studio-stage hidden">
+
+    <!-- منطقة المعاينة -->
+    <div class="preview-wrap">
+      <div class="preview-frame">
+        <video id="sourceVideo" playsinline muted="false" webkit-playsinline></video>
+        <canvas id="mainCanvas"></canvas>
+        <div id="textLayer" class="text-layer"></div>
+        <div id="exportOverlay" class="export-overlay hidden">
+          <div class="export-ring">
+            <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"/><circle id="ringProgress" class="ring-fg" cx="60" cy="60" r="52"/></svg>
+            <span id="exportPercentText">0%</span>
+          </div>
+          <p id="exportStatusText">جاري تجهيز التصدير…</p>
+        </div>
+      </div>
+
+      <!-- شريط التحكم بالتشغيل -->
+      <div class="player-controls glass">
+        <button id="playBtn" class="ctrl-btn" aria-label="تشغيل">▶</button>
+        <button id="pauseBtn" class="ctrl-btn" aria-label="إيقاف مؤقت">⏸</button>
+        <span id="curTime" class="time-label">00:00</span>
+        <input id="seekBar" class="seek-bar" type="range" min="0" max="100" value="0" step="0.1">
+        <span id="durTime" class="time-label">00:00</span>
+        <button id="muteBtn" class="ctrl-btn" aria-label="كتم الصوت">🔊</button>
+        <label class="btn btn-ghost btn-sm" for="videoInput2">فيديو آخر</label>
+        <input type="file" id="videoInput2" accept="video/*" hidden>
+      </div>
+    </div>
+
+    <!-- تبويبات لوحة التحكم -->
+    <nav class="panel-tabs" role="tablist" aria-label="أقسام التحكم">
+      <button class="tab-btn active" data-panel="panel-effects">✨ المؤثرات</button>
+      <button class="tab-btn" data-panel="panel-settings">🎛️ الإعدادات</button>
+      <button class="tab-btn" data-panel="panel-background">🖼️ الخلفية</button>
+      <button class="tab-btn" data-panel="panel-text">🔤 النصوص</button>
+      <button class="tab-btn" data-panel="panel-export">⬇️ التصدير</button>
+    </nav>
+
+    <!-- ===== قسم المؤثرات ===== -->
+    <section id="panel-effects" class="control-panel active">
+      <h2 class="panel-title">اختر مؤثراً بصرياً</h2>
+      <div id="effectsGrid" class="effects-grid"></div>
+    </section>
+
+    <!-- ===== قسم الإعدادات ===== -->
+    <section id="panel-settings" class="control-panel">
+      <h2 class="panel-title">الإعدادات</h2>
+      <div class="settings-grid">
+
+        <div class="setting-item">
+          <label for="colorPicker">لون المؤثر</label>
+          <input type="color" id="colorPicker" value="#39f5c9">
+        </div>
+
+        <div class="setting-item">
+          <label for="bgColorPicker">لون الخلفية السريع</label>
+          <input type="color" id="bgColorPicker" value="#07060d">
+        </div>
+
+        <div class="setting-item slider-item">
+          <label for="opacityRange">الشفافية <span class="val" id="opacityVal">100%</span></label>
+          <input type="range" id="opacityRange" min="10" max="100" value="100" step="1">
+        </div>
+
+        <div class="setting-item slider-item">
+          <label for="sensitivityRange">حساسية الصوت <span class="val" id="sensitivityVal">100%</span></label>
+          <input type="range" id="sensitivityRange" min="10" max="300" value="100" step="1">
+        </div>
+
+        <div class="setting-item slider-item">
+          <label for="speedRange">سرعة الحركة <span class="val" id="speedVal">100%</span></label>
+          <input type="range" id="speedRange" min="10" max="300" value="100" step="1">
+        </div>
+
+        <div class="setting-item slider-item">
+          <label for="lineWidthRange">سُمك الخط <span class="val" id="lineWidthVal">3</span></label>
+          <input type="range" id="lineWidthRange" min="1" max="12" value="3" step="1">
+        </div>
+
+        <div class="setting-item slider-item">
+          <label for="particleCountRange">عدد الجسيمات <span class="val" id="particleCountVal">120</span></label>
+          <input type="range" id="particleCountRange" min="20" max="400" value="120" step="10">
+        </div>
+
+        <div class="setting-item slider-item">
+          <label for="glowRange">قوة التوهج <span class="val" id="glowVal">50%</span></label>
+          <input type="range" id="glowRange" min="0" max="100" value="50" step="1">
+        </div>
+
+        <div class="setting-item slider-item">
+          <label for="bassRange">تقوية الجهير (Bass) <span class="val" id="bassVal">100%</span></label>
+          <input type="range" id="bassRange" min="0" max="300" value="100" step="1">
+        </div>
+
+        <div class="setting-item slider-item">
+          <label for="trebleRange">تقوية الحدة (Treble) <span class="val" id="trebleVal">100%</span></label>
+          <input type="range" id="trebleRange" min="0" max="300" value="100" step="1">
+        </div>
+
+        <div class="setting-item slider-item">
+          <label for="blurRange">مقدار الضبابية <span class="val" id="blurVal">0px</span></label>
+          <input type="range" id="blurRange" min="0" max="20" value="0" step="1">
+        </div>
+
+        <div class="setting-item slider-item">
+          <label for="rotationRange">سرعة الدوران <span class="val" id="rotationVal">0%</span></label>
+          <input type="range" id="rotationRange" min="-100" max="100" value="20" step="1">
+        </div>
+
+      </div>
+      <button id="resetSettingsBtn" class="btn btn-ghost">إعادة ضبط الإعدادات</button>
+    </section>
+
+    <!-- ===== قسم الخلفية ===== -->
+    <section id="panel-background" class="control-panel">
+      <h2 class="panel-title">نوع الخلفية</h2>
+      <div class="bg-options">
+        <button class="bg-opt active" data-bg="black">
+          <span class="bg-swatch swatch-black"></span> أسود
+        </button>
+        <button class="bg-opt" data-bg="white">
+          <span class="bg-swatch swatch-white"></span> أبيض
+        </button>
+        <button class="bg-opt" data-bg="gradient">
+          <span class="bg-swatch swatch-gradient"></span> تدرج لوني
+        </button>
+        <button class="bg-opt" data-bg="image">
+          <span class="bg-swatch swatch-image">🖼️</span> صورة من الهاتف
+        </button>
+        <button class="bg-opt" data-bg="video">
+          <span class="bg-swatch swatch-video">🎬</span> فيديو آخر كخلفية
+        </button>
+      </div>
+      <input type="file" id="bgImageInput" accept="image/*" hidden>
+      <input type="file" id="bgVideoInput" accept="video/*" hidden>
+      <p class="hint-small">عند اختيار "فيديو آخر"، سيتم تشغيله بصمت خلف مؤثرات صوت الفيديو الأساسي.</p>
+    </section>
+
+    <!-- ===== قسم النصوص ===== -->
+    <section id="panel-text" class="control-panel">
+      <h2 class="panel-title">إضافة نص على الفيديو</h2>
+      <div class="text-form">
+        <input type="text" id="textInput" placeholder="اكتب نصاً هنا…" maxlength="60">
+        <div class="settings-grid">
+          <div class="setting-item">
+            <label for="fontSelect">الخط</label>
+            <select id="fontSelect">
+              <option value="'IBM Plex Sans Arabic', sans-serif">IBM Plex Sans Arabic</option>
+              <option value="'Rajdhani', sans-serif">Rajdhani</option>
+              <option value="'Arial', sans-serif">Arial</option>
+              <option value="'Georgia', serif">Georgia</option>
+              <option value="'Courier New', monospace">Courier New</option>
+            </select>
+          </div>
+          <div class="setting-item">
+            <label for="textColor">لون الخط</label>
+            <input type="color" id="textColor" value="#ffffff">
+          </div>
+          <div class="setting-item">
+            <label for="textAnim">تحريك النص</label>
+            <select id="textAnim">
+              <option value="none">بدون</option>
+              <option value="bassPulse">نبض مع الجهير (Bass) الفعلي 🔊</option>
+              <option value="pulse">نبض ثابت</option>
+              <option value="float">تعويم</option>
+              <option value="shake">اهتزاز مع الإيقاع</option>
+              <option value="typewriter">آلة كاتبة</option>
+            </select>
+          </div>
+          <div class="setting-item">
+            <label class="checkbox-label"><input type="checkbox" id="textShadow" checked> ظل</label>
+          </div>
+          <div class="setting-item">
+            <label class="checkbox-label"><input type="checkbox" id="textGlow"> توهج نيون</label>
+          </div>
+        </div>
+        <button id="addTextBtn" class="btn btn-primary">إضافة النص</button>
+      </div>
+      <div id="textList" class="text-list"></div>
+    </section>
+
+    <!-- ===== قسم التصدير ===== -->
+    <section id="panel-export" class="control-panel">
+      <h2 class="panel-title">تصدير الفيديو</h2>
+      <div class="res-options">
+        <button class="res-opt active" data-res="720">720p</button>
+        <button class="res-opt" data-res="1080">1080p</button>
+        <button class="res-opt" data-res="1440" id="res1440">1440p</button>
+      </div>
+      <p id="perfNote" class="hint-small"></p>
+
+      <div class="export-progress-wrap hidden" id="exportProgressWrap">
+        <div class="export-progress-bar">
+          <div id="exportProgressFill" class="export-progress-fill"></div>
+        </div>
+        <span id="exportProgressLabel">0%</span>
+      </div>
+
+      <button id="exportBtn" class="btn btn-primary btn-huge">
+        <span class="btn-icon">⬇️</span><span>Export Video</span>
+      </button>
+      <a id="downloadLink" class="btn btn-ghost hidden" download="audio-visualizer-export.webm">تنزيل الفيديو الناتج ⬇</a>
+    </section>
+
+  </section>
+</main>
+
+<canvas id="hiddenComposeCanvas" style="display:none;"></canvas>
+<audio id="dummyAudio" hidden></audio>
+
+<script>
+/* =====================================================================
+   Audio Visualizer Studio — script.js
+   تطبيق كامل من جهة العميل فقط (بدون خادم) — Canvas + Web Audio API
+   ===================================================================== */
+'use strict';
+
+/* ================= 1) عناصر DOM ================= */
+const $ = (id) => document.getElementById(id);
+
+const uploadStage   = $('uploadStage');
+const studioStage    = $('studioStage');
+const videoInput     = $('videoInput');
+const videoInput2    = $('videoInput2');
+const video          = $('sourceVideo');
+const mainCanvas     = $('mainCanvas');
+const mainCtx        = mainCanvas.getContext('2d', { alpha: false });
+const idleCanvas     = $('idleCanvas');
+const idleCtx        = idleCanvas.getContext('2d');
+
+const playBtn = $('playBtn'), pauseBtn = $('pauseBtn'), muteBtn = $('muteBtn');
+const seekBar = $('seekBar'), curTimeEl = $('curTime'), durTimeEl = $('durTime');
+
+const effectsGrid = $('effectsGrid');
+const tabBtns = document.querySelectorAll('.tab-btn');
+const panels  = document.querySelectorAll('.control-panel');
+
+const exportOverlay = $('exportOverlay');
+const ringProgress  = $('ringProgress');
+const exportPercentText = $('exportPercentText');
+const exportStatusText  = $('exportStatusText');
+const exportBtn = $('exportBtn');
+const exportProgressWrap = $('exportProgressWrap');
+const exportProgressFill = $('exportProgressFill');
+const exportProgressLabel = $('exportProgressLabel');
+const downloadLink = $('downloadLink');
+const perfNote = $('perfNote');
+
+/* ================= 2) الحالة العامة ================= */
+const settings = {
+  color: '#39f5c9',
+  bgColor: '#07060d',
+  opacity: 1,
+  sensitivity: 1,
+  speed: 1,
+  lineWidth: 3,
+  particleCount: 120,
+  glow: 0.5,
+  bassBoost: 1,
+  trebleBoost: 1,
+  blur: 0,
+  rotation: 0.2
+};
+const DEFAULT_SETTINGS = { ...settings };
+
+let selectedEffect = 'spectrumBars';
+let bgMode = 'black';
+let bgImageEl = null;
+let bgVideoEl = null;
+
+const texts = []; // {id,text,font,color,shadow,glow,anim,createdAt,x,y}
+let textIdCounter = 0;
+
+let audioCtx = null, analyser = null, sourceNode = null, streamDestNode = null;
+let freqData = null, timeData = null;
+let beatCooldown = 0;
+
+let rafId = null;
+let particles = [];
+let ringsFx = []; // used by musicPulse / waterRipple
+let lightningBolts = [];
+let lastFrameTime = 0;
+
+/* ================= 3) قائمة المؤثرات ================= */
+const EFFECTS_LIST = [
+  { id:'spectrumBars',    name:'Spectrum Bars' },
+  { id:'circularSpectrum',name:'Circular Spectrum' },
+  { id:'waveform',        name:'Waveform' },
+  { id:'audioCircle',     name:'Audio Circle' },
+  { id:'neonCircle',      name:'Neon Circle' },
+  { id:'musicPulse',      name:'Music Pulse' },
+  { id:'particlesFx',     name:'Particles' },
+  { id:'fire',            name:'Fire' },
+  { id:'lightning',       name:'Lightning' },
+  { id:'galaxy',          name:'Galaxy' },
+  { id:'smoke',           name:'Smoke' },
+  { id:'waterRipple',     name:'Water Ripple' },
+  { id:'heartBeat',       name:'Heart Beat' },
+  { id:'diamond',         name:'Diamond' },
+  { id:'tunnel',          name:'Tunnel' },
+  { id:'spiral',          name:'Spiral' },
+  { id:'rings',           name:'Rings' },
+  { id:'explosion',       name:'Explosion' },
+  { id:'equalizer3D',     name:'Equalizer 3D' },
+  { id:'glowLines',       name:'Glow Lines' },
+];
+
+/* ================= 4) أدوات مساعدة عامة ================= */
+function hexToRgb(hex){
+  const v = hex.replace('#','');
+  const n = parseInt(v.length===3 ? v.split('').map(c=>c+c).join('') : v, 16);
+  return { r:(n>>16)&255, g:(n>>8)&255, b:n&255 };
+}
+function rgba(hex, a){ const c = hexToRgb(hex); return `rgba(${c.r},${c.g},${c.b},${a})`; }
+function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+function fmtTime(s){
+  if(!isFinite(s)) return '00:00';
+  const m = Math.floor(s/60), sec = Math.floor(s%60);
+  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+/* استخراج مستويات الصوت (جهير/متوسط/حدة) من مصفوفة الترددات */
+function getAudioLevels(freq){
+  if(!freq) return { bass:0, mid:0, treble:0, avg:0 };
+  const len = freq.length;
+  const bassEnd = Math.floor(len*0.08);
+  const midEnd  = Math.floor(len*0.35);
+  const trebleEnd = Math.floor(len*0.65);
+  let bass=0, mid=0, treble=0, sum=0;
+  for(let i=0;i<bassEnd;i++) bass += freq[i];
+  for(let i=bassEnd;i<midEnd;i++) mid += freq[i];
+  for(let i=midEnd;i<trebleEnd;i++) treble += freq[i];
+  for(let i=0;i<len;i++) sum += freq[i];
+  bass = (bass/(bassEnd||1))/255 * settings.bassBoost * settings.sensitivity;
+  mid  = (mid/((midEnd-bassEnd)||1))/255 * settings.sensitivity;
+  treble = (treble/((trebleEnd-midEnd)||1))/255 * settings.trebleBoost * settings.sensitivity;
+  const avg = (sum/len)/255 * settings.sensitivity;
+  return { bass, mid, treble, avg };
+}
+
+/* ================= 5) نظام الجسيمات العام ================= */
+class Particle{
+  constructor(x,y,vx,vy,life,size,color,gravity=0){
+    this.x=x; this.y=y; this.vx=vx; this.vy=vy;
+    this.life=life; this.maxLife=life; this.size=size;
+    this.color=color; this.gravity=gravity;
+  }
+  update(dt){
+    this.x += this.vx*dt; this.y += this.vy*dt;
+    this.vy += this.gravity*dt;
+    this.life -= dt;
+  }
+  get alpha(){ return clamp(this.life/this.maxLife, 0, 1); }
+  dead(){ return this.life<=0; }
+}
+function spawnParticles(list, count, factory){
+  const max = settings.particleCount;
+  for(let i=0;i<count && list.length<max;i++) list.push(factory());
+}
+function drawParticle(ctx,p){
+  ctx.globalAlpha = p.alpha * settings.opacity;
+  ctx.fillStyle = p.color;
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, p.size*p.alpha, 0, Math.PI*2);
+  ctx.fill();
+}
+
+/* ================= 6) دوال رسم المؤثرات (20) ================= */
+/* كل دالة توقيعها: (ctx, w, h, freq, time, levels, t, dt) */
+
+function fxSpectrumBars(ctx,w,h,freq,time,lv,t,dt){
+  const bars = 56;
+  const step = Math.max(1, Math.floor(freq.length/bars));
+  const gap = 3;
+  const bw = (w/bars) - gap;
+  ctx.fillStyle = settings.color;
+  for(let i=0;i<bars;i++){
+    const v = (freq[i*step]/255) * settings.sensitivity;
+    const barH = clamp(v*h*0.55, 2, h*0.9);
+    const x = i*(w/bars);
+    ctx.fillRect(x, h-barH, bw, barH);
+  }
+}
+
+function fxCircularSpectrum(ctx,w,h,freq,time,lv,t,dt){
+  const cx=w/2, cy=h/2, R = Math.min(w,h)*0.18;
+  const bars = 72;
+  ctx.strokeStyle = settings.color;
+  ctx.lineWidth = settings.lineWidth;
+  ctx.lineCap = 'round';
+  const rot = t*settings.rotation*0.5;
+  for(let i=0;i<bars;i++){
+    const idx = Math.floor(i/bars*freq.length*0.6);
+    const v = (freq[idx]/255) * settings.sensitivity;
+    const len = R*0.4 + v*Math.min(w,h)*0.32;
+    const ang = (i/bars)*Math.PI*2 + rot;
+    const x1 = cx + Math.cos(ang)*R, y1 = cy + Math.sin(ang)*R;
+    const x2 = cx + Math.cos(ang)*(R+len), y2 = cy + Math.sin(ang)*(R+len);
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  }
+}
+
+function fxWaveform(ctx,w,h,freq,time,lv,t,dt){
+  ctx.strokeStyle = settings.color;
+  ctx.lineWidth = settings.lineWidth;
+  ctx.beginPath();
+  const step = w/time.length;
+  for(let i=0;i<time.length;i++){
+    const v = (time[i]-128)/128 * settings.sensitivity;
+    const y = h/2 + v*h*0.38;
+    const x = i*step;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+}
+
+function fxAudioCircle(ctx,w,h,freq,time,lv,t,dt){
+  const cx=w/2, cy=h/2, base = Math.min(w,h)*0.16;
+  const r = base + lv.avg*Math.min(w,h)*0.28;
+  ctx.strokeStyle = settings.color;
+  ctx.lineWidth = settings.lineWidth*1.4;
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
+  ctx.lineWidth = settings.lineWidth*0.6;
+  ctx.globalAlpha = 0.5*settings.opacity;
+  ctx.beginPath(); ctx.arc(cx,cy,r*0.7,0,Math.PI*2); ctx.stroke();
+  ctx.globalAlpha = settings.opacity;
+}
+
+function fxNeonCircle(ctx,w,h,freq,time,lv,t,dt){
+  const cx=w/2, cy=h/2, base = Math.min(w,h)*0.14;
+  const r = base + lv.bass*Math.min(w,h)*0.3;
+  ctx.save();
+  ctx.shadowColor = settings.color;
+  ctx.shadowBlur = 18 + settings.glow*40;
+  ctx.strokeStyle = settings.color;
+  ctx.lineWidth = settings.lineWidth;
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
+  ctx.restore();
+}
+
+function fxMusicPulse(ctx,w,h,freq,time,lv,t,dt){
+  if(lv.bass>0.55 && beatCooldown<=0){
+    ringsFx.push({ r: Math.min(w,h)*0.1, alpha:1 });
+    beatCooldown = 0.22;
+  }
+  const cx=w/2, cy=h/2;
+  ctx.lineWidth = settings.lineWidth;
+  for(let i=ringsFx.length-1;i>=0;i--){
+    const ring = ringsFx[i];
+    ring.r += (60+settings.speed*140)*dt;
+    ring.alpha -= dt*0.9;
+    if(ring.alpha<=0){ ringsFx.splice(i,1); continue; }
+    ctx.globalAlpha = ring.alpha*settings.opacity;
+    ctx.strokeStyle = settings.color;
+    ctx.beginPath(); ctx.arc(cx,cy,ring.r,0,Math.PI*2); ctx.stroke();
+  }
+  ctx.globalAlpha = settings.opacity;
+  const r = Math.min(w,h)*0.08 + lv.bass*Math.min(w,h)*0.06;
+  ctx.fillStyle = settings.color;
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
+}
+
+function fxParticles(ctx,w,h,freq,time,lv,t,dt){
+  const cx=w/2, cy=h/2;
+  spawnParticles(particles, Math.round(1+lv.avg*6), ()=>{
+    const ang = Math.random()*Math.PI*2;
+    const spd = (30+Math.random()*80) * (0.5+lv.avg) * settings.speed;
+    return new Particle(cx,cy, Math.cos(ang)*spd, Math.sin(ang)*spd, 1+Math.random()*1.2, 2+Math.random()*3, settings.color);
+  });
+  for(let i=particles.length-1;i>=0;i--){
+    const p = particles[i]; p.update(dt);
+    if(p.dead()){ particles.splice(i,1); continue; }
+    drawParticle(ctx,p);
+  }
+  ctx.globalAlpha = settings.opacity;
+}
+
+function fxFire(ctx,w,h,freq,time,lv,t,dt){
+  const baseX = w/2, baseY = h*0.92;
+  spawnParticles(particles, Math.round(2+lv.bass*10), ()=>{
+    const c = Math.random()<0.5 ? '#ff7a1a' : '#ffcf3d';
+    return new Particle(
+      baseX+(Math.random()-0.5)*w*0.3, baseY,
+      (Math.random()-0.5)*30*settings.speed, -(80+Math.random()*120)*settings.speed,
+      0.6+Math.random()*0.6, 6+Math.random()*10, c, -20);
+  });
+  for(let i=particles.length-1;i>=0;i--){
+    const p = particles[i]; p.update(dt);
+    if(p.dead()){ particles.splice(i,1); continue; }
+    ctx.globalAlpha = p.alpha*0.85*settings.opacity;
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.size*p.alpha,0,Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha = settings.opacity;
+}
+
+function fxLightning(ctx,w,h,freq,time,lv,t,dt){
+  if(lv.treble>0.5 && beatCooldown<=0){
+    const startX = Math.random()*w;
+    const pts = [{x:startX,y:0}];
+    let x=startX, y=0;
+    while(y<h){
+      y += h/9 + Math.random()*20;
+      x += (Math.random()-0.5)*70;
+      pts.push({x,y});
+    }
+    lightningBolts.push({ pts, alpha:1 });
+    beatCooldown = 0.15;
+  }
+  ctx.lineWidth = settings.lineWidth*0.8;
+  ctx.strokeStyle = settings.color;
+  ctx.save();
+  ctx.shadowColor = settings.color;
+  ctx.shadowBlur = 10+settings.glow*30;
+  for(let i=lightningBolts.length-1;i>=0;i--){
+    const b = lightningBolts[i];
+    b.alpha -= dt*3.2;
+    if(b.alpha<=0){ lightningBolts.splice(i,1); continue; }
+    ctx.globalAlpha = b.alpha*settings.opacity;
+    ctx.beginPath();
+    b.pts.forEach((p,idx)=> idx===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+    ctx.stroke();
+  }
+  ctx.restore();
+  ctx.globalAlpha = settings.opacity;
+}
+
+function fxGalaxy(ctx,w,h,freq,time,lv,t,dt){
+  const cx=w/2, cy=h/2;
+  spawnParticles(particles, lv.avg>0.15?2:0, ()=>{
+    const ang = Math.random()*Math.PI*2;
+    return { ang, speed: 0.6+Math.random()*1.4,
+      dist: 20+Math.random()*10, life: 3+Math.random()*3, maxLife: 6,
+      size: 1.5+Math.random()*2.5 };
+  });
+  for(let i=particles.length-1;i>=0;i--){
+    const p = particles[i];
+    p.ang += (0.6+settings.rotation)*p.speed*dt;
+    p.dist += (14+lv.avg*40)*dt*settings.speed;
+    p.life -= dt;
+    if(p.life<=0 || p.dist>Math.min(w,h)*0.55){ particles.splice(i,1); continue; }
+    const x = cx+Math.cos(p.ang)*p.dist, y = cy+Math.sin(p.ang)*p.dist*0.6;
+    const a = clamp(p.life/p.maxLife,0,1)*settings.opacity;
+    ctx.globalAlpha = a;
+    ctx.fillStyle = settings.color;
+    ctx.beginPath(); ctx.arc(x,y,p.size,0,Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha = settings.opacity;
+}
+
+function fxSmoke(ctx,w,h,freq,time,lv,t,dt){
+  spawnParticles(particles, Math.round(1+lv.mid*3), ()=>{
+    return new Particle(w/2+(Math.random()-0.5)*w*0.4, h*0.85,
+      (Math.random()-0.5)*16, -(30+Math.random()*40)*settings.speed,
+      2.5+Math.random()*2, 18+Math.random()*26, rgba(settings.color,0.5), 0);
+  });
+  for(let i=particles.length-1;i>=0;i--){
+    const p = particles[i]; p.update(dt); p.x += Math.sin(t+p.y*0.01)*10*dt;
+    if(p.dead()){ particles.splice(i,1); continue; }
+    ctx.globalAlpha = p.alpha*0.25*settings.opacity;
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha = settings.opacity;
+}
+
+function fxWaterRipple(ctx,w,h,freq,time,lv,t,dt){
+  if(beatCooldown<=0 && (lv.bass>0.4 || Math.random()<0.01)){
+    ringsFx.push({ r:4, alpha:0.9 });
+    beatCooldown = 0.35;
+  }
+  const cx=w/2, cy=h/2;
+  for(let i=ringsFx.length-1;i>=0;i--){
+    const r = ringsFx[i];
+    r.r += (40+settings.speed*90)*dt;
+    r.alpha -= dt*0.5;
+    if(r.alpha<=0){ ringsFx.splice(i,1); continue; }
+    ctx.globalAlpha = r.alpha*settings.opacity;
+    ctx.strokeStyle = settings.color;
+    ctx.lineWidth = Math.max(1, settings.lineWidth*r.alpha*1.5);
+    ctx.beginPath(); ctx.ellipse(cx,cy,r.r,r.r*0.5,0,0,Math.PI*2); ctx.stroke();
+  }
+  ctx.globalAlpha = settings.opacity;
+}
+
+function heartPath(ctx,cx,cy,size){
+  ctx.beginPath();
+  ctx.moveTo(cx, cy+size*0.3);
+  ctx.bezierCurveTo(cx-size, cy-size*0.6, cx-size*0.5, cy-size*1.3, cx, cy-size*0.5);
+  ctx.bezierCurveTo(cx+size*0.5, cy-size*1.3, cx+size, cy-size*0.6, cx, cy+size*0.3);
+  ctx.closePath();
+}
+function fxHeartBeat(ctx,w,h,freq,time,lv,t,dt){
+  const cx=w/2, cy=h/2;
+  const scale = Math.min(w,h)*0.14*(1+lv.bass*0.5+Math.sin(t*settings.speed*4)*0.03);
+  ctx.save();
+  ctx.shadowColor = settings.color;
+  ctx.shadowBlur = settings.glow*35;
+  ctx.fillStyle = rgba(settings.color, 0.85*settings.opacity);
+  heartPath(ctx,cx,cy,scale);
+  ctx.fill();
+  ctx.restore();
+}
+
+function fxDiamond(ctx,w,h,freq,time,lv,t,dt){
+  const cx=w/2, cy=h/2;
+  const size = Math.min(w,h)*0.16*(1+lv.avg*0.6);
+  const rot = t*settings.rotation;
+  ctx.save();
+  ctx.translate(cx,cy); ctx.rotate(rot);
+  ctx.strokeStyle = settings.color;
+  ctx.lineWidth = settings.lineWidth;
+  ctx.beginPath();
+  ctx.moveTo(0,-size); ctx.lineTo(size,0); ctx.lineTo(0,size); ctx.lineTo(-size,0);
+  ctx.closePath(); ctx.stroke();
+  ctx.restore();
+}
+
+function fxTunnel(ctx,w,h,freq,time,lv,t,dt){
+  const cx=w/2, cy=h/2;
+  const rings = 10;
+  ctx.lineWidth = settings.lineWidth;
+  for(let i=0;i<rings;i++){
+    const phase = ((t*settings.speed*0.4)+i/rings)%1;
+    const r = phase*Math.min(w,h)*0.6;
+    const idx = Math.floor((i/rings)*freq.length*0.5);
+    const v = freq[idx]/255;
+    ctx.globalAlpha = (1-phase)*settings.opacity;
+    ctx.strokeStyle = settings.color;
+    ctx.beginPath(); ctx.rect(cx-r*(0.7+v*0.4), cy-r*(0.7+v*0.4), r*(1.4+v*0.8), r*(1.4+v*0.8)); ctx.stroke();
+  }
+  ctx.globalAlpha = settings.opacity;
+}
+
+function fxSpiral(ctx,w,h,freq,time,lv,t,dt){
+  const cx=w/2, cy=h/2;
+  ctx.strokeStyle = settings.color;
+  ctx.lineWidth = settings.lineWidth;
+  ctx.beginPath();
+  const turns = 4.5;
+  const maxR = Math.min(w,h)*0.42;
+  const rot = t*settings.rotation;
+  const N = 160;
+  for(let i=0;i<N;i++){
+    const pct = i/N;
+    const idx = Math.floor(pct*freq.length*0.6);
+    const v = freq[idx]/255*settings.sensitivity*0.25;
+    const ang = pct*turns*Math.PI*2 + rot;
+    const r = pct*maxR + v*30;
+    const x = cx+Math.cos(ang)*r, y = cy+Math.sin(ang)*r;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+}
+
+function fxRings(ctx,w,h,freq,time,lv,t,dt){
+  const cx=w/2, cy=h/2;
+  const count = 5;
+  for(let i=0;i<count;i++){
+    const idx = Math.floor((i/count)*freq.length*0.5);
+    const v = freq[idx]/255;
+    const r = Math.min(w,h)*(0.1+i*0.075) + v*20;
+    ctx.save();
+    ctx.translate(cx,cy);
+    ctx.rotate(t*settings.rotation*(i%2===0?1:-1)*0.5);
+    ctx.strokeStyle = settings.color;
+    ctx.lineWidth = settings.lineWidth;
+    ctx.setLineDash([r*0.25, r*0.15]);
+    ctx.globalAlpha = (0.4+v*0.6)*settings.opacity;
+    ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
+  ctx.globalAlpha = settings.opacity;
+  ctx.setLineDash([]);
+}
+
+function fxExplosion(ctx,w,h,freq,time,lv,t,dt){
+  const cx=w/2, cy=h/2;
+  if(lv.bass>0.62 && beatCooldown<=0){
+    beatCooldown = 0.4;
+    const n = Math.min(40, Math.round(settings.particleCount*0.4));
+    for(let i=0;i<n;i++){
+      const ang = Math.random()*Math.PI*2;
+      const spd = (100+Math.random()*220)*settings.speed;
+      particles.push(new Particle(cx,cy, Math.cos(ang)*spd, Math.sin(ang)*spd, 0.6+Math.random()*0.5, 2+Math.random()*3, settings.color, 60));
+    }
+  }
+  for(let i=particles.length-1;i>=0;i--){
+    const p = particles[i]; p.update(dt);
+    if(p.dead()){ particles.splice(i,1); continue; }
+    drawParticle(ctx,p);
+  }
+  ctx.globalAlpha = settings.opacity;
+}
+
+function fxEqualizer3D(ctx,w,h,freq,time,lv,t,dt){
+  const bars = 24;
+  const bw = w/bars;
+  const depth = bw*0.4;
+  for(let i=0;i<bars;i++){
+    const idx = Math.floor(i/bars*freq.length*0.7);
+    const v = freq[idx]/255*settings.sensitivity;
+    const barH = clamp(v*h*0.55, 3, h*0.85);
+    const x = i*bw, y = h-barH;
+    ctx.fillStyle = settings.color;
+    ctx.fillRect(x, y, bw*0.65, barH);
+    ctx.fillStyle = rgba(settings.color, 0.45);
+    ctx.beginPath();
+    ctx.moveTo(x+bw*0.65, y);
+    ctx.lineTo(x+bw*0.65+depth, y-depth*0.5);
+    ctx.lineTo(x+bw*0.65+depth, y-depth*0.5+barH);
+    ctx.lineTo(x+bw*0.65, y+barH);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = rgba(settings.color, 0.75);
+    ctx.beginPath();
+    ctx.moveTo(x,y);
+    ctx.lineTo(x+depth, y-depth*0.5);
+    ctx.lineTo(x+bw*0.65+depth, y-depth*0.5);
+    ctx.lineTo(x+bw*0.65, y);
+    ctx.closePath(); ctx.fill();
+  }
+}
+
+function fxGlowLines(ctx,w,h,freq,time,lv,t,dt){
+  const lines = 6;
+  ctx.save();
+  ctx.shadowColor = settings.color;
+  ctx.shadowBlur = 8+settings.glow*30;
+  ctx.strokeStyle = settings.color;
+  ctx.lineWidth = settings.lineWidth*0.7;
+  for(let i=0;i<lines;i++){
+    const idx = Math.floor((i/lines)*freq.length*0.5);
+    const v = freq[idx]/255;
+    const y = (i+0.5)/lines*h;
+    ctx.globalAlpha = (0.35+v*0.65)*settings.opacity;
+    ctx.beginPath();
+    const N=40;
+    for(let n=0;n<=N;n++){
+      const x = n/N*w;
+      const wob = Math.sin(x*0.02 + t*settings.speed*2 + i)*v*18;
+      if(n===0) ctx.moveTo(x,y+wob); else ctx.lineTo(x,y+wob);
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
+  ctx.globalAlpha = settings.opacity;
+}
+
+const EFFECT_FN = {
+  spectrumBars: fxSpectrumBars,
+  circularSpectrum: fxCircularSpectrum,
+  waveform: fxWaveform,
+  audioCircle: fxAudioCircle,
+  neonCircle: fxNeonCircle,
+  musicPulse: fxMusicPulse,
+  particlesFx: fxParticles,
+  fire: fxFire,
+  lightning: fxLightning,
+  galaxy: fxGalaxy,
+  smoke: fxSmoke,
+  waterRipple: fxWaterRipple,
+  heartBeat: fxHeartBeat,
+  diamond: fxDiamond,
+  tunnel: fxTunnel,
+  spiral: fxSpiral,
+  rings: fxRings,
+  explosion: fxExplosion,
+  equalizer3D: fxEqualizer3D,
+  glowLines: fxGlowLines,
+};
+
+/* ================= 7) بناء شبكة بطاقات المؤثرات ================= */
+let previewRafId = null, previewsRunning = false;
+const previewCanvases = [];
+
+function buildEffectsGrid(){
+  EFFECTS_LIST.forEach(fx=>{
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'effect-card' + (fx.id===selectedEffect ? ' selected' : '');
+    card.dataset.fx = fx.id;
+    card.innerHTML = `<span class="effect-badge">✓</span><canvas width="140" height="93"></canvas><span>${fx.name}</span>`;
+    card.addEventListener('click', ()=> selectEffect(fx.id));
+    effectsGrid.appendChild(card);
+    previewCanvases.push({ id: fx.id, canvas: card.querySelector('canvas') });
+  });
+}
+
+function selectEffect(id){
+  selectedEffect = id;
+  particles = []; ringsFx = []; lightningBolts = [];
+  document.querySelectorAll('.effect-card').forEach(c=>{
+    c.classList.toggle('selected', c.dataset.fx===id);
+  });
+}
+
+/* حلقة معاينة مصغّرة تعمل ببيانات صوتية اصطناعية (لتوفير البطارية) */
+function runPreviewLoop(ts){
+  if(!previewsRunning) return;
+  const t = ts/1000;
+  const fakeFreq = new Uint8Array(128);
+  const fakeTime = new Uint8Array(256);
+  for(let i=0;i<128;i++){
+    fakeFreq[i] = clamp(128 + Math.sin(t*3+i*0.3)*90*Math.abs(Math.sin(t*0.7+i*0.05)), 0, 255);
+  }
+  for(let i=0;i<256;i++){
+    fakeTime[i] = 128 + Math.sin(t*4 + i*0.2)*70;
+  }
+  const lv = { bass: 0.5+0.5*Math.sin(t*2), mid:0.4, treble:0.4+0.3*Math.sin(t*5), avg:0.5+0.3*Math.sin(t*1.3) };
+  previewCanvases.forEach(({id,canvas})=>{
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    ctx.fillStyle = '#050308';
+    ctx.fillRect(0,0,w,h);
+    ctx.globalAlpha = 1;
+    const fn = EFFECT_FN[id];
+    if(fn){
+      try{ fn(ctx,w,h,fakeFreq,fakeTime,lv,t,1/30); }catch(e){ /* تجاهل أي خطأ في المعاينة */ }
+    }
+  });
+  previewRafId = requestAnimationFrame(runPreviewLoop);
+}
+function startPreviews(){ if(previewsRunning) return; previewsRunning = true; previewRafId = requestAnimationFrame(runPreviewLoop); }
+function stopPreviews(){ previewsRunning = false; if(previewRafId) cancelAnimationFrame(previewRafId); }
+
+/* ================= 8) شاشة الرفع: أنيميشن ترحيبي بسيط ================= */
+function resizeIdleCanvas(){
+  const rect = idleCanvas.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  idleCanvas.width = rect.width*dpr; idleCanvas.height = rect.height*dpr;
+  idleCtx.setTransform(dpr,0,0,dpr,0,0);
+}
+let idleRaf = null;
+function idleLoop(ts){
+  const w = idleCanvas.width/(window.devicePixelRatio||1);
+  const h = idleCanvas.height/(window.devicePixelRatio||1);
+  idleCtx.clearRect(0,0,w,h);
+  const t = ts/1000;
+  const bars = 32, cx=w/2, cy=h/2, R = Math.min(w,h)*0.22;
+  idleCtx.lineWidth = 3;
+  idleCtx.lineCap='round';
+  for(let i=0;i<bars;i++){
+    const v = 0.3+0.7*Math.abs(Math.sin(t*2 + i*0.4));
+    const len = R*0.3 + v*R*0.9;
+    const ang = (i/bars)*Math.PI*2 + t*0.3;
+    const x1 = cx+Math.cos(ang)*R, y1 = cy+Math.sin(ang)*R;
+    const x2 = cx+Math.cos(ang)*(R+len), y2 = cy+Math.sin(ang)*(R+len);
+    idleCtx.strokeStyle = i%2===0 ? 'rgba(57,245,201,0.9)' : 'rgba(194,57,245,0.9)';
+    idleCtx.beginPath(); idleCtx.moveTo(x1,y1); idleCtx.lineTo(x2,y2); idleCtx.stroke();
+  }
+  idleRaf = requestAnimationFrame(idleLoop);
+}
+resizeIdleCanvas();
+idleRaf = requestAnimationFrame(idleLoop);
+window.addEventListener('resize', ()=>{ if(!uploadStage.classList.contains('hidden')) resizeIdleCanvas(); });
+
+/* ================= 9) تحميل الفيديو وربط الصوت ================= */
+function ensureAudioGraph(){
+  if(audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  sourceNode = audioCtx.createMediaElementSource(video);
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 1024;
+  analyser.smoothingTimeConstant = 0.8;
+  freqData = new Uint8Array(analyser.frequencyBinCount);
+  timeData = new Uint8Array(analyser.frequencyBinCount);
+  streamDestNode = audioCtx.createMediaStreamDestination();
+  sourceNode.connect(analyser);
+  analyser.connect(audioCtx.destination);
+  analyser.connect(streamDestNode);
+}
+
+function loadVideoFile(file){
+  if(!file) return;
+  const url = URL.createObjectURL(file);
+  video.src = url;
+  video.load();
+  video.addEventListener('loadedmetadata', ()=>{
+    ensureAudioGraph();
+    resizeMainCanvas();
+    durTimeEl.textContent = fmtTime(video.duration);
+    seekBar.max = video.duration || 100;
+    uploadStage.classList.add('hidden');
+    studioStage.classList.remove('hidden');
+    stopPreviews();
+    updatePerfNote();
+    video.play().catch(()=>{});
+  }, { once:true });
+}
+
+videoInput.addEventListener('change', e=> loadVideoFile(e.target.files[0]));
+videoInput2.addEventListener('change', e=> loadVideoFile(e.target.files[0]));
+
+/* ================= 10) عناصر التحكم بالتشغيل ================= */
+function safeResumeAudio(){ if(audioCtx && audioCtx.state==='suspended') audioCtx.resume(); }
+
+playBtn.addEventListener('click', ()=>{ safeResumeAudio(); video.play(); });
+pauseBtn.addEventListener('click', ()=> video.pause());
+muteBtn.addEventListener('click', ()=>{
+  video.muted = !video.muted;
+  muteBtn.textContent = video.muted ? '🔇' : '🔊';
+});
+
+video.addEventListener('play', ()=>{ startMainLoop(); });
+video.addEventListener('pause', ()=>{ stopMainLoop(); });
+video.addEventListener('ended', ()=>{ stopMainLoop(); });
+
+let seekingByUser = false;
+video.addEventListener('timeupdate', ()=>{
+  if(!seekingByUser){
+    curTimeEl.textContent = fmtTime(video.currentTime);
+    seekBar.value = video.currentTime;
+  }
+});
+seekBar.addEventListener('input', ()=>{ seekingByUser = true; curTimeEl.textContent = fmtTime(+seekBar.value); });
+seekBar.addEventListener('change', ()=>{ video.currentTime = +seekBar.value; seekingByUser = false; });
+
+/* ================= 11) تحجيم الكانفاس الرئيسي بشكل متجاوب ================= */
+function resizeMainCanvas(){
+  const rect = mainCanvas.parentElement.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  mainCanvas.width = Math.round(rect.width*dpr);
+  mainCanvas.height = Math.round(rect.height*dpr);
+  mainCanvas.style.width = rect.width+'px';
+  mainCanvas.style.height = rect.height+'px';
+}
+window.addEventListener('resize', ()=>{ if(!studioStage.classList.contains('hidden')) resizeMainCanvas(); });
+
+/* ================= 12) الخلفية ================= */
+function drawBackground(ctx,w,h){
+  switch(bgMode){
+    case 'white':
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,w,h); break;
+    case 'gradient': {
+      const g = ctx.createLinearGradient(0,0,w,h);
+      g.addColorStop(0, settings.color);
+      g.addColorStop(1, settings.bgColor);
+      ctx.fillStyle = g; ctx.fillRect(0,0,w,h);
+      break;
+    }
+    case 'image':
+      ctx.fillStyle = settings.bgColor; ctx.fillRect(0,0,w,h);
+      if(bgImageEl && bgImageEl.complete){ drawCover(ctx, bgImageEl, w, h); }
+      break;
+    case 'video':
+      ctx.fillStyle = '#000'; ctx.fillRect(0,0,w,h);
+      if(bgVideoEl && bgVideoEl.readyState>=2){ drawCover(ctx, bgVideoEl, w, h); }
+      break;
+    default: // black
+      ctx.fillStyle = settings.bgColor; ctx.fillRect(0,0,w,h);
+  }
+}
+function drawCover(ctx, media, w, h){
+  const mw = media.videoWidth || media.naturalWidth || media.width;
+  const mh = media.videoHeight || media.naturalHeight || media.height;
+  if(!mw || !mh) return;
+  const scale = Math.max(w/mw, h/mh);
+  const dw = mw*scale, dh = mh*scale;
+  ctx.drawImage(media, (w-dw)/2, (h-dh)/2, dw, dh);
+}
+
+/* ================= 13) حلقة الرسم الرئيسية ================= */
+function startMainLoop(){
+  safeResumeAudio();
+  if(rafId) return;
+  lastFrameTime = performance.now();
+  rafId = requestAnimationFrame(mainLoop);
+}
+function stopMainLoop(){
+  if(rafId){ cancelAnimationFrame(rafId); rafId = null; }
+}
+
+function mainLoop(ts){
+  rafId = requestAnimationFrame(mainLoop);
+  const dt = Math.min(0.05, (ts-lastFrameTime)/1000);
+  lastFrameTime = ts;
+  if(beatCooldown>0) beatCooldown -= dt;
+
+  const w = mainCanvas.width, h = mainCanvas.height;
+  const ctx = mainCtx;
+
+  if(analyser){
+    analyser.getByteFrequencyData(freqData);
+    analyser.getByteTimeDomainData(timeData);
+  }
+  const lv = analyser ? getAudioLevels(freqData) : {bass:0,mid:0,treble:0,avg:0};
+
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,w,h);
+  drawBackground(ctx,w,h);
+
+  ctx.save();
+  ctx.globalAlpha = settings.opacity;
+  ctx.filter = settings.blur>0 ? `blur(${settings.blur}px)` : 'none';
+  const fn = EFFECT_FN[selectedEffect];
+  if(fn && analyser){
+    try{ fn(ctx, w, h, freqData, timeData, lv, ts/1000, dt); }catch(e){ /* حماية من أي خطأ برمجي في مؤثر */ }
+  }
+  ctx.restore();
+
+  ctx.filter = 'none';
+  drawTexts(ctx, w, h, ts/1000, lv);
+}
+
+/* ================= 14) النصوص فوق الفيديو (تُرسم مباشرة على الكانفاس) ================= */
+/* lv: مستويات الصوت الحالية (bass/mid/treble/avg) — تُستخدم لتحريك النص فعلياً مع الموسيقى */
+function drawTexts(ctx,w,h,t,lv){
+  lv = lv || { bass:0, mid:0, treble:0, avg:0 };
+  texts.forEach((tx, i)=>{
+    const baseSize = Math.round(h*0.045);
+    ctx.save();
+    ctx.font = `700 ${baseSize}px ${tx.font}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    let x = w/2, y = h*(0.18 + i*0.09);
+    let scale = 1, rot = 0, extraGlow = 0;
+    const age = t - tx.createdAt;
+
+    if(tx.anim==='pulse') scale = 1 + Math.sin(t*4)*0.08;
+    if(tx.anim==='float') y += Math.sin(t*2+i)*10;
+    if(tx.anim==='shake') rot = Math.sin(t*10+i)*0.05;
+    if(tx.anim==='bassPulse'){
+      // نبضة حقيقية مرتبطة بمستوى الجهير (Bass) اللحظي من الصوت الفعلي
+      scale = 1 + clamp(lv.bass,0,1.4)*0.45;
+      extraGlow = clamp(lv.bass,0,1.4)*22;
+    }
+    let shownText = tx.text;
+    if(tx.anim==='typewriter'){
+      const chars = Math.floor((age*8)) % (tx.text.length+12);
+      shownText = tx.text.slice(0, Math.min(chars, tx.text.length));
+    }
+
+    ctx.translate(x,y);
+    ctx.rotate(rot);
+    ctx.scale(scale,scale);
+
+    if(tx.shadow){
+      ctx.shadowColor = 'rgba(0,0,0,0.7)';
+      ctx.shadowBlur = 6;
+      ctx.shadowOffsetY = 3;
+    }
+    if(tx.glow || extraGlow>0){
+      ctx.shadowColor = tx.color;
+      ctx.shadowBlur = (tx.glow ? 20 : 0) + extraGlow;
+    }
+    ctx.fillStyle = tx.color;
+    ctx.fillText(shownText, 0, 0);
+    ctx.restore();
+  });
+}
+
+/* ================= 15) وصل عناصر التبويبات ================= */
+tabBtns.forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    tabBtns.forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    panels.forEach(p=>p.classList.remove('active'));
+    $(btn.dataset.panel).classList.add('active');
+    if(btn.dataset.panel==='panel-effects') startPreviews(); else stopPreviews();
+  });
+});
+
+/* ================= 16) ربط عناصر الإعدادات ================= */
+function bindRange(id, key, fmt, transform){
+  const el = $(id), valEl = $(id.replace('Range','Val'));
+  el.addEventListener('input', ()=>{
+    const raw = +el.value;
+    settings[key] = transform ? transform(raw) : raw;
+    if(valEl) valEl.textContent = fmt ? fmt(raw) : raw;
+  });
+}
+bindRange('opacityRange','opacity', v=>v+'%', v=>v/100);
+bindRange('sensitivityRange','sensitivity', v=>v+'%', v=>v/100);
+bindRange('speedRange','speed', v=>v+'%', v=>v/100);
+bindRange('lineWidthRange','lineWidth', v=>v, v=>v);
+bindRange('particleCountRange','particleCount', v=>v, v=>v);
+bindRange('glowRange','glow', v=>v+'%', v=>v/100);
+bindRange('bassRange','bassBoost', v=>v+'%', v=>v/100);
+bindRange('trebleRange','trebleBoost', v=>v+'%', v=>v/100);
+bindRange('blurRange','blur', v=>v+'px', v=>v);
+bindRange('rotationRange','rotation', v=>v+'%', v=>v/50);
+
+$('colorPicker').addEventListener('input', e=> settings.color = e.target.value);
+$('bgColorPicker').addEventListener('input', e=> settings.bgColor = e.target.value);
+
+$('resetSettingsBtn').addEventListener('click', ()=>{
+  Object.assign(settings, DEFAULT_SETTINGS);
+  $('colorPicker').value = settings.color;
+  $('bgColorPicker').value = settings.bgColor;
+  $('opacityRange').value = 100; $('opacityVal').textContent='100%';
+  $('sensitivityRange').value = 100; $('sensitivityVal').textContent='100%';
+  $('speedRange').value = 100; $('speedVal').textContent='100%';
+  $('lineWidthRange').value = 3; $('lineWidthVal').textContent='3';
+  $('particleCountRange').value = 120; $('particleCountVal').textContent='120';
+  $('glowRange').value = 50; $('glowVal').textContent='50%';
+  $('bassRange').value = 100; $('bassVal').textContent='100%';
+  $('trebleRange').value = 100; $('trebleVal').textContent='100%';
+  $('blurRange').value = 0; $('blurVal').textContent='0px';
+  $('rotationRange').value = 20; $('rotationVal').textContent='20%';
+});
+
+/* ================= 17) قسم الخلفية ================= */
+document.querySelectorAll('.bg-opt').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const mode = btn.dataset.bg;
+    if(mode==='image'){ $('bgImageInput').click(); return; }
+    if(mode==='video'){ $('bgVideoInput').click(); return; }
+    bgMode = mode;
+    document.querySelectorAll('.bg-opt').forEach(b=>b.classList.toggle('active', b===btn));
+  });
+});
+$('bgImageInput').addEventListener('change', e=>{
+  const file = e.target.files[0]; if(!file) return;
+  bgImageEl = new Image();
+  bgImageEl.src = URL.createObjectURL(file);
+  bgMode = 'image';
+  document.querySelectorAll('.bg-opt').forEach(b=>b.classList.toggle('active', b.dataset.bg==='image'));
+});
+$('bgVideoInput').addEventListener('change', e=>{
+  const file = e.target.files[0]; if(!file) return;
+  bgVideoEl = document.createElement('video');
+  bgVideoEl.src = URL.createObjectURL(file);
+  bgVideoEl.loop = true; bgVideoEl.muted = true; bgVideoEl.playsInline = true;
+  bgVideoEl.play().catch(()=>{});
+  bgMode = 'video';
+  document.querySelectorAll('.bg-opt').forEach(b=>b.classList.toggle('active', b.dataset.bg==='video'));
+});
+
+/* ================= 18) قسم النصوص ================= */
+$('addTextBtn').addEventListener('click', ()=>{
+  const val = $('textInput').value.trim();
+  if(!val) return;
+  const obj = {
+    id: ++textIdCounter,
+    text: val,
+    font: $('fontSelect').value,
+    color: $('textColor').value,
+    shadow: $('textShadow').checked,
+    glow: $('textGlow').checked,
+    anim: $('textAnim').value,
+    createdAt: (performance.now()/1000)
+  };
+  texts.push(obj);
+  $('textInput').value = '';
+  renderTextList();
+});
+function renderTextList(){
+  const box = $('textList');
+  box.innerHTML = '';
+  texts.forEach(tx=>{
+    const row = document.createElement('div');
+    row.className = 'text-list-item';
+    row.innerHTML = `<span></span>`;
+    row.querySelector('span').textContent = tx.text;
+    const del = document.createElement('button');
+    del.textContent = '✕';
+    del.addEventListener('click', ()=>{
+      const idx = texts.findIndex(x=>x.id===tx.id);
+      if(idx>-1) texts.splice(idx,1);
+      renderTextList();
+    });
+    row.appendChild(del);
+    box.appendChild(row);
+  });
+}
+
+/* ================= 19) قسم التصدير ================= */
+const RES_MAP = {
+  720:  { w:1280, h:720 },
+  1080: { w:1920, h:1080 },
+  1440: { w:2560, h:1440 },
+};
+let selectedRes = 720;
+
+function updatePerfNote(){
+  const cores = navigator.hardwareConcurrency || 2;
+  const mem = navigator.deviceMemory || 4;
+  const powerful = cores>=6 && mem>=4;
+  if(!powerful){
+    $('res1440').disabled = true;
+    perfNote.textContent = 'دقة 1440p متاحة فقط على الأجهزة القوية — جهازك الحالي يدعم حتى 1080p بسلاسة.';
+  }else{
+    $('res1440').disabled = false;
+    perfNote.textContent = 'جهازك يدعم التصدير حتى 1440p.';
+  }
+}
+
+document.querySelectorAll('.res-opt').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    if(btn.disabled) return;
+    selectedRes = +btn.dataset.res;
+    document.querySelectorAll('.res-opt').forEach(b=>b.classList.toggle('active', b===btn));
+  });
+});
+
+function pickMimeType(){
+  const candidates = [
+    'video/mp4;codecs=h264,aac',
+    'video/mp4',
+    'video/webm;codecs=vp9,opus',
+    'video/webm;codecs=vp8,opus',
+    'video/webm'
+  ];
+  for(const c of candidates){
+    if(window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(c)) return c;
+  }
+  return '';
+}
+
+exportBtn.addEventListener('click', startExport);
+
+function startExport(){
+  if(!video.src){ return; }
+  ensureAudioGraph();
+  safeResumeAudio();
+
+  let { w: exW, h: exH } = RES_MAP[selectedRes];
+  const vw = video.videoWidth || 16, vh = video.videoHeight || 9;
+  if(vh > vw){ const tmp = exW; exW = exH; exH = tmp; } // فيديو عمودي (هاتف)
+
+  const exCanvas = document.createElement('canvas');
+  exCanvas.width = exW; exCanvas.height = exH;
+  const exCtx = exCanvas.getContext('2d', { alpha:false });
+
+  const fps = 30;
+  const videoStream = exCanvas.captureStream(fps);
+  const audioTracks = streamDestNode ? streamDestNode.stream.getAudioTracks() : [];
+  const combined = new MediaStream([...videoStream.getVideoTracks(), ...audioTracks]);
+
+  const mimeType = pickMimeType();
+  const bitrate = selectedRes>=1440 ? 14000000 : selectedRes>=1080 ? 8000000 : 4000000;
+  let recorder;
+  try{
+    recorder = new MediaRecorder(combined, mimeType ? { mimeType, videoBitsPerSecond: bitrate } : undefined);
+  }catch(e){
+    exportStatusText.textContent = 'التصدير غير مدعوم على هذا المتصفح.';
+    return;
+  }
+
+  const chunks = [];
+  recorder.ondataavailable = (e)=>{ if(e.data && e.data.size>0) chunks.push(e.data); };
+
+  video.pause();
+  video.currentTime = 0;
+
+  exportOverlay.classList.remove('hidden');
+  exportProgressWrap.classList.remove('hidden');
+  downloadLink.classList.add('hidden');
+  exportBtn.disabled = true;
+  exportStatusText.textContent = 'جاري التسجيل…';
+
+  let exportRafId = null;
+  let exportLastT = performance.now();
+
+  function exportFrame(ts){
+    const dt = Math.min(0.05,(ts-exportLastT)/1000); exportLastT = ts;
+    if(beatCooldown>0) beatCooldown -= dt;
+    if(analyser){
+      analyser.getByteFrequencyData(freqData);
+      analyser.getByteTimeDomainData(timeData);
+    }
+    const lv = analyser ? getAudioLevels(freqData) : {bass:0,mid:0,treble:0,avg:0};
+    exCtx.clearRect(0,0,exW,exH);
+    drawBackground(exCtx, exW, exH);
+    exCtx.save();
+    exCtx.globalAlpha = settings.opacity;
+    exCtx.filter = settings.blur>0 ? `blur(${settings.blur}px)` : 'none';
+    const fn = EFFECT_FN[selectedEffect];
+    if(fn){ try{ fn(exCtx, exW, exH, freqData, timeData, lv, ts/1000, dt); }catch(e){} }
+    exCtx.restore();
+    exCtx.filter = 'none';
+    drawTexts(exCtx, exW, exH, ts/1000, lv);
+
+    const pct = video.duration ? clamp(video.currentTime/video.duration,0,1) : 0;
+    updateExportProgress(pct);
+
+    if(video.ended || (video.duration && video.currentTime>=video.duration-0.05)){
+      finishExport();
+      return;
+    }
+    exportRafId = requestAnimationFrame(exportFrame);
+  }
+
+  function updateExportProgress(pct){
+    const pctInt = Math.round(pct*100);
+    exportPercentText.textContent = pctInt+'%';
+    exportProgressFill.style.width = pctInt+'%';
+    exportProgressLabel.textContent = pctInt+'%';
+    const circumference = 327;
+    ringProgress.style.strokeDashoffset = circumference*(1-pct);
+  }
+
+  function finishExport(){
+    if(exportRafId) cancelAnimationFrame(exportRafId);
+    video.pause();
+    if(recorder.state!=='inactive') recorder.stop();
+  }
+
+  recorder.onstop = ()=>{
+    const blob = new Blob(chunks, { type: mimeType || 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    const ext = (mimeType||'').includes('mp4') ? 'mp4' : 'webm';
+    downloadLink.href = url;
+    downloadLink.download = `audio-visualizer-export.${ext}`;
+    downloadLink.classList.remove('hidden');
+    exportOverlay.classList.add('hidden');
+    exportBtn.disabled = false;
+    exportStatusText.textContent = 'اكتمل التصدير';
+  };
+
+  video.play().then(()=>{
+    recorder.start(250);
+    exportLastT = performance.now();
+    exportRafId = requestAnimationFrame(exportFrame);
+  }).catch(()=>{
+    exportStatusText.textContent = 'تعذّر بدء التشغيل للتصدير.';
+    exportOverlay.classList.add('hidden');
+    exportBtn.disabled = false;
+  });
+}
+
+/* ================= 20) توفير الطاقة: إيقاف كل شيء عند إخفاء الصفحة ================= */
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden){
+    stopPreviews();
+    if(!video.paused) video.pause();
+  }
+});
+
+/* ================= 21) التشغيل الأولي ================= */
+buildEffectsGrid();
+startPreviews();
+
+</script>
+</body>
+</html>
