@@ -72,7 +72,11 @@
                 <span>التقدم: <b id="count">0</b>/12</span>
             </div>
             <!-- تم إضافة زر النسخ هنا كما طلبت -->
-            <button class="action-btn" id="copy-btn" onclick="copyAll()">Copy Data (-)</button>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                <button class="action-btn" id="copy-btn" onclick="copyAll()" style="margin-bottom:0;">Copy Data (-)</button>
+                <button class="action-btn" id="paste-btn" onclick="pasteAll()" style="margin-bottom:0; background:#0891b2;">Paste Data</button>
+            </div>
+            <button class="action-btn" id="copy-labeled-btn" onclick="copyAllLabeled()" style="background:#7c3aed;">📋 نسخ مع تسمية كل حقل (سطر لكل معلومة)</button>
             <button class="action-btn save-btn" id="btn-export" onclick="exportPDF()" style="display:none;">📥 حفظ وتصدير PDF</button>
         </div>
         <div id="form-container"></div>
@@ -102,6 +106,10 @@
             { key: 'coords', ar: 'احداثيات الموقع', en: 'Coordinates', img: 'https://i.ibb.co/Qv0zM7s6/cordinate.png' }
         ];
 
+        // ترتيب العرض في الشاشة فقط (الرمز البريدي بعد الرقم الاضافي)
+        // هذا لا يغيّر ترتيب البيانات الفعلي المستخدم في الحفظ/النسخ/التصدير
+        const displayOrder = [0, 1, 2, 3, 4, 6, 7, 5, 8, 9, 10, 11];
+
         let formData = new Array(12).fill(null).map(() => ({ value: '', marker: null, rect: null }));
         let customLabels = [];
         let history = [];
@@ -127,12 +135,13 @@
         function initForm() {
             const container = document.getElementById('form-container');
             container.innerHTML = '';
-            fieldsConfig.forEach((f, i) => {
+            displayOrder.forEach(i => {
+                const f = fieldsConfig[i];
                 const row = document.createElement('div');
                 row.className = 'form-row'; row.id = `row-${i}`;
                 row.onclick = () => { if(mode==='label') setActive(i); };
                 row.innerHTML = `<div class="form-label">${lang==='ar'?f.ar:f.en}</div>
-                    <div class="form-value"><input type="text" id="input-${i}" oninput="formData[${i}].value=this.value;updateUI();" placeholder="..."></div>
+                    <div class="form-value"><input type="text" id="input-${i}" oninput="formData[${i}].value=this.value;updateUI();" onpaste="return handlePaste(event);" onkeydown="return handleInputKeydown(event, ${i});" placeholder="..."></div>
                     <div class="preview-col">${f.img ? `<button class="eye-btn" onclick="openImg('${f.img}')">👁️</button>`:''}</div>
                     <div class="controls-col"><button onclick="clearRow(${i})" style="color:red;border:none;background:none;cursor:pointer;">×</button></div>`;
                 container.appendChild(row);
@@ -287,6 +296,72 @@
         function toggleLang() { lang = lang==='ar'?'en':'ar'; document.documentElement.dir = lang==='ar'?'rtl':'ltr'; initForm(); updateUI(); }
         function openImg(u) { document.getElementById('modal-img').src = u; document.getElementById('image-modal').style.display = 'flex'; }
         function undo() { if(!history.length) return; const l = history.pop(); if(l.type==='marker') { formData[l.index].value=''; formData[l.index].marker=null; } else if(l.type==='rect') { formData[l.index].rect=null; setActive(l.index); } else if(l.type==='custom') { customLabels.splice(l.index, 1); } updateUI(); drawElements(); }
+
+        // الانتقال للحقل التالي بالترتيب المعروض على الشاشة (نفس ترتيب Tab)
+        function focusNext(currentIndex) {
+            const pos = displayOrder.indexOf(currentIndex);
+            if(pos !== -1 && pos < displayOrder.length - 1) {
+                const nextIndex = displayOrder[pos + 1];
+                const nextInput = document.getElementById(`input-${nextIndex}`);
+                if(nextInput) { nextInput.focus(); nextInput.select(); }
+            }
+        }
+        // زر Enter ينتقل للحقل التالي مثل Tab تماماً
+        function handleInputKeydown(e, i) {
+            if(e.key === 'Enter') {
+                e.preventDefault();
+                focusNext(i);
+                return false;
+            }
+        }
+
+        // توزيع نص منسوخ (بصيغة الشرطة "-") على كل الحقول بنفس ترتيب النسخ الأصلي
+        function distributeText(text) {
+            if(!text) return;
+            const parts = text.split('-');
+            parts.forEach((val, idx) => {
+                if(idx < formData.length) formData[idx].value = val.trim();
+            });
+            updateUI();
+        }
+
+        // دالة الاسترجاع (عكس عملية النسخ): لصق نص منسوخ سابقاً وتوزيعه على كل الحقول
+        function handlePaste(e) {
+            const text = (e.clipboardData || window.clipboardData).getData('text');
+            if(text.indexOf('-') === -1) return true; // لصق عادي لقيمة واحدة، لا تغيير في السلوك
+            e.preventDefault();
+            distributeText(text);
+            return false;
+        }
+
+        // زر لصق منفصل (لأن بعض المتصفحات لا تسمح بحدث paste تلقائي من الكيبورد الافتراضي)
+        async function pasteAll() {
+            try {
+                const text = await navigator.clipboard.readText();
+                if(!text) { alert('الحافظة فارغة'); return; }
+                distributeText(text);
+                const btn = document.getElementById('paste-btn');
+                const old = btn.innerText;
+                btn.innerText = "PASTED!";
+                setTimeout(() => btn.innerText = old, 1000);
+            } catch(err) {
+                alert('تعذر الوصول إلى الحافظة. تأكد من صلاحيات المتصفح: ' + err.message);
+            }
+        }
+
+        // نسخ كل المحتويات مع تسمية كل حقل، وكل معلومة في سطر منفصل
+        function copyAllLabeled() {
+            const text = displayOrder.map(i => {
+                const label = lang === 'ar' ? fieldsConfig[i].ar : fieldsConfig[i].en;
+                return `${label}: ${formData[i].value.trim()}`;
+            }).join('\n');
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('copy-labeled-btn');
+                const old = btn.innerText;
+                btn.innerText = "COPIED!";
+                setTimeout(() => btn.innerText = old, 1000);
+            });
+        }
 
         // تم إضافة دالة النسخ هنا
         function copyAll() {
