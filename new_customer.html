@@ -69,7 +69,7 @@
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px;">
                 <button onclick="toggleLang()">AR/EN</button>
-                <span>التقدم: <b id="count">0</b>/12</span>
+                <span>التقدم: <b id="count">0</b>/13</span>
             </div>
             <!-- تم إضافة زر النسخ هنا كما طلبت -->
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
@@ -93,9 +93,9 @@
 
         const fieldsConfig = [
             { key: 'store', ar: 'اسم المحل', en: 'Store Name', img: 'https://i.ibb.co/QS64sQv/name.png' },
-            { key: 'cr', ar: 'رقم السجل', en: 'CR Number', img: 'https://i.ibb.co/tMFfW4rS/cr-number.png' },
+            { key: 'cr', ar: 'رقم السجل', en: 'CR Number', img: 'https://i.ibb.co/tMFfW4rS/cr-number.png', link: 'https://mc.gov.sa/ar/eservices/Pages/Commercial-data.aspx' },
             { key: 'license', ar: 'رقم الرخصة', en: 'License Num', img: 'https://i.ibb.co/Rps00MVc/licen-number.png' },
-            { key: 'tax', ar: 'الرقم الضريبي', en: 'Tax Number', img: 'https://i.ibb.co/S4tS0SfK/vat-number.png' },
+            { key: 'tax', ar: 'الرقم الضريبي', en: 'Tax Number', img: 'https://i.ibb.co/S4tS0SfK/vat-number.png', link: 'https://zatca.gov.sa/ar/eServices/Pages/TaxpayerLookup.aspx' },
             { key: 'mobile', ar: 'رقم الجوال', en: 'Mobile Num', img: '' },
             { key: 'zip', ar: 'الرمز البريدي', en: 'Zip Code', img: 'https://i.ibb.co/jPYLs91S/postal.png' },
             { key: 'building', ar: 'رقم المبني', en: 'Building Num', img: 'https://i.ibb.co/nszKXs03/bulding.png' },
@@ -103,14 +103,14 @@
             { key: 'district', ar: 'اسم الحي', en: 'District', img: 'https://i.ibb.co/QSdK6yz/distract.png' },
             { key: 'street', ar: 'اسم الشارع', en: 'Street', img: 'https://i.ibb.co/ycKffvyW/street.png' },
             { key: 'short', ar: 'الموقع المختصر', en: 'Short Address', img: 'https://i.ibb.co/JRN93Tjg/shortcode.png' },
-            { key: 'coords', ar: 'احداثيات الموقع', en: 'Coordinates', img: 'https://i.ibb.co/Qv0zM7s6/cordinate.png' }
+            { key: 'coords', ar: 'احداثيات الموقع', en: 'Coordinates', img: 'https://i.ibb.co/Qv0zM7s6/cordinate.png' },
+            { key: 'city', ar: 'اسم المدينة', en: 'City', img: '' }
         ];
 
-        // ترتيب العرض في الشاشة فقط (الرمز البريدي بعد الرقم الاضافي)
-        // هذا لا يغيّر ترتيب البيانات الفعلي المستخدم في الحفظ/النسخ/التصدير
-        const displayOrder = [0, 1, 2, 3, 4, 6, 7, 5, 8, 9, 10, 11];
+        // ترتيب العرض في الشاشة فقط (لا يغيّر ترتيب البيانات الفعلي المستخدم في الحفظ/النسخ/التصدير)
+        const displayOrder = [0, 1, 2, 3, 6, 7, 5, 9, 8, 12, 10, 11, 4];
 
-        let formData = new Array(12).fill(null).map(() => ({ value: '', marker: null, rect: null }));
+        let formData = new Array(13).fill(null).map(() => ({ value: '', marker: null, rect: null }));
         let customLabels = [];
         let history = [];
         let pdfBytes = null;
@@ -140,7 +140,11 @@
                 const row = document.createElement('div');
                 row.className = 'form-row'; row.id = `row-${i}`;
                 row.onclick = () => { if(mode==='label') setActive(i); };
-                row.innerHTML = `<div class="form-label">${lang==='ar'?f.ar:f.en}</div>
+                const labelText = lang==='ar'?f.ar:f.en;
+                const labelHtml = f.link
+                    ? `<div class="form-label" style="cursor:pointer;text-decoration:underline;color:#38bdf8;" onclick="copyAndOpenLink('${f.link}', event)" title="نسخ رقم السجل وفتح الرابط">${labelText} 🔗</div>`
+                    : `<div class="form-label">${labelText}</div>`;
+                row.innerHTML = `${labelHtml}
                     <div class="form-value"><input type="text" id="input-${i}" oninput="formData[${i}].value=this.value;updateUI();" onpaste="return handlePaste(event);" onkeydown="return handleInputKeydown(event, ${i});" placeholder="..."></div>
                     <div class="preview-col">${f.img ? `<button class="eye-btn" onclick="openImg('${f.img}')">👁️</button>`:''}</div>
                     <div class="controls-col"><button onclick="clearRow(${i})" style="color:red;border:none;background:none;cursor:pointer;">×</button></div>`;
@@ -228,7 +232,7 @@
             } else {
                 formData[activeIdx].rect = {...rectData, text: (activeIdx+1)+'. '+(lang==='ar'?fieldsConfig[activeIdx].ar : fieldsConfig[activeIdx].en)};
                 history.push({ type: 'rect', index: activeIdx });
-                if(activeIdx < 11) setActive(activeIdx+1);
+                if(activeIdx < 12) setActive(activeIdx+1);
             }
             activeRect.remove(); drawElements();
         }
@@ -292,10 +296,22 @@
         function toggleCustomText() { isCustom = !isCustom; document.getElementById('btn-custom').classList.toggle('active', isCustom); }
         function updateUI() { formData.forEach((f,i) => { const inp = document.getElementById(`input-${i}`); if(inp) inp.value = f.value; document.getElementById(`row-${i}`).classList.toggle('filled', !!f.value); }); document.getElementById('count').innerText = formData.filter(f=>f.value).length; }
         function clearRow(i) { formData[i] = { value: '', marker: null, rect: null }; updateUI(); drawElements(); }
-        function skip() { if(activeIdx < 11) setActive(activeIdx+1); }
+        function skip() { if(activeIdx < 12) setActive(activeIdx+1); }
         function toggleLang() { lang = lang==='ar'?'en':'ar'; document.documentElement.dir = lang==='ar'?'rtl':'ltr'; initForm(); updateUI(); }
         function openImg(u) { document.getElementById('modal-img').src = u; document.getElementById('image-modal').style.display = 'flex'; }
         function undo() { if(!history.length) return; const l = history.pop(); if(l.type==='marker') { formData[l.index].value=''; formData[l.index].marker=null; } else if(l.type==='rect') { formData[l.index].rect=null; setActive(l.index); } else if(l.type==='custom') { customLabels.splice(l.index, 1); } updateUI(); drawElements(); }
+
+        // نسخ رقم السجل ثم فتح رابط الجهة الحكومية في نافذة جديدة
+        function copyAndOpenLink(link, e) {
+            if(e) e.stopPropagation();
+            const crValue = (formData[1].value || '').trim();
+            const openLink = () => window.open(link, '_blank');
+            if(crValue && navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(crValue).then(openLink).catch(openLink);
+            } else {
+                openLink();
+            }
+        }
 
         // الانتقال للحقل التالي بالترتيب المعروض على الشاشة (نفس ترتيب Tab)
         function focusNext(currentIndex) {
