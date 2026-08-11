@@ -36,6 +36,10 @@
         .btn-merge { background: var(--success); }
         .btn-images { background: #f39c12; }
 
+        .align-selector { display: flex; gap: 6px; margin-top: 8px; }
+        .align-btn { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.78rem; font-weight: bold; color: var(--text); font-family: 'CustomArabic', sans-serif; }
+        .align-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
         #fileList { margin-top: 15px; width: 100%; }
         .file-item { background: #fff; margin-bottom: 10px; padding: 12px; border-radius: 16px; border: 1px solid #edf2f7; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
         .drag-handle { cursor: grab; color: #ccc; font-size: 1.4rem; }
@@ -88,6 +92,11 @@
 
     <div style="background: #f9f9f9; padding: 12px; border-radius: 15px; border: 1px solid #eee; margin-bottom:15px;">
         <textarea id="textPageInput" rows="2" style="width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; outline:none; font-family:inherit; resize: none;" placeholder="اكتب نصاً ليظهر في صفحة مستقلة..."></textarea>
+        <div class="align-selector">
+            <button type="button" class="align-btn active" data-align="right" onclick="setTextAlign('right')">⇥ محاذاة يمين</button>
+            <button type="button" class="align-btn" data-align="center" onclick="setTextAlign('center')">⇹ توسيط</button>
+            <button type="button" class="align-btn" data-align="left" onclick="setTextAlign('left')">⇤ محاذاة يسار</button>
+        </div>
         <button class="btn" style="background:var(--primary); margin-top:8px; height:36px; font-size:0.85rem;" onclick="handleTextAddition()">إدراج نص</button>
     </div>
 
@@ -117,9 +126,35 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
     let items = [];
+    let currentTextAlign = 'right'; // المحاذاة الافتراضية لصفحات النص الجديدة
     const FONT_URL = 'https://files.catbox.moe/hmey7o.ttf';
 
     function updateItemData(idx, field, value) { items[idx][field] = value; }
+
+    function setTextAlign(align) {
+        currentTextAlign = align;
+        document.querySelectorAll('.align-btn').forEach(b => b.classList.toggle('active', b.dataset.align === align));
+    }
+
+    // ===== معالجة اتجاه النص العربي عند الرسم داخل PDF =====
+    // pdf-lib لا يدعم تشكيل/ترتيب النص العربي (BiDi)، وبعض قارئات PDF
+    // تقوم تلقائياً بعكس اتجاه أي نص يحتوي على حروف عربية بالكامل بما فيها الأرقام.
+    // لذلك نجهّز النص هنا بحيث تبقى الأرقام والنص اللاتيني بترتيبها الصحيح (من اليسار لليمين)
+    // بينما تُعرض الكلمات العربية بشكل صحيح بعد أن يقوم القارئ بعكسها.
+    const ARABIC_RE = /[\u0600-\u06FF\u0750-\u077F]/;
+    function isArabicToken(tok) { return ARABIC_RE.test(tok); }
+
+    function fixBidiLine(line) {
+        const tokens = line.split(' ');
+        const processed = tokens.map(tok => isArabicToken(tok) ? tok.split('').reverse().join('') : tok);
+        return processed.reverse().join(' ').split('').reverse().join('');
+    }
+
+    function getAlignedX(pageWidth, textWidth, align, margin = 50) {
+        if (align === 'left') return margin;
+        if (align === 'center') return (pageWidth - textWidth) / 2;
+        return pageWidth - textWidth - margin; // right (افتراضي)
+    }
 
     function renderUI() {
         const list = document.getElementById('fileList');
@@ -239,16 +274,20 @@
                     const page = pdfDoc.addPage([595, 842]); // A4
                     const content = item.type === 'gps' ? item.content : item.text;
                     const lines = content.split('\n');
+                    const align = item.align || 'right';
+                    const { width: pageWidth } = page.getSize();
                     
                     let yOffset = 800;
                     if (item.customName) {
-                        drawArabicText(page, item.customName, customFont, 22, 780);
+                        drawArabicText(page, item.customName, customFont, 22, 780, align);
                         yOffset -= 50;
                     }
 
                     lines.forEach(line => {
-                        page.drawText(line, {
-                            x: 50,
+                        const fixed = fixBidiLine(line);
+                        const textWidth = customFont.widthOfTextAtSize(fixed, 14);
+                        page.drawText(fixed, {
+                            x: getAlignedX(pageWidth, textWidth, align),
                             y: yOffset,
                             size: 14,
                             font: customFont,
@@ -272,12 +311,13 @@
         }
     }
 
-    // دالة مساعدة لرسم النص العربي (تتعامل مع التموضع البسيط)
-    function drawArabicText(page, text, font, size, customY) {
+    // دالة مساعدة لرسم النص العربي (تتعامل مع التموضع + إصلاح اتجاه الأرقام)
+    function drawArabicText(page, text, font, size, customY, align = 'right') {
+        const fixed = fixBidiLine(text);
         const { width, height } = page.getSize();
-        const textWidth = font.widthOfTextAtSize(text, size);
-        page.drawText(text, {
-            x: width - textWidth - 30, // محاذاة لليمين
+        const textWidth = font.widthOfTextAtSize(fixed, size);
+        page.drawText(fixed, {
+            x: getAlignedX(width, textWidth, align, 30),
             y: customY || (height - size - 20),
             size: size,
             font: font,
@@ -301,7 +341,7 @@
         if (!text) return;
         items.push({ 
             id: Math.random(), type: 'text_page', 
-            customName: "صفحة نصية", text: text, 
+            customName: "صفحة نصية", text: text, align: currentTextAlign,
             thumb: await genSimpleThumb("📄 نص"), rotation: 0, includeName: true 
         });
         document.getElementById('textPageInput').value = ''; renderUI();
@@ -312,7 +352,7 @@
             const lat = pos.coords.latitude.toFixed(6);
             const lon = pos.coords.longitude.toFixed(6);
             const c = `بيانات الموقع الجغرافي\nخط العرض: ${lat}\nخط الطول: ${lon}\nرابط خرائط جوجل:\nhttps://www.google.com/maps?q=${lat},${lon}`;
-            items.push({ id: Math.random(), type: 'gps', customName: "موقع GPS", content: c, rotation: 0, thumb: "", includeName: true });
+            items.push({ id: Math.random(), type: 'gps', customName: "موقع GPS", content: c, align: currentTextAlign, rotation: 0, thumb: "", includeName: true });
             const last = items[items.length-1];
             genSimpleThumb("📍 GPS").then(t => { last.thumb = t; renderUI(); });
         }, () => alert("يرجى تفعيل صلاحية الوصول للموقع"));
