@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>رادار تبوك | محطة رصد المصور الاحترافية</title>
+    <style>
+        :root {
+            --bg: #05070a; --card: #12151a; --accent: #00a2ff;
+            --success: #1b4d2e; --success-txt: #00ff88;
+            --inactive: #1a1e24; --inactive-txt: #64748b;
+            --target: #ffcc00; --danger: #ff4d4d; --text: #e0e0e0;
+        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+        
+        /* القسم العلوي */
+        .top-section { display: grid; grid-template-columns: 320px 1fr 380px; gap: 5px; padding: 5px; background: #0a0c10; border-bottom: 1px solid #30363d; }
+        .box { background: var(--card); border: 1px solid #30363d; border-radius: 8px; padding: 8px; }
+        
+        .weather-display { text-align: center; border-right: 3px solid var(--accent); }
+        .operation-status { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; align-items: center; }
+
+        .status-tag { padding: 6px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; text-align: center; border: 1px solid transparent; }
+        .active-green { background: var(--success); color: var(--success-txt); border-color: var(--success-txt); box-shadow: 0 0 10px rgba(0,255,136,0.2); }
+        .inactive-gray { background: #2a2e35; color: var(--inactive-txt); border-color: #444; opacity: 0.6; }
+
+        /* منطقة المدخلات والأزرار */
+        .input-area { display: flex; flex-direction: column; gap: 5px; }
+        .controls { display: flex; gap: 5px; align-items: center; }
+        .textarea-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; flex: 1; }
+        textarea { width: 100%; height: 40px; background: #000; color: var(--accent); border: 1px solid #30363d; border-radius: 5px; padding: 5px; font-size: 0.7rem; resize: none; }
+        
+        .btn { border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.75rem; transition: 0.2s; }
+        .btn-update { background: var(--success-txt); color: #000; height: 40px; }
+        .btn-link { background: #1e293b; color: var(--accent); border: 1px solid var(--accent); }
+
+        /* الجداول */
+        .tables-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 5px; margin-bottom: 5px; }
+        
+        /* تلوين الجدول بالكامل بناءً على النشاط */
+        .table-wrap { 
+            background: var(--card); 
+            border-radius: 8px; 
+            overflow: hidden; 
+            transition: all 0.5s ease; 
+            border: 2px solid #30363d;
+        }
+
+        /* الجدول النشط */
+        .table-active { 
+            border-color: var(--success-txt) !important; 
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.15);
+            opacity: 1;
+            filter: grayscale(0);
+        }
+        .table-active .table-header { background: var(--success) !important; color: #fff !important; }
+
+        /* الجدول غير النشط */
+        .table-inactive { 
+            opacity: 0.4; 
+            filter: grayscale(1);
+            border-color: #222;
+        }
+        .table-inactive .table-header { background: #1a1e24 !important; color: #555 !important; }
+
+        table { width: 100%; border-collapse: collapse; text-align: right; font-size: 0.75rem; }
+        th { background: rgba(0,0,0,0.3); color: var(--accent); padding: 4px; font-size: 0.7rem; }
+        td { padding: 5px 8px; border-bottom: 1px solid #21262d; }
+
+        .target-row { background: rgba(255, 204, 0, 0.2) !important; border: 2px solid var(--target); font-weight: bold; }
+        .past-row { opacity: 0.4; }
+
+        /* الرادار */
+        .radar-container { flex: 1; width: 100%; background: #000; position: relative; border-top: 1px solid #30363d; }
+        iframe { width: 100%; height: 100%; border: none; position: absolute; top: 0; left: 0; }
+    </style>
+</head>
+<body>
+
+    <div class="top-section">
+        <div class="box weather-display">
+            <div id="clock" style="font-family: monospace; font-size: 1rem; color: var(--accent);">00:00:00</div>
+            <div style="display: flex; justify-content: space-around; align-items: center; margin-top: 2px;">
+                <span id="api-temp" style="font-size: 1.2rem; font-weight: bold;">--°C</span>
+                <span id="api-wind-text" style="font-size: 0.8rem; color: var(--success-txt);">-- | --</span>
+            </div>
+            <div style="font-size: 0.7rem; margin-top: 2px;">المدرج النشط: <b id="rw-num" style="color:var(--target)">--</b></div>
+        </div>
+
+        <div class="input-area">
+            <div class="controls">
+                <div class="textarea-grid">
+                    <textarea id="arrIn" placeholder="لصق الوصول هنا..."></textarea>
+                    <textarea id="depIn" placeholder="لصق المغادرة هنا..."></textarea>
+                </div>
+                <button class="btn btn-update" onclick="processAll()">تحليل ⚡</button>
+            </div>
+            <div style="display: flex; gap: 5px;">
+                <button class="btn btn-link" onclick="window.open('https://www.flightradar24.com/data/airports/tuu/arrivals','_blank')">وصول (FR24)</button>
+                <button class="btn btn-link" onclick="window.open('https://www.flightradar24.com/data/airports/tuu/departures','_blank')">مغادرة (FR24)</button>
+            </div>
+        </div>
+
+        <div class="box operation-status">
+            <div id="tag-arr" class="status-tag">هبوط من الشمال</div>
+            <div id="tag-dep" class="status-tag">إقلاع للشمال</div>
+            <div style="grid-column: span 2; font-size: 0.6rem; text-align: center; color: #64748b; margin-top: 2px;">
+                الجدول "المضيء": هو الذي يمر من أمام نافذتك الآن
+            </div>
+        </div>
+    </div>
+
+    <div class="tables-section">
+        <!-- جدول الوصول -->
+        <div id="wrap-arr" class="table-wrap">
+            <div class="table-header" style="padding:2px; text-align:center; font-size:0.75rem; font-weight:bold;">🛬 هبوط (Arrivals)</div>
+            <table>
+                <thead><tr><th>الموعد</th><th>الرحلة</th><th>المصدر</th><th>الحالة</th></tr></thead>
+                <tbody id="arrBody"></tbody>
+            </table>
+        </div>
+        <!-- جدول المغادرة -->
+        <div id="wrap-dep" class="table-wrap">
+            <div class="table-header" style="padding:2px; text-align:center; font-size:0.75rem; font-weight:bold;">🛫 إقلاع (Departures)</div>
+            <table>
+                <thead><tr><th>الموعد</th><th>الرحلة</th><th>الوجهة</th><th>الحالة</th></tr></thead>
+                <tbody id="depBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="radar-container">
+        <iframe id="radarFrame" src="https://www.radarbox.com?widget=1&lat=28.374&lng=36.618&z=10&style=dark"></iframe>
+    </div>
+
+<script>
+    const API_KEY = '97b5106d52eb673306c7110bd5f3de8b';
+    let isNorthWind = true;
+
+    setInterval(() => {
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-GB');
+    }, 1000);
+
+    async function updateWeather() {
+        try {
+            const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=Tabuk,SA&appid=${API_KEY}&units=metric`);
+            const data = await res.json();
+            const deg = data.wind.deg;
+            const speed = Math.round(data.wind.speed * 1.94);
+            
+            document.getElementById('api-temp').innerText = `${Math.round(data.main.temp)}°C`;
+            document.getElementById('api-wind-text').innerText = `${deg}° | ${speed} kts`;
+
+            // المنطق: رياح من الشمال (220-40) تعني مدرج 31
+            isNorthWind = (deg >= 220 || deg <= 40);
+            const activeRW = isNorthWind ? "31" : "13";
+            document.getElementById('rw-num').innerText = activeRW;
+
+            const tagArr = document.getElementById('tag-arr');
+            const tagDep = document.getElementById('tag-dep');
+            const wrapArr = document.getElementById('wrap-arr');
+            const wrapDep = document.getElementById('wrap-dep');
+
+            if (isNorthWind) {
+                // رياح شمالية: الإقلاع للشمال نشط (مدرج 31)
+                tagArr.className = "status-tag inactive-gray"; tagArr.innerText = "هبوط (عكس نافذتك)";
+                tagDep.className = "status-tag active-green"; tagDep.innerText = "إقلاع للشمال (نشط ✅)";
+                wrapArr.className = "table-wrap table-inactive";
+                wrapDep.className = "table-wrap table-active";
+            } else {
+                // رياح جنوبية: الهبوط من الشمال نشط (مدرج 13)
+                tagArr.className = "status-tag active-green"; tagArr.innerText = "هبوط من الشمال (نشط ✅)";
+                tagDep.className = "status-tag inactive-gray"; tagDep.innerText = "إقلاع (عكس نافذتك)";
+                wrapArr.className = "table-wrap table-active";
+                wrapDep.className = "table-wrap table-inactive";
+            }
+        } catch (e) { console.error("Weather Error"); }
+    }
+    updateWeather();
+    setInterval(updateWeather, 300000);
+
+    // تُستخدم من إضافة المتصفح (تحديث تلقائي من FlightRadar24) لحقن البيانات مباشرة
+    window.__injectFlights = function(arrFlights, depFlights) {
+        renderTable("arrBody", arrFlights || []);
+        renderTable("depBody", depFlights || []);
+    };
+
+    // لوحة تشخيص بسيطة تعرض مراحل الاستقبال والتحديث — تفيد عند تصحيح مشاكل الإضافة
+    (function() {
+        const logBox = document.createElement('div');
+        logBox.id = 'radarDebugLog';
+        logBox.style.cssText = 'position:fixed;bottom:40px;left:5px;z-index:9999;width:260px;max-height:160px;overflow-y:auto;background:rgba(0,0,0,0.9);color:#00ff88;font-size:0.65rem;font-family:monospace;padding:6px;border:1px solid #30363d;border-radius:6px;direction:ltr;text-align:left;display:none;';
+        document.body.appendChild(logBox);
+
+        const toggle = document.createElement('button');
+        toggle.textContent = '🐞';
+        toggle.title = 'سجل التشخيص';
+        toggle.style.cssText = 'position:fixed;bottom:5px;left:5px;z-index:10000;background:#1e293b;color:#00a2ff;border:1px solid #00a2ff;border-radius:50%;width:30px;height:30px;font-size:0.9rem;';
+        toggle.onclick = () => { logBox.style.display = logBox.style.display === 'none' ? 'block' : 'none'; };
+        document.body.appendChild(toggle);
+
+        window.__radarLog = function(msg) {
+            const time = new Date().toLocaleTimeString('en-GB');
+            const line = document.createElement('div');
+            line.textContent = `[${time}] ${msg}`;
+            logBox.appendChild(line);
+            logBox.scrollTop = logBox.scrollHeight;
+            console.log('[رادار]', msg);
+        };
+
+        window.__radarLog('الصفحة جاهزة، بانتظار التحديث من الإضافة...');
+    })();
+
+    // جسر بين إضافة المتصفح (عالم معزول لا يرى متغيرات الصفحة) وبين الصفحة نفسها،
+    // عبر حدث DOM بدل الوصول المباشر لـ window.__injectFlights
+    document.addEventListener('__radarUpdate', function(e) {
+        try {
+            window.__radarLog(`استلمت تحديث: وصول ${e.detail.arr.length} / مغادرة ${e.detail.dep.length}`);
+            window.__injectFlights(e.detail.arr, e.detail.dep);
+            window.__radarLog('تم عرض البيانات في الجدولين ✅');
+        } catch (err) {
+            window.__radarLog('خطأ أثناء التحديث: ' + err.message);
+        }
+    });
+
+    function processAll() {
+        renderTable("arrBody", parseFlights(document.getElementById('arrIn').value));
+        renderTable("depBody", parseFlights(document.getElementById('depIn').value));
+        document.getElementById('arrIn').value = '';
+        document.getElementById('depIn').value = '';
+    }
+
+    function parseFlights(text) {
+        const flights = [];
+        const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        for (let i = 0; i < lines.length; i++) {
+            const timeMatch = lines[i].match(/^(\d{1,2}:\d{2})\s*(AM|PM)?/i);
+            if (timeMatch) {
+                let status = "Scheduled";
+                for (let j = 1; j <= 8; j++) {
+                    const l = lines[i+j];
+                    if (l && (l.includes('Estimated') || l.includes('Landed') || l.includes('Scheduled') || l.includes('Departed') || l.includes('Delayed') || l.includes('Landing'))) {
+                        status = l; break;
+                    }
+                }
+                flights.push({ timeStr: timeMatch[0], code: lines[i+1], city: lines[i+2], status, mins: convertToMins(timeMatch[1], timeMatch[2]) });
+            }
+        }
+        return flights.sort((a, b) => a.mins - b.mins);
+    }
+
+    function convertToMins(t, ap) {
+        let [h, m] = t.split(':').map(Number);
+        if (ap && ap.toUpperCase() === 'PM' && h !== 12) h += 12;
+        if (ap && ap.toUpperCase() === 'AM' && h === 12) h = 0;
+        return h * 60 + m;
+    }
+
+    function getStatusColor(status) {
+        if (status.includes('Landed') || status.includes('Departed')) return 'color: var(--success-txt);';
+        if (status.includes('Estimated') || status.includes('Landing')) return 'color: var(--target); font-weight: bold;';
+        if (status.includes('Delayed')) return 'color: var(--danger);';
+        return 'color: var(--inactive-txt);';
+    }
+
+    function renderTable(id, flights) {
+        const tbody = document.getElementById(id);
+        tbody.innerHTML = '';
+        const now = (new Date().getHours() * 60) + new Date().getMinutes();
+        const targetIdx = flights.findIndex(f => f.mins >= now - 10);
+        
+        let list = (targetIdx !== -1) ? flights.slice(Math.max(0, targetIdx - 1), targetIdx + 8) : flights.slice(-9);
+
+        list.forEach((f, idx) => {
+            const row = document.createElement('tr');
+            const isTarget = (targetIdx !== -1 && idx === (targetIdx > 0 ? 1 : 0));
+            if (f.mins < now && !isTarget) row.className = 'past-row';
+            if (isTarget) row.className = 'target-row';
+
+            row.innerHTML = `
+                <td>${f.timeStr}</td>
+                <td><b>${f.code}</b></td>
+                <td>${f.city}</td>
+                <td style="${getStatusColor(f.status)}">${f.status}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+</script>
+</body>
+</html>
